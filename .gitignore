@@ -1,0 +1,24 @@
+# Git Ignore for Yaaic
+
+# Android Studio & Gradle
+*.iml
+build/
+.gradle/
+.idea/
+
+# MacOS X
+.DS_Store
+
+# Compiled and generated files
+bin/
+gen/
+R.java
+
+# Build files
+local.properties
+ant.properties
+build.xml
+proguard.cfg
+
+# Maven
+target/
