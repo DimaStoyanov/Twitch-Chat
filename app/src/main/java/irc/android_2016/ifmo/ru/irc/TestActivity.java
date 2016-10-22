@@ -1,5 +1,6 @@
 package irc.android_2016.ifmo.ru.irc;
 
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -51,9 +52,19 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
             if (savedInstanceState.getBoolean("isConnected")) {
                 disableEdits();
             }
+        } else {
+            load();
         }
 
         findViewById(R.id.connectButton).setOnClickListener(this);
+    }
+
+    private void load() {
+        SharedPreferences pref = getPreferences(MODE_PRIVATE);
+        server.setText(pref.getString("Server", ""));
+        nick.setText(pref.getString("Nick", ""));
+        password.setText(pref.getString("Password", ""));
+        channel.setText(pref.getString("Channel", ""));
     }
 
     void disableEdits() {
@@ -73,6 +84,18 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
         outState.putString("Password", password.getText().toString());
         outState.putString("Channel", channel.getText().toString());
         outState.putString("Text", text.getText().toString());
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SharedPreferences pref = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor ed = pref.edit();
+        ed.putString("Server", server.getText().toString());
+        ed.putString("Nick", nick.getText().toString());
+        ed.putString("Password", password.getText().toString());
+        ed.putString("Channel", channel.getText().toString());
+        ed.commit();
     }
 
     @Override
