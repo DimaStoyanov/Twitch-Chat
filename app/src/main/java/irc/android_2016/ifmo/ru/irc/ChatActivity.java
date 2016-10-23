@@ -1,10 +1,12 @@
 package irc.android_2016.ifmo.ru.irc;
 
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -17,11 +19,12 @@ import java.net.Socket;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity implements View.OnClickListener {
     IRCClientTask task;
     ScrollView scrollView;
     LinearLayout ll;
     TextView chanel;
+    EditText msg;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,14 +33,25 @@ public class ChatActivity extends AppCompatActivity {
         scrollView = (ScrollView) findViewById(R.id.scrollv);
         chanel = (TextView) findViewById(R.id.chanel);
         ll = (LinearLayout) findViewById(R.id.messages);
+        msg = (EditText) findViewById(R.id.text_message);
+        SharedPreferences pref = getSharedPreferences("Settings", MODE_PRIVATE);
+        findViewById(R.id.send).setOnClickListener(this);
         if (savedInstanceState != null) {
-            task = (IRCClientTask) getLastNonConfigurationInstance();
+            task = (IRCClientTask) getLastCustomNonConfigurationInstance();
             if (task != null) {
+                Log.d("IRC Chat", "task restored");
                 task.changeActivity(this);
+            } else {
+                Log.d("IRC Chat", "New task from state");
+                chanel.setText(savedInstanceState.getString("Channel"));
+                task = new ChatActivity.IRCClientTask(this);
+                task.execute(savedInstanceState.getString("Server"), savedInstanceState.getString("Nick"),
+                        savedInstanceState.getString("Password"), savedInstanceState.getString("Channel"));
             }
 
         }
         if (task == null) {
+            Log.d("IRC Chat", "New task from intent");
             task = new ChatActivity.IRCClientTask(this);
             Bundle data = getIntent().getExtras();
             chanel.setText(data.getString("Channel"));
@@ -46,11 +60,29 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onClick(View v) {
+        task.onMessageSend(getIntent().getExtras().getString("Nick"),
+                msg.getText().toString(), getIntent().getExtras().getString("Channel"));
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Bundle data = getIntent().getExtras();
+        outState.putString("Server", data.getString("Server"));
+        outState.putString("Nick", data.getString("Nick"));
+        outState.putString("Password", data.getString("Password"));
+        outState.putString("Channel", data.getString("Channel"));
+
+    }
 
     private class IRCClientTask extends AsyncTask<String, String, Void> {
         private volatile ChatActivity activity;
         private Pattern message = Pattern.compile(":([\\w]+)![\\w@.]+ PRIVMSG (#?[\\w]+) :(.*)");
         private Socket socket;
+        private OutputStream out;
 
         public IRCClientTask(ChatActivity activity) {
             super();
@@ -66,7 +98,7 @@ public class ChatActivity extends AppCompatActivity {
                 socket = new Socket(InetAddress.getByName(sockaddr[0]), Integer.decode(sockaddr[1]));
 
                 InputStream in = socket.getInputStream();
-                OutputStream out = socket.getOutputStream();
+                out = socket.getOutputStream();
 
                 out.write(("PASS " + password + "\n").getBytes());
                 out.write(("NICK " + nick + "\n").getBytes());
@@ -124,12 +156,26 @@ public class ChatActivity extends AppCompatActivity {
             }
             activity.scrollView.fullScroll(View.FOCUS_DOWN);
         }
+
+        protected void onMessageSend(String nick, String message, String channel) {
+            try {
+                if (out != null) {
+                    Log.d("IRC", "sending: <" + nick + "> " + message);
+                    out.write(("PRIVMSG " + channel + " :" + message + "\n").getBytes());
+                    onProgressUpdate("<" + nick + "> " + message + "\n");
+                    msg.setText("");
+                }
+            } catch (IOException e) {
+                publishProgress(e.getMessage());
+            }
+        }
     }
 
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Log.d("IRC Chat", "On destroy");
         task.cancel(true);
     }
 

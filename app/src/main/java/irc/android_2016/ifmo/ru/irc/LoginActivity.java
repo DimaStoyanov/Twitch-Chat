@@ -20,8 +20,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         init();
         findViewById(R.id.connectButton).setOnClickListener(this);
         if (savedInstanceState != null) {
+            Log.d("IRC Login", "Read from saved state");
             readFromBundle(savedInstanceState);
         } else {
+            Log.d("IRC Login", "Read from cache");
             readFromCache();
         }
     }
@@ -41,7 +43,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     }
 
     private void readFromCache() {
-        SharedPreferences pref = getPreferences(MODE_PRIVATE);
+        SharedPreferences pref = getSharedPreferences("Settings", MODE_PRIVATE);
         server.setText(pref.getString("Server", ""));
         nick.setText(pref.getString("Nick", ""));
         password.setText(pref.getString("Password", ""));
@@ -64,6 +66,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
+        Log.d("IRC Login", "Save instance state");
         outState.putString("Server", server.getText().toString());
         outState.putString("Nick", nick.getText().toString());
         outState.putString("Password", password.getText().toString());
@@ -73,12 +76,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        SharedPreferences pref = getPreferences(MODE_PRIVATE);
+        SharedPreferences pref = getSharedPreferences("Settings", MODE_PRIVATE);
         SharedPreferences.Editor ed = pref.edit();
         ed.putString("Server", server.getText().toString());
         ed.putString("Nick", nick.getText().toString());
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
+        Log.d("IRC Login", "Save data to cache");
         ed.commit();
     }
 
