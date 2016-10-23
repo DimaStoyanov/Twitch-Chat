@@ -6,7 +6,10 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -24,6 +27,17 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         } else {
             readFromCache();
         }
+        /* Test */
+        Button test = new Button(this);
+        test.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(LoginActivity.this, TestActivity.class));
+            }
+        });
+        test.setText("TEST");
+        ((RelativeLayout) findViewById(R.id.connectButton).getParent()).addView(test);
+        /* Test */
     }
 
     private void init() {

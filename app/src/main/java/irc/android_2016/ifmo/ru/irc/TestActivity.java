@@ -1,30 +1,67 @@
 package irc.android_2016.ifmo.ru.irc;
 
+import android.content.ComponentName;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import irc.android_2016.ifmo.ru.irc.client.ClientService;
+import irc.android_2016.ifmo.ru.irc.client.ClientServiceCallback;
+import irc.android_2016.ifmo.ru.irc.client.ClientSettings;
+import irc.android_2016.ifmo.ru.irc.client.Message;
+
 import static android.view.View.GONE;
 
-public class TestActivity extends AppCompatActivity implements View.OnClickListener {
+public class TestActivity extends AppCompatActivity
+        implements View.OnClickListener, ClientServiceCallback {
 
     EditText server, nick, password, channel;
     TextView text;
     ScrollView scroll;
-    IRCClientTask task = null;
+    //IRCClientTask task = null;
+    volatile ClientService cs;
+
+    ServiceConnection sc = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            cs = ((ClientService.Binder) service).getService();
+            cs.changeActivity(TestActivity.this);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            cs.changeActivity(null);
+            cs = null;
+        }
+    };
+
+    @Override
+    public void onMessageReceived(final Message msg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                text.append("<" + msg.from + " at " + msg.to + "> " + msg.message + "\n");
+            }
+        });
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,10 +75,6 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
         scroll = (ScrollView) findViewById(R.id.scroll);
 
         if (savedInstanceState != null) {
-            task = (IRCClientTask) getLastCustomNonConfigurationInstance();
-            if (task != null) {
-                task.changeActivity(this);
-            }
             server.setText(savedInstanceState.getString("Server"));
             nick.setText(savedInstanceState.getString("Nick"));
             password.setText(savedInstanceState.getString("Password"));
@@ -77,7 +110,7 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean("isConnected", task != null);
+        outState.putBoolean("isConnected", sc != null);
         outState.putString("Server", server.getText().toString());
         outState.putString("Nick", nick.getText().toString());
         outState.putString("Password", password.getText().toString());
@@ -95,84 +128,28 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
+        unbindService(sc);
     }
 
     @Override
     public void onClick(View v) {
-        if (task == null) {
-            task = new IRCClientTask(this);
-            task.execute(server.getText().toString(), nick.getText().toString(),
-                    password.getText().toString(), channel.getText().toString());
-            disableEdits();
-        }
-    }
+        Matcher addrport = Pattern.compile("([\\w.]+):?(\\d+)?").matcher(server.getText().toString());
 
-    @Override
-    public Object onRetainCustomNonConfigurationInstance() {
-        return task;
-    }
+        try {
+            Intent intent = new Intent(this, ClientService.class);
+            if (addrport.find()) {
+                ClientSettings cs = new ClientSettings()
+                        .setAddress(addrport.group(1))
+                        .setPort(Integer.decode(addrport.group(2)))
+                        .setPassword(password.getText().toString())
+                        .addNicks(nick.getText().toString())
+                        .addChannels(channel.getText().toString().split(","));
+                intent.putExtra("ClientSettings", cs);
 
-    private class IRCClientTask extends AsyncTask<String, String, Void> {
-        private volatile TestActivity activity;
-        private Pattern message = Pattern.compile(":([\\w]+)![\\w@.]+ PRIVMSG (#?[\\w]+) :(.*)");
-
-        public IRCClientTask(TestActivity activity) {
-            super();
-            changeActivity(activity);
-        }
-
-        @Override
-        protected Void doInBackground(String... params) {
-            String server = params[0], nick = params[1], password = params[2], channel = params[3];
-            try {
-                String[] sockaddr = server.split(":");
-                Socket socket = new Socket(InetAddress.getByName(sockaddr[0]), Integer.decode(sockaddr[1]));
-
-                InputStream in = socket.getInputStream();
-                OutputStream out = socket.getOutputStream();
-
-                out.write(("PASS " + password + "\n").getBytes());
-                out.write(("NICK " + nick + "\n").getBytes());
-                out.write(("JOIN " + channel + "\n").getBytes());
-
-                final byte[] buf = new byte[8192];
-
-                while (socket.isConnected()) {
-                    if (in.available() > 0) {
-                        String str = new String(buf, 0, in.read(buf));
-                        Matcher matcher = message.matcher(str);
-                        if (matcher.find()) {
-                            String sender = matcher.group(1);
-                            String to = matcher.group(2);
-                            String msg = matcher.group(3);
-                            Log.w("chat", str);
-                            publishProgress("<" + sender + "> " + msg + "\n");
-                        } else {
-                            Log.w("kek", str);
-                            publishProgress(str);
-                        }
-                    } else {
-                        Thread.sleep(100);
-                    }
-                }
-
-                publishProgress("Disconnected");
-            } catch (Exception x) {
-                publishProgress(x.getMessage());
+                bindService(intent, sc, BIND_AUTO_CREATE);
             }
-            return null;
-        }
-
-        void changeActivity(TestActivity activity) {
-            this.activity = activity;
-        }
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-            for (String value : values) {
-                activity.text.append(value);
-            }
-            activity.scroll.fullScroll(View.FOCUS_DOWN);
+        } catch (UnknownHostException x) {
+            Toast.makeText(this, x.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 }

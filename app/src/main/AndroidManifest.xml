@@ -17,8 +17,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".TestActivity" />
+        <activity android:name=".TestActivity" android:theme="@style/Theme.AppCompat"/>
         <activity android:name=".ChatActivity" />
+
+        <service
+            android:name=".client.ClientService"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>
