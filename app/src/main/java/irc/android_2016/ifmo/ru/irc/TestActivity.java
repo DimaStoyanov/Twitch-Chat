@@ -35,7 +35,6 @@ public class TestActivity extends AppCompatActivity implements View.OnClickListe
         password = (EditText) findViewById(R.id.password);
         channel = (EditText) findViewById(R.id.channel);
         text = (TextView) findViewById(R.id.text);
-
         scroll = (ScrollView) findViewById(R.id.scroll);
 
         if (savedInstanceState != null) {

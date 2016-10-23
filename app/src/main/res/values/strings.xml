@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">IRC</string>
+    <string name="send">send</string>
+    <string name="server_address_port">Server address:port</string>
+    <string name="nick">Nick</string>
+    <string name="irc_client">IRC Client</string>
+    <string name="password">Password</string>
+    <string name="channel">#channel</string>
+    <string name="connect">Connect</string>
+    <string name="your_message">Your message</string>
 </resources>

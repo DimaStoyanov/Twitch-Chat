@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_login"
+    android:background="@drawable/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="irc.android_2016.ifmo.ru.irc.LoginActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/irc_client"
+        android:textSize="50sp"
+        android:layout_marginTop="100dp"
+        android:textStyle="bold"
+        android:textColor="@android:color/background_light"
+        android:gravity="center"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
+    <EditText
+        android:id="@+id/server"
+        android:layout_width="300dp"
+        android:textColor="@android:color/background_light"
+        android:layout_above="@+id/nick"
+        android:textColorHint="?attr/actionModeSplitBackground"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:hint="@string/server_address_port" />
+
+    <EditText
+        android:id="@+id/nick"
+        android:layout_above="@+id/password"
+        android:textColor="@android:color/background_light"
+        android:layout_centerHorizontal="true"
+        android:layout_width="300dp"
+        android:textColorHint="?attr/actionModeSplitBackground"
+        android:gravity="center"
+        android:layout_height="wrap_content"
+        android:hint="@string/nick" />
+
+    <EditText
+        android:id="@+id/password"
+        android:layout_width="300dp"
+        android:gravity="center"
+        android:layout_centerHorizontal="true"
+        android:textColor="@android:color/background_light"
+        android:layout_centerVertical="true"
+        android:textColorHint="?attr/actionModeSplitBackground"
+        android:layout_height="wrap_content"
+        android:hint="@string/password"
+        android:inputType="textPassword" />
+
+    <EditText
+        android:id="@+id/channel"
+        android:layout_below="@+id/password"
+        android:layout_centerHorizontal="true"
+        android:hint="@string/channel"
+        android:textColorHint="?attr/actionModeSplitBackground"
+        android:layout_width="300dp"
+        android:textColor="@android:color/background_light"
+        android:gravity="center"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/connectButton"
+        android:layout_below="@+id/channel"
+        android:layout_centerHorizontal="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/connect" />
+
+
+</RelativeLayout>
