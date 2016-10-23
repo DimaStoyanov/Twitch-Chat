@@ -9,6 +9,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -49,6 +50,7 @@ public class ChatActivity extends AppCompatActivity {
     private class IRCClientTask extends AsyncTask<String, String, Void> {
         private volatile ChatActivity activity;
         private Pattern message = Pattern.compile(":([\\w]+)![\\w@.]+ PRIVMSG (#?[\\w]+) :(.*)");
+        private Socket socket;
 
         public IRCClientTask(ChatActivity activity) {
             super();
@@ -61,7 +63,7 @@ public class ChatActivity extends AppCompatActivity {
             Log.d("IRC", "Server=" + server + " nick=" + nick + " password=" + password + " channel=" + channel);
             try {
                 String[] sockaddr = server.split(":");
-                Socket socket = new Socket(InetAddress.getByName(sockaddr[0]), Integer.decode(sockaddr[1]));
+                socket = new Socket(InetAddress.getByName(sockaddr[0]), Integer.decode(sockaddr[1]));
 
                 InputStream in = socket.getInputStream();
                 OutputStream out = socket.getOutputStream();
@@ -98,6 +100,17 @@ public class ChatActivity extends AppCompatActivity {
             return null;
         }
 
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+            try {
+                socket.close();
+            } catch (IOException x) {
+                Log.e("IRCTask.onCanceled", x.getMessage());
+            }
+            Log.i("IRCTask", "canceled");
+        }
+
         void changeActivity(ChatActivity activity) {
             this.activity = activity;
         }
@@ -113,6 +126,12 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        task.cancel(true);
+    }
 
     @Override
     public Object onRetainCustomNonConfigurationInstance() {
