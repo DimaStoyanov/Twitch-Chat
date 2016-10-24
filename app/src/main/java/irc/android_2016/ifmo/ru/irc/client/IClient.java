@@ -5,6 +5,8 @@ package irc.android_2016.ifmo.ru.irc.client;
  */
 
 public interface IClient {
+    boolean connect(ClientSettings clientSettings);
+    boolean isConnected();
     Exception getLastError();
     boolean attachActivity(ClientServiceCallback activity);
     boolean joinChannel(String channel);

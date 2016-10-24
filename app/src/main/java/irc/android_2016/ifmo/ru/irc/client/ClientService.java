@@ -13,25 +13,17 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ClientService extends Service {
-    private IBinder binder;
+    private ClientService.Binder binder = new ClientService.Binder();
     private Queue<Message> messages = new ConcurrentLinkedQueue<>();
-    private Executor executor = Executors.newCachedThreadPool();
+    Executor executor = Executors.newCachedThreadPool();
 
     public class Binder extends android.os.Binder {
         Client client;
-        ClientSettings clientSettings;
-
-        Binder(ClientSettings clientSettings) {
-            this.clientSettings = clientSettings;
-        }
 
         public Client getClient() {
-            return getClient(clientSettings);
-        }
-
-        public Client getClient(ClientSettings cs) {
-            client = new Client(cs, ClientService.this);
-            ClientService.this.executor.execute(client);
+            if (client == null) {
+                client = new Client(ClientService.this);
+            }
             return client;
         }
     }
@@ -55,13 +47,17 @@ public class ClientService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         Log.i("onBind", "onBind");
-        return new ClientService.Binder(
-                (ClientSettings) intent.getExtras().getSerializable("ClientSettings"));
+        return binder;
+    }
+
+    @Override
+    public void onRebind(Intent intent) {
+        Log.i("onRebind", "onRebind");
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
-        return super.onUnbind(intent);
+        return true;
     }
 
     @Override
@@ -72,7 +68,7 @@ public class ClientService extends Service {
     }
 
     /*private class Client implements Runnable {
-        volatile boolean isRunning = true;
+        volatile boolean isConnected = true;
 
         ClientSettings cs;
         Socket socket;
@@ -117,7 +113,7 @@ public class ClientService extends Service {
                     } else {
                         Thread.sleep(100);
                     }
-                    if (!isRunning) {
+                    if (!isConnected) {
                         Log.i("@client", "Quitting");
                         out.write("QUIT\n".getBytes());
                         callbackMessage(new Message("@client", "", "Disconnected"));

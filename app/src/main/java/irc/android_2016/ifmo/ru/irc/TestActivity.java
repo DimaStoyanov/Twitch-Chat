@@ -88,12 +88,9 @@ public class TestActivity extends AppCompatActivity
             password.setText(savedInstanceState.getString("Password"));
             channel.setText(savedInstanceState.getString("Channel"));
             text.setText(savedInstanceState.getString("Text"));
+            clientSettings = (ClientSettings) savedInstanceState.getSerializable("ClientSettings");
 
             if (savedInstanceState.getBoolean("isConnected")) {
-                clientSettings = (ClientSettings) savedInstanceState.getSerializable("ClientSettings");
-                Intent intent = new Intent(this, ClientService.class);
-                intent.putExtra("ClientSettings", clientSettings);
-                //bindService(intent, serviceConnection, BIND_AUTO_CREATE);
                 disableEdits();
             }
         } else {
@@ -116,6 +113,8 @@ public class TestActivity extends AppCompatActivity
                 }
             }
         });
+
+        bindService(new Intent(this, ClientService.class), serviceConnection, BIND_AUTO_CREATE);
     }
 
     private void load() {
@@ -149,9 +148,9 @@ public class TestActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        Log.i("TestActivity", "onBackPressed");
         if (client != null) {
             client.close();
-            unbindService(serviceConnection);
         }
     }
 
@@ -165,6 +164,7 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
+        unbindService(serviceConnection);
     }
 
     @Override
@@ -172,7 +172,6 @@ public class TestActivity extends AppCompatActivity
         Matcher addrport = Pattern.compile("([\\w.]+):?(\\d+)?").matcher(server.getText().toString());
 
         try {
-            Intent intent = new Intent(this, ClientService.class);
             if (addrport.find()) {
                 clientSettings = new ClientSettings()
                         .setAddress(addrport.group(1))
@@ -180,10 +179,12 @@ public class TestActivity extends AppCompatActivity
                         .setPassword(password.getText().toString())
                         .addNicks(nick.getText().toString())
                         .addChannels(channel.getText().toString().split(", "));
-                intent.putExtra("ClientSettings", clientSettings);
 
-                Log.i("onClick", "LUL");
-                bindService(intent, serviceConnection, BIND_AUTO_CREATE);
+                if (client.connect(clientSettings)) {
+                    Log.i("onClick", "LUL");
+                } else {
+                    Toast.makeText(this, "Can't connect to server", Toast.LENGTH_SHORT).show();
+                }
             }
         } catch (UnknownHostException x) {
             Toast.makeText(this, x.getMessage(), Toast.LENGTH_SHORT).show();

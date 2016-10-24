@@ -25,9 +25,15 @@ public class Client implements IClient, Runnable {
     private BufferedReader in;
     private PrintWriter out;
 
-    Client(ClientSettings clientSettings, ClientService clientService) {
-        this.clientSettings = clientSettings;
+    Client(ClientService clientService) {
         this.clientService = clientService;
+    }
+
+    @Override
+    public boolean connect(ClientSettings clientSettings) {
+        this.clientSettings = clientSettings;
+        clientService.executor.execute(this);
+        return true;
     }
 
     @Override
@@ -109,6 +115,7 @@ public class Client implements IClient, Runnable {
             out = null;
             isRunning = false;
         }
+        Log.i("Client.run()", "closed");
     }
 
     private void parse(String s) {
@@ -144,5 +151,10 @@ public class Client implements IClient, Runnable {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public boolean isConnected() {
+        return isRunning;
     }
 }
