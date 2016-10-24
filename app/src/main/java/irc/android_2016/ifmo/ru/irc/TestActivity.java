@@ -7,14 +7,12 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.text.InputType;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,6 +55,12 @@ public class TestActivity extends AppCompatActivity
             @Override
             public void run() {
                 text.append("<" + msg.from + " to " + msg.to + "> " + msg.message + "\n");
+                scroll.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        scroll.fullScroll(ScrollView.FOCUS_DOWN);
+                    }
+                });
             }
         });
     }
@@ -91,6 +95,21 @@ public class TestActivity extends AppCompatActivity
         }
 
         findViewById(R.id.connectButton).setOnClickListener(this);
+        findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (clientService != null) {
+                    if (!clientService.sendMessage(new Message(
+                            nick.getText().toString(),
+                            channel.getText().toString(),
+                            ((EditText) findViewById(R.id.typeMessage)).getText().toString()))) {
+                        Toast.makeText(TestActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(TestActivity.this, "Connect first!", Toast.LENGTH_SHORT).show();
+                }
+            }
+        });
     }
 
     private void load() {
@@ -132,6 +151,7 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
         if (clientService != null) {
+            clientService.disconnect();
             unbindService(serviceConnection);
         }
     }

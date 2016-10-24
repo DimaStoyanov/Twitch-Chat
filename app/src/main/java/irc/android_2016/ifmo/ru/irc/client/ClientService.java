@@ -24,6 +24,7 @@ public class ClientService extends Service {
     private Queue<Message> messages = new ConcurrentLinkedQueue<>();
     private Executor executor = Executors.newCachedThreadPool();
     private ClientServiceCallback activity;
+    private Client client = null;
 
     public class Binder extends android.os.Binder {
         public ClientService getService() {
@@ -49,8 +50,8 @@ public class ClientService extends Service {
     }
 
     public void start(ClientSettings cs) {
-        settings = cs;
-        executor.execute(new Client(cs));
+        client = new Client(settings = cs);
+        executor.execute(client);
     }
 
     @Override
@@ -67,12 +68,36 @@ public class ClientService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (client != null) {
+            client.isRunning = false;
+        }
         Toast.makeText(this, "ClientService.onDestroy()", Toast.LENGTH_SHORT).show();
         stopForeground(true);
     }
 
+    public boolean sendMessage(Message msg) {
+        if (client != null && client.isRunning) {
+            try {
+                String message = "PRIVMSG " + msg.to + " :" + msg.message + "\n";
+                Log.i("sendMessage", message);
+                client.out.write(message.getBytes());
+
+                return true;
+            } catch (IOException e) {
+                return false;
+            }
+        }
+        return false;
+    }
+
     public void changeActivity(ClientServiceCallback ac) {
         activity = ac;
+    }
+
+    public void disconnect() {
+        if (client != null && client.isRunning) {
+            client.isRunning = false;
+        }
     }
 
     private boolean callbackMessage(Message msg) {
@@ -84,6 +109,8 @@ public class ClientService extends Service {
     }
 
     private class Client implements Runnable {
+        volatile boolean isRunning = true;
+
         ClientSettings cs;
         Socket socket;
         InputStream in;
@@ -127,10 +154,17 @@ public class ClientService extends Service {
                     } else {
                         Thread.sleep(100);
                     }
+                    if (!isRunning) {
+                        Log.i("@client", "Quitting");
+                        out.write("QUIT\n".getBytes());
+                        callbackMessage(new Message("@client", "", "Disconnected"));
+                        break;
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
+                client = null;
                 try {
                     socket.close();
                 } catch (IOException e) {
