@@ -7,28 +7,32 @@ import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ClientService extends Service {
-    private IBinder binder = new ClientService.Binder();
-    private ClientSettings settings;
+    private IBinder binder;
     private Queue<Message> messages = new ConcurrentLinkedQueue<>();
     private Executor executor = Executors.newCachedThreadPool();
-    private ClientServiceCallback activity;
-    private Client client = null;
 
     public class Binder extends android.os.Binder {
-        public ClientService getService() {
-            return ClientService.this;
+        Client client;
+        ClientSettings clientSettings;
+
+        Binder(ClientSettings clientSettings) {
+            this.clientSettings = clientSettings;
+        }
+
+        public Client getClient() {
+            return getClient(clientSettings);
+        }
+
+        public Client getClient(ClientSettings cs) {
+            client = new Client(cs, ClientService.this);
+            ClientService.this.executor.execute(client);
+            return client;
         }
     }
 
@@ -45,19 +49,14 @@ public class ClientService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        //start(settings = (ClientSettings) intent.getExtras().getSerializable("ClientSettings"));
         return super.onStartCommand(intent, flags, startId);
-    }
-
-    public void start(ClientSettings cs) {
-        client = new Client(settings = cs);
-        executor.execute(client);
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        start((ClientSettings) intent.getExtras().getSerializable("ClientSettings"));
-        return binder;
+        Log.i("onBind", "onBind");
+        return new ClientService.Binder(
+                (ClientSettings) intent.getExtras().getSerializable("ClientSettings"));
     }
 
     @Override
@@ -68,47 +67,11 @@ public class ClientService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (client != null) {
-            client.isRunning = false;
-        }
         Toast.makeText(this, "ClientService.onDestroy()", Toast.LENGTH_SHORT).show();
         stopForeground(true);
     }
 
-    public boolean sendMessage(Message msg) {
-        if (client != null && client.isRunning) {
-            try {
-                String message = "PRIVMSG " + msg.to + " :" + msg.message + "\n";
-                Log.i("sendMessage", message);
-                client.out.write(message.getBytes());
-
-                return true;
-            } catch (IOException e) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    public void changeActivity(ClientServiceCallback ac) {
-        activity = ac;
-    }
-
-    public void disconnect() {
-        if (client != null && client.isRunning) {
-            client.isRunning = false;
-        }
-    }
-
-    private boolean callbackMessage(Message msg) {
-        if (activity != null) {
-            activity.onMessageReceived(msg);
-            return true;
-        }
-        return false;
-    }
-
-    private class Client implements Runnable {
+    /*private class Client implements Runnable {
         volatile boolean isRunning = true;
 
         ClientSettings cs;
@@ -116,7 +79,7 @@ public class ClientService extends Service {
         InputStream in;
         OutputStream out;
 
-        public Client(ClientSettings cs) {
+        Client(ClientSettings cs) {
             this.cs = cs;
         }
 
@@ -172,5 +135,5 @@ public class ClientService extends Service {
                 }
             }
         }
-    }
+    }*/
 }

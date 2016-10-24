@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -17,6 +18,7 @@ import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import irc.android_2016.ifmo.ru.irc.client.Client;
 import irc.android_2016.ifmo.ru.irc.client.ClientService;
 import irc.android_2016.ifmo.ru.irc.client.ClientServiceCallback;
 import irc.android_2016.ifmo.ru.irc.client.ClientSettings;
@@ -31,21 +33,25 @@ public class TestActivity extends AppCompatActivity
     TextView text;
     ScrollView scroll;
 
+    ClientService.Binder binder = null;
     ClientSettings clientSettings;
-    volatile ClientService clientService;
+    Client client;
 
     ServiceConnection serviceConnection = new ServiceConnection() {
-
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            clientService = ((ClientService.Binder) service).getService();
-            clientService.changeActivity(TestActivity.this);
+            binder = (ClientService.Binder) service;
+            Log.i("onServiceConnected", name.toString());
+            ClientService.Binder binder = (ClientService.Binder) service;
+            client = binder.getClient();
+            client.attachActivity(TestActivity.this);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            clientService.changeActivity(null);
-            clientService = null;
+            client.attachActivity(null);
+            client = null;
+            binder = null;
         }
     };
 
@@ -54,7 +60,7 @@ public class TestActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                text.append("<" + msg.from + " to " + msg.to + "> " + msg.message + "\n");
+                text.append("<" + msg.from + " to " + msg.to + "> " + msg.text + "\n");
                 scroll.post(new Runnable() {
                     @Override
                     public void run() {
@@ -87,7 +93,7 @@ public class TestActivity extends AppCompatActivity
                 clientSettings = (ClientSettings) savedInstanceState.getSerializable("ClientSettings");
                 Intent intent = new Intent(this, ClientService.class);
                 intent.putExtra("ClientSettings", clientSettings);
-                bindService(intent, serviceConnection, BIND_AUTO_CREATE);
+                //bindService(intent, serviceConnection, BIND_AUTO_CREATE);
                 disableEdits();
             }
         } else {
@@ -98,8 +104,8 @@ public class TestActivity extends AppCompatActivity
         findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (clientService != null) {
-                    if (!clientService.sendMessage(new Message(
+                if (client != null) {
+                    if (!client.sendMessage(new Message(
                             nick.getText().toString(),
                             channel.getText().toString(),
                             ((EditText) findViewById(R.id.typeMessage)).getText().toString()))) {
@@ -131,13 +137,22 @@ public class TestActivity extends AppCompatActivity
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean("isConnected", clientService != null);
+        outState.putBoolean("isConnected", client != null);
         outState.putString("Server", server.getText().toString());
         outState.putString("Nick", nick.getText().toString());
         outState.putString("Password", password.getText().toString());
         outState.putString("Channel", channel.getText().toString());
         outState.putString("Text", text.getText().toString());
         outState.putSerializable("ClientSettings", clientSettings);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        if (client != null) {
+            client.close();
+            unbindService(serviceConnection);
+        }
     }
 
     @Override
@@ -150,10 +165,6 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
-        if (clientService != null) {
-            clientService.disconnect();
-            unbindService(serviceConnection);
-        }
     }
 
     @Override
@@ -168,9 +179,10 @@ public class TestActivity extends AppCompatActivity
                         .setPort(Integer.decode(addrport.group(2)))
                         .setPassword(password.getText().toString())
                         .addNicks(nick.getText().toString())
-                        .addChannels(channel.getText().toString().split(","));
+                        .addChannels(channel.getText().toString().split(", "));
                 intent.putExtra("ClientSettings", clientSettings);
 
+                Log.i("onClick", "LUL");
                 bindService(intent, serviceConnection, BIND_AUTO_CREATE);
             }
         } catch (UnknownHostException x) {

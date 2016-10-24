@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public class Message {
     public static Pattern pattern = Pattern.compile(":([\\w]+)!?[\\w@.]+ [\\w]+ (#?[\\w]+) :(.*)");
-    public String from, to, message;
+    public String from, to, text;
     public Date date;
 
     public Message(String string) {
@@ -18,13 +18,13 @@ public class Message {
         if (matcher.find()) {
             from = matcher.group(1);
             to = matcher.group(2);
-            message = matcher.group(3);
+            text = matcher.group(3);
         }
     }
 
-    public Message(String from, String to, String message) {
+    public Message(String from, String to, String text) {
         this.from = from;
         this.to = to;
-        this.message = message;
+        this.text = text;
     }
 }
