@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  */
 
 public class Message {
-    public static Pattern pattern = Pattern.compile(":([\\w]+)![\\w@.]+ PRIVMSG (#?[\\w]+) :(.*)");
+    public static Pattern pattern = Pattern.compile(":([\\w]+)!?[\\w@.]+ [\\w]+ (#?[\\w]+) :(.*)");
     public String from, to, message;
     public Date date;
 

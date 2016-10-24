@@ -40,6 +40,7 @@ public class TestActivity extends AppCompatActivity
     volatile ClientService cs;
 
     ServiceConnection sc = new ServiceConnection() {
+
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             cs = ((ClientService.Binder) service).getService();
@@ -58,7 +59,7 @@ public class TestActivity extends AppCompatActivity
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                text.append("<" + msg.from + " at " + msg.to + "> " + msg.message + "\n");
+                text.append("<" + msg.from + " to " + msg.to + "> " + msg.message + "\n");
             }
         });
     }
@@ -128,7 +129,9 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
-        unbindService(sc);
+        if (cs != null) {
+            unbindService(sc);
+        }
     }
 
     @Override

@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import irc.android_2016.ifmo.ru.irc.TestActivity;
@@ -102,8 +103,6 @@ public class ClientService extends Service {
         @Override
         public void run() {
             try {
-                Log.i("client", "starting");
-
                 socket = new Socket(cs.address, cs.port);
                 in = socket.getInputStream();
                 out = socket.getOutputStream();
@@ -122,11 +121,13 @@ public class ClientService extends Service {
                     if (in.available() > 0) {
                         String s = new String(buffer, 0, in.read(buffer));
                         Log.i("chat", s);
-                        if (Message.pattern.matcher(s).find()) {
-                            callbackMessage(new Message(s));
+                        Matcher m = Message.pattern.matcher(s);
+                        while (m.find()) {
+                            callbackMessage(new Message(m.group()));
                         }
                         if (Pattern.compile("PING :(.*)").matcher(s).find()) {
-                            out.write("PONG".getBytes());
+                            Log.i("client", "pong");
+                            out.write("PONG :\n".getBytes());
                         }
                     } else {
                         Thread.sleep(100);
