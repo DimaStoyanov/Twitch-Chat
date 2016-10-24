@@ -1,7 +1,6 @@
 package irc.android_2016.ifmo.ru.irc;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -16,15 +15,13 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        Log.d("IRC", "on create");
         init();
         findViewById(R.id.connectButton).setOnClickListener(this);
+        // TODO Планирую добавить диалговое окно вначале, которое предлагает заполнить текстовые поля по шаблону
+        // TODO (уже имеющемуся), или создать новый шаблон, или забить на шаблоны и просто ввести логин
         if (savedInstanceState != null) {
             Log.d("IRC Login", "Read from saved state");
             readFromBundle(savedInstanceState);
-        } else {
-            Log.d("IRC Login", "Read from cache");
-            readFromCache();
         }
     }
 
@@ -42,13 +39,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         channel.setText(bundle.getString("Channel"));
     }
 
-    private void readFromCache() {
-        SharedPreferences pref = getSharedPreferences("Settings", MODE_PRIVATE);
-        server.setText(pref.getString("Server", ""));
-        nick.setText(pref.getString("Nick", ""));
-        password.setText(pref.getString("Password", ""));
-        channel.setText(pref.getString("Channel", ""));
-    }
 
 
     @Override
@@ -58,6 +48,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         intent.putExtra("Nick", nick.getText().toString());
         intent.putExtra("Password", password.getText().toString());
         intent.putExtra("Channel", channel.getText().toString());
+        intent.putExtra("Saved", false);
         startActivity(intent);
 
     }
@@ -73,17 +64,5 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         outState.putString("Channel", channel.getText().toString());
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        SharedPreferences pref = getSharedPreferences("Settings", MODE_PRIVATE);
-        SharedPreferences.Editor ed = pref.edit();
-        ed.putString("Server", server.getText().toString());
-        ed.putString("Nick", nick.getText().toString());
-        ed.putString("Password", password.getText().toString());
-        ed.putString("Channel", channel.getText().toString());
-        Log.d("IRC Login", "Save data to cache");
-        ed.commit();
-    }
 
 }

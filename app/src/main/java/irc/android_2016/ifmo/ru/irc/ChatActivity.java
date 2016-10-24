@@ -19,12 +19,16 @@ import java.net.Socket;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import irc.android_2016.ifmo.ru.irc.model.LoginData;
+import irc.android_2016.ifmo.ru.irc.utils.FileUtils;
+
 public class ChatActivity extends AppCompatActivity implements View.OnClickListener {
     IRCClientTask task;
     ScrollView scrollView;
     LinearLayout ll;
     TextView chanel;
     EditText msg;
+    boolean saved;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,6 +58,8 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             Log.d("IRC Chat", "New task from intent");
             task = new ChatActivity.IRCClientTask(this);
             Bundle data = getIntent().getExtras();
+            saved = data.getBoolean("Saved");
+            System.out.println("Saved= " + saved);
             chanel.setText(data.getString("Channel"));
             task.execute(data.getString("Server"), data.getString("Nick"),
                     data.getString("Password"), data.getString("Channel"));
@@ -106,6 +112,22 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 
                 final byte[] buf = new byte[8192];
 
+                // Если мы еще не сохраняли этот канал, нужно записать данные в файл
+                if (!saved && socket.isConnected()) {
+                    Log.d("IRC Chat", "Save data to cache");
+                    SharedPreferences pref = getSharedPreferences("Login_data", MODE_PRIVATE);
+                    String file_path = pref.getString("file_path", "");
+//                    file_path = "";
+                    if ("".equals(file_path)) {
+                        Log.d("IRC Chat", "Save path to file");
+                        file_path = FileUtils.getPathOfExternalFile(ChatActivity.this);
+                        SharedPreferences.Editor editor = pref.edit();
+                        editor.putString("file_path", file_path);
+                        editor.commit();
+                    }
+                    FileUtils.addData(file_path, new LoginData(server, nick, password, channel));
+                }
+
                 while (socket.isConnected()) {
                     if (in.available() > 0) {
                         String str = new String(buf, 0, in.read(buf));
@@ -157,7 +179,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             activity.scrollView.fullScroll(View.FOCUS_DOWN);
         }
 
-        protected void onMessageSend(String nick, String message, String channel) {
+        void onMessageSend(String nick, String message, String channel) {
             try {
                 if (out != null) {
                     Log.d("IRC", "sending: <" + nick + "> " + message);

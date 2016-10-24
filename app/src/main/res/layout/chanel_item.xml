@@ -6,15 +6,16 @@
     android:layout_height="wrap_content">
 
     <Button
+        android:id="@+id/selected_channel"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="3"
-        android:text="Forsenlol" />
+        android:layout_weight="3" />
 
     <ImageButton
+        android:id="@+id/delete_channel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:src="@drawable/trash_icon3"
+        android:src="@drawable/trash_icon"
         android:layout_weight="1"
-        android:text="Delete" />
+        android:contentDescription="@string/delete" />
 </LinearLayout>

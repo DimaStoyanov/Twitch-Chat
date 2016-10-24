@@ -18,7 +18,7 @@
         android:gravity="center"
         android:textStyle="bold|normal"
         android:textSize="30sp"
-        android:text="IRC Client"
+        android:text="@string/irc_client"
         android:textAllCaps="true" />
 
     <LinearLayout
@@ -55,7 +55,6 @@
         android:layout_below="@id/ll"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-
         <LinearLayout
             android:id="@+id/channels_ll"
             android:orientation="vertical"

@@ -9,4 +9,5 @@
     <string name="connect">Connect</string>
     <string name="your_message">Your message</string>
     <string name="add_channel">Add Channel</string>
+    <string name="delete">Delete</string>
 </resources>
