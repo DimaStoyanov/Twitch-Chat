@@ -8,7 +8,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -30,6 +29,7 @@ public class FileUtils {
 
     // Символ который никогда не встречается в запросах
     private final static String DELIM = "↨";
+
 
     /**
      * Создает временный пустой файл в папке приложения в External Storage
@@ -55,6 +55,7 @@ public class FileUtils {
         return File.createTempFile("login_data", extension, dir);
     }
 
+
     /**
      * @param context Контекст
      * @return Возвращает путь созданного файла
@@ -63,6 +64,7 @@ public class FileUtils {
     public static String getPathOfExternalFile(Context context) throws IOException {
         return createExternalFile(context, "txt").getPath();
     }
+
 
     /**
      * Добавляет в конец файла данные о логине. Разделяет данные с помощью DELIM.
@@ -101,29 +103,12 @@ public class FileUtils {
 
 
     /**
-     * Функция, которая считывает последнюю строку файла, и вычисляет последний записанный id.
-     * Реализована на основе RandomAccessReader.
-     * Пытается считать 2 строки с конца, иначе уменьшает индекс.
+     * Функция, которая считывает весь файл, и вычисляет последний записанный id.
      *
-     * @param f Файл, в котором ищется
+     * @param path Путь файла, в котором ищется
      * @return id строки данных в файле.
      * @throws IOException
      */
-    private static String getLastId(File f) throws IOException {
-        RandomAccessFile reader = new RandomAccessFile(f, "r");
-        String result = null;
-        long startIndex = f.length();
-        while (startIndex >= 0 && (result == null || result.length() == 0)) {
-            reader.seek(startIndex);
-            if (startIndex > 0)
-                reader.readLine();
-            result = reader.readLine();
-            startIndex--;
-        }
-        reader.close();
-        return result == null ? "0" : result.substring(0, result.indexOf(DELIM));
-    }
-
     private static String getLastId(String path) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(path));
         String temp, result = null;

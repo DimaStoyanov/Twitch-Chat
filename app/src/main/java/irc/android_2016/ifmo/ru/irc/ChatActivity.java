@@ -1,11 +1,15 @@
 package irc.android_2016.ifmo.ru.irc;
 
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.style.StyleSpan;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -18,6 +22,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,12 +31,14 @@ import irc.android_2016.ifmo.ru.irc.model.LoginData;
 import irc.android_2016.ifmo.ru.irc.utils.FileUtils;
 
 public class ChatActivity extends AppCompatActivity implements View.OnClickListener {
-    IRCClientTask task;
+    IRCClientTask task = null;
     ScrollView scrollView;
     LinearLayout ll;
     TextView chanel;
     EditText msg;
     boolean saved;
+    ArrayList<String> messages;
+    boolean cancelTask = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,11 +48,28 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         chanel = (TextView) findViewById(R.id.chanel);
         ll = (LinearLayout) findViewById(R.id.messages);
         msg = (EditText) findViewById(R.id.text_message);
+//        msg.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+//            @Override
+//            public void onFocusChange(View view, boolean hasFocus) {
+//                if (hasFocus) {
+//                    scrollView.postDelayed(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            scrollView.fullScroll(ScrollView.FOCUS_DOWN);
+//                        }
+//                    }, 12200);
+//                } else {
+//                }
+//            }
+//        });
+
         findViewById(R.id.send).setOnClickListener(this);
+        messages = new ArrayList<>();
         if (savedInstanceState != null) {
             task = (IRCClientTask) getLastCustomNonConfigurationInstance();
             if (task != null) {
                 Log.d("IRC Chat", "task restored");
+                restoreFromBundle(savedInstanceState);
                 task.changeActivity(this);
             } else {
                 Log.d("IRC Chat", "New task from state");
@@ -67,23 +92,23 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+
+    private void restoreFromBundle(Bundle savedInstanceState) {
+        if (savedInstanceState.containsKey("cancelTask") && !savedInstanceState.getBoolean("cancelTask")
+                && savedInstanceState.getStringArrayList("messages") != null) {
+            messages = savedInstanceState.getStringArrayList("messages");
+            task.initChatMessages(messages);
+
+        }
+    }
+
+
     @Override
     public void onClick(View v) {
         task.onMessageSend(getIntent().getExtras().getString("Nick"),
                 msg.getText().toString(), getIntent().getExtras().getString("Channel"));
     }
 
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        super.onSaveInstanceState(outState);
-        Bundle data = getIntent().getExtras();
-        outState.putString("Server", data.getString("Server"));
-        outState.putString("Nick", data.getString("Nick"));
-        outState.putString("Password", data.getString("Password"));
-        outState.putString("Channel", data.getString("Channel"));
-
-    }
 
     private class IRCClientTask extends AsyncTask<String, String, Void> {
         private volatile ChatActivity activity;
@@ -171,25 +196,43 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         protected void onProgressUpdate(String... values) {
-            LayoutInflater inflater = LayoutInflater.from(ChatActivity.this);
-            View message;
-            for (String value : values) {
-                if (value.contains("PRIVMSG ")) {
-                    value = value.substring(value.indexOf("PRIVMSG ") + 8);
-
-                    message = inflater.inflate(R.layout.chat_message, null);
-                    ((TextView) message.findViewById(R.id.author)).setText(value.substring(1, value.indexOf(">:")) + ":");
-                    ((TextView) message.findViewById(R.id.content)).setText(value.substring(value.indexOf(">:") + 3, value.indexOf("\n")));
-                    activity.ll.addView(message);
-                } else {
-                    // можно парсить как служебные сообщения в будущем
-                    TextView tv = new TextView(ChatActivity.this);
-                    tv.setText(value);
-                    activity.ll.addView(tv);
-                }
+            for (String s : values) {
+                messages.add(s);
+                publishMessage(s);
             }
-            activity.scrollView.fullScroll(View.FOCUS_DOWN);
+
         }
+
+        private void initChatMessages(List<String> messages) {
+            for (String s : messages) {
+                publishProgress(s);
+            }
+        }
+
+        private void publishMessage(String messageStr) {
+            TextView textView = new TextView(activity);
+            if (messageStr.contains("PRIVMSG ")) {
+                messageStr = messageStr.substring(messageStr.indexOf("PRIVMSG ") + 8);
+                String author = messageStr.substring(1, messageStr.indexOf(">:")) + ":";
+                String content = messageStr.substring(messageStr.indexOf(">:") + 3, messageStr.indexOf("\n"));
+                Spannable text = new SpannableString(author + " " + content);
+                text.setSpan(new StyleSpan(Typeface.BOLD), 0, author.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                textView.setText(text);
+            } else {
+                // можно парсить как служебные сообщения в будущем
+                textView.setText(messageStr);
+            }
+            textView.setLinksClickable(true);
+            textView.setTextIsSelectable(true);
+            activity.ll.addView(textView);
+            activity.scrollView.post(new Runnable() {
+                @Override
+                public void run() {
+                    activity.scrollView.fullScroll(ScrollView.FOCUS_DOWN);
+                }
+            });
+        }
+
 
         void onMessageSend(String nick, String message, String channel) {
             try {
@@ -203,19 +246,35 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
                 publishProgress(e.getMessage());
             }
         }
-    }
 
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        Log.d("IRC Chat", "On destroy");
-        task.cancel(true);
     }
 
     @Override
     public Object onRetainCustomNonConfigurationInstance() {
         return task;
     }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.d("IRC chat", "on back pressed");
+        task.cancel(true);
+        cancelTask = true;
+    }
+
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Bundle data = getIntent().getExtras();
+        outState.putString("Server", data.getString("Server"));
+        outState.putString("Nick", data.getString("Nick"));
+        outState.putString("Password", data.getString("Password"));
+        outState.putString("Channel", data.getString("Channel"));
+        outState.putStringArrayList("messages", messages);
+        outState.putBoolean("cancelTask", cancelTask);
+    }
+
 
 }

@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.util.concurrent.ExecutionException;
 
 import irc.android_2016.ifmo.ru.irc.model.LoginData;
 import irc.android_2016.ifmo.ru.irc.utils.FileUtils;
@@ -31,6 +32,7 @@ public class ChannelsListActivity extends AppCompatActivity {
     private LinearLayout ll;
     private List<LoginData> data;
     private boolean updateDataFromCache = false;
+    private AsyncTask<Void, Void, String> loader = new FiePathLoader();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,11 +71,30 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     }
 
+    public class FiePathLoader extends AsyncTask<Void, Void, String> {
+
+        @Override
+        protected String doInBackground(Void... voids) {
+            return getSharedPreferences("Logind_data", MODE_PRIVATE).getString("file path", "");
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+        }
+    }
+
 
     private void readFromCache() {
         Log.d("IRC Chanel list", "Read from cache");
-        SharedPreferences pref = getSharedPreferences("Login_data", MODE_PRIVATE);
-        final String path = pref.getString("file_path", "");
+        loader.execute();
+        String path = "";
+        try {
+            path = loader.get();
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
+
         // Если файла нет или нет доступа к нему, ничего не делаем
         if (!(new File(path)).exists()) return;
         AsyncTask<String, Void, List<LoginData>> asyncTask = new AsyncTask<String, Void, List<LoginData>>() {
@@ -200,11 +221,12 @@ public class ChannelsListActivity extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 Log.d("IRC Channel list", "Clear cache");
-                SharedPreferences preferences = getSharedPreferences("Login_data", MODE_PRIVATE);
+                loader.execute();
+                String path = "";
                 try {
                     ll.removeAllViews();
-                    return new File(preferences.getString("file_path", "")).delete();
-                } catch (RuntimeException e) {
+                    return new File(loader.get()).delete();
+                } catch (RuntimeException | ExecutionException | InterruptedException e) {
                     e.printStackTrace();
                 }
                 return false;

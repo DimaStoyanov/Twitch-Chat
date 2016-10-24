@@ -8,6 +8,7 @@
         android:id="@+id/author"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
+        android:textIsSelectable="true"
         android:text="NIGHTBOT:"
         android:textStyle="bold" />
 
@@ -15,6 +16,7 @@
         android:id="@+id/content"
         android:layout_width="0dp"
         android:layout_marginLeft="5dp"
+        android:textIsSelectable="true"
         android:layout_height="wrap_content"
         android:layout_weight="3.81"
         android:text="DansGame Kappa GasgiGasm FeelsBadMan" />
