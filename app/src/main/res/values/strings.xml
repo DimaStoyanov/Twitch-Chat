@@ -10,4 +10,7 @@
     <string name="your_message">Your message</string>
     <string name="add_channel">Add Channel</string>
     <string name="delete">Delete</string>
+    <string name="forsenlol">#Forsenlol</string>
+    <string name="test">TEST</string>
+    <string name="settings">settings</string>
 </resources>

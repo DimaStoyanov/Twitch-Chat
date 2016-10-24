@@ -9,6 +9,7 @@
         android:id="@+id/selected_channel"
         android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:text="@string/forsenlol"
         android:layout_weight="3" />
 
     <ImageButton

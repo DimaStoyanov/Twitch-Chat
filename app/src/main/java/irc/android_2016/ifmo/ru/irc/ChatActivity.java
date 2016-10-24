@@ -5,12 +5,14 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -38,7 +40,6 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         chanel = (TextView) findViewById(R.id.chanel);
         ll = (LinearLayout) findViewById(R.id.messages);
         msg = (EditText) findViewById(R.id.text_message);
-        SharedPreferences pref = getSharedPreferences("Settings", MODE_PRIVATE);
         findViewById(R.id.send).setOnClickListener(this);
         if (savedInstanceState != null) {
             task = (IRCClientTask) getLastCustomNonConfigurationInstance();
@@ -117,13 +118,12 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
                     Log.d("IRC Chat", "Save data to cache");
                     SharedPreferences pref = getSharedPreferences("Login_data", MODE_PRIVATE);
                     String file_path = pref.getString("file_path", "");
-//                    file_path = "";
-                    if ("".equals(file_path)) {
-                        Log.d("IRC Chat", "Save path to file");
+                    if (!(new File(file_path)).exists()) {
+                        Log.d("IRC Chat", "Created new temp file");
                         file_path = FileUtils.getPathOfExternalFile(ChatActivity.this);
                         SharedPreferences.Editor editor = pref.edit();
                         editor.putString("file_path", file_path);
-                        editor.commit();
+                        editor.apply();
                     }
                     FileUtils.addData(file_path, new LoginData(server, nick, password, channel));
                 }
@@ -137,7 +137,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
                             String to = matcher.group(2);
                             String msg = matcher.group(3);
                             Log.w("chat", str);
-                            publishProgress("<" + sender + "> " + msg + "\n");
+                            publishProgress("PRIVMSG <" + sender + ">: " + msg + "\n");
                         } else {
                             Log.w("kek", str);
                             publishProgress(str);
@@ -171,10 +171,22 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 
         @Override
         protected void onProgressUpdate(String... values) {
+            LayoutInflater inflater = LayoutInflater.from(ChatActivity.this);
+            View message;
             for (String value : values) {
-                TextView textView = new TextView(ChatActivity.this);
-                textView.setText(value);
-                activity.ll.addView(textView);
+                if (value.contains("PRIVMSG ")) {
+                    value = value.substring(value.indexOf("PRIVMSG ") + 8);
+
+                    message = inflater.inflate(R.layout.chat_message, null);
+                    ((TextView) message.findViewById(R.id.author)).setText(value.substring(1, value.indexOf(">")));
+                    ((TextView) message.findViewById(R.id.content)).setText(value.substring(value.indexOf(">") + 1, value.indexOf("\n")));
+                    activity.ll.addView(message);
+                } else {
+                    // можно парсить как служебные сообщения в будущем
+                    TextView tv = new TextView(ChatActivity.this);
+                    tv.setText(value);
+                    activity.ll.addView(tv);
+                }
             }
             activity.scrollView.fullScroll(View.FOCUS_DOWN);
         }
@@ -184,7 +196,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
                 if (out != null) {
                     Log.d("IRC", "sending: <" + nick + "> " + message);
                     out.write(("PRIVMSG " + channel + " :" + message + "\n").getBytes());
-                    onProgressUpdate("<" + nick + "> " + message + "\n");
+                    onProgressUpdate("PRIVMSG <" + nick + ">: " + message + "\n");
                     msg.setText("");
                 }
             } catch (IOException e) {

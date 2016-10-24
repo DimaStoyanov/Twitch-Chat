@@ -33,6 +33,9 @@ public class LoginData {
     String channel;
 
     public LoginData(String... data) {
+//        if(data.length != 4){
+//            throw new RuntimeException("Invalid args");
+//        }
         server = data[0];
         nick = data[1];
         password = data[2];
@@ -40,11 +43,16 @@ public class LoginData {
     }
 
     public LoginData(StringTokenizer tokens) {
-        id = Integer.parseInt(tokens.nextToken());
-        server = tokens.nextToken();
-        nick = tokens.nextToken();
-        password = tokens.nextToken();
-        channel = tokens.nextToken();
+        try {
+            id = tokens.hasMoreTokens() ? Integer.parseInt(tokens.nextToken()) : 0;
+        } catch (NumberFormatException e) {
+            id = 0;
+        }
+        server = tokens.hasMoreTokens() ? tokens.nextToken() : "";
+        nick = tokens.hasMoreTokens() ? tokens.nextToken() : "";
+        password = tokens.hasMoreTokens() ? tokens.nextToken() : "";
+        channel = tokens.hasMoreTokens() ? tokens.nextToken() : "";
+
     }
 
     @Override

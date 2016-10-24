@@ -1,13 +1,13 @@
 package irc.android_2016.ifmo.ru.irc;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
@@ -25,6 +25,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         if (savedInstanceState != null) {
             Log.d("IRC Login", "Read from saved state");
             readFromBundle(savedInstanceState);
+        } else {
+            Log.d("IRC Login", "Read from cache");
+            readFromCache();
         }
         /* Test */
         Button test = new Button(this);
@@ -34,9 +37,29 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 startActivity(new Intent(LoginActivity.this, TestActivity.class));
             }
         });
-        test.setText("TEST");
+        test.setText(R.string.test);
         ((RelativeLayout) findViewById(R.id.connectButton).getParent()).addView(test);
         /* Test */
+    }
+
+    // Пока нету шаблона логина, все же пусть будет чтения с кэша
+    private void readFromCache() {
+        SharedPreferences pref = getPreferences(MODE_PRIVATE);
+        server.setText(pref.getString("Server", ""));
+        nick.setText(pref.getString("Nick", ""));
+        password.setText(pref.getString("Password", ""));
+        channel.setText(pref.getString("Channel", ""));
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        SharedPreferences.Editor ed = getPreferences(MODE_PRIVATE).edit();
+        ed.putString("Server", server.getText().toString());
+        ed.putString("Nick", nick.getText().toString());
+        ed.putString("Password", password.getText().toString());
+        ed.putString("Channel", channel.getText().toString());
+        ed.apply();
     }
 
     private void init() {

@@ -15,6 +15,9 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,8 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     private LinearLayout ll;
     private List<LoginData> data;
+    private boolean updateDataFromCache = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -39,17 +44,29 @@ public class ChannelsListActivity extends AppCompatActivity {
         // То в savedInstanceState будут лежать не актуальные данные, и надо как-то это проверять.
         // В случае чего, лезть в кэш. Пока что проще сразу лезть в кэш.
         readFromCache();
-
+        updateDataFromCache = true;
     }
 
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d("IRC", "On pause");
+        updateDataFromCache = false;
+    }
 
     @Override
     protected void onStart() {
         super.onStart();
         Log.d("IRC", "On start");
-        // TODO При добавлении новых каналов, они появляются на экране, только если
-        // TODO прилоежние попало в onCreate. Нужно придумать способ как в ином случае проверять
-        // TODO и добавлять новые элементы
+        // Способ не самый эффективный - возможно нужно добавить одну вьюшку, а мы все стираем, а потом добавляем.
+        // Но тут данных мало и пока сойдет.
+        if (!updateDataFromCache) {
+            ll.removeAllViews();
+            readFromCache();
+            updateDataFromCache = true;
+        }
+
     }
 
 
@@ -57,9 +74,9 @@ public class ChannelsListActivity extends AppCompatActivity {
         Log.d("IRC Chanel list", "Read from cache");
         SharedPreferences pref = getSharedPreferences("Login_data", MODE_PRIVATE);
         final String path = pref.getString("file_path", "");
-        if ("".equals(path)) return;
+        // Если файла нет или нет доступа к нему, ничего не делаем
+        if (!(new File(path)).exists()) return;
         AsyncTask<String, Void, List<LoginData>> asyncTask = new AsyncTask<String, Void, List<LoginData>>() {
-
             @Override
             protected List<LoginData> doInBackground(String... params) {
                 return FileUtils.getData(params[0]);
@@ -73,10 +90,15 @@ public class ChannelsListActivity extends AppCompatActivity {
 
             }
         };
+        try {
+            BufferedReader temp = new BufferedReader(new FileReader(path));
+            temp.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         // TODO в случае неверного логина, тут может кинуться RuntimeException
         // TODO Нужно что-то предпринять, лишние проверки и прочее
         asyncTask.execute(path);
-
 
 
     }
@@ -85,11 +107,16 @@ public class ChannelsListActivity extends AppCompatActivity {
     private void addChannels(List<LoginData> data) {
         this.data = data;
         View item;
+        System.out.println("Login data");
+        for (int i = 0; i < data.size(); i++) {
+            System.out.println(data.get(i).toString());
+        }
         LayoutInflater inflater = LayoutInflater.from(this);
         for (int i = 0; i < data.size(); i++) {
             item = inflater.inflate(R.layout.chanel_item, null);
             Button selectChannel = (Button) item.findViewById(R.id.selected_channel);
             ImageButton deleteChannel = (ImageButton) item.findViewById(R.id.delete_channel);
+            if (data.get(i).channel.length() == 0) continue;
             selectChannel.setText(data.get(i).channel.substring(1));
             selectChannel.setOnClickListener(new OnSelectChannelListener(data.get(i).id));
             deleteChannel.setOnClickListener(new OnDeleteChannelListener(data.get(i).id));
@@ -137,7 +164,6 @@ public class ChannelsListActivity extends AppCompatActivity {
                 if (d.id == id) {
                     // Получаем предка  предка кнопки - линеар лайаута, хранящий линеар лайауты, которые хранят 2 кнопки
                     // и удаляем у него  предка кнопки
-                    // TODO здесь падает если удалять не первый элемент (nullptrException), пока не знаю почему.
                     ((ViewGroup) (v.getParent()).getParent()).removeView((View) v.getParent());
                     AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
                         @Override
@@ -170,19 +196,18 @@ public class ChannelsListActivity extends AppCompatActivity {
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        menu.add(0, 1, 0, "Clear casche").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        menu.add(0, 1, 0, "Clear cache").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Log.d("IRC", "Clear cache");
+                Log.d("IRC Channel list", "Clear cache");
                 SharedPreferences preferences = getSharedPreferences("Login_data", MODE_PRIVATE);
-                SharedPreferences.Editor ed = preferences.edit();
                 try {
-                    ed.putString("file_path", FileUtils.getPathOfExternalFile(ChannelsListActivity.this));
-                    ed.apply();
-                } catch (IOException e) {
+                    ll.removeAllViews();
+                    return new File(preferences.getString("file_path", "")).delete();
+                } catch (RuntimeException e) {
                     e.printStackTrace();
                 }
-                return true;
+                return false;
             }
         });
 
