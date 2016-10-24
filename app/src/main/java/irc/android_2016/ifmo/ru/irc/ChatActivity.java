@@ -178,8 +178,8 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
                     value = value.substring(value.indexOf("PRIVMSG ") + 8);
 
                     message = inflater.inflate(R.layout.chat_message, null);
-                    ((TextView) message.findViewById(R.id.author)).setText(value.substring(1, value.indexOf(">")));
-                    ((TextView) message.findViewById(R.id.content)).setText(value.substring(value.indexOf(">") + 1, value.indexOf("\n")));
+                    ((TextView) message.findViewById(R.id.author)).setText(value.substring(1, value.indexOf(">:")) + ":");
+                    ((TextView) message.findViewById(R.id.content)).setText(value.substring(value.indexOf(">:") + 3, value.indexOf("\n")));
                     activity.ll.addView(message);
                 } else {
                     // можно парсить как служебные сообщения в будущем
