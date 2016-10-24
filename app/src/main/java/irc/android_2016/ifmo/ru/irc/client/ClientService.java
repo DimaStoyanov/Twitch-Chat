@@ -1,11 +1,8 @@
 package irc.android_2016.ifmo.ru.irc.client;
 
-import android.app.Activity;
 import android.app.Notification;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
@@ -14,17 +11,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.util.LinkedList;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import irc.android_2016.ifmo.ru.irc.TestActivity;
 
 public class ClientService extends Service {
     private IBinder binder = new ClientService.Binder();
@@ -49,9 +41,10 @@ public class ClientService extends Service {
         startForeground(1, new Notification());
     }
 
+
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        start(settings = (ClientSettings) intent.getExtras().getSerializable("ClientSettings"));
+        //start(settings = (ClientSettings) intent.getExtras().getSerializable("ClientSettings"));
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -123,7 +116,9 @@ public class ClientService extends Service {
                         Log.i("chat", s);
                         Matcher m = Message.pattern.matcher(s);
                         while (m.find()) {
-                            callbackMessage(new Message(m.group()));
+                            Message msg = new Message(m.group());
+                            messages.add(msg);
+                            callbackMessage(msg);
                         }
                         if (Pattern.compile("PING :(.*)").matcher(s).find()) {
                             Log.i("client", "pong");

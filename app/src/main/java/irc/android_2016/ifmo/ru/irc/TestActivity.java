@@ -4,21 +4,17 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
+import android.text.InputType;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.io.Serializable;
 import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,21 +32,22 @@ public class TestActivity extends AppCompatActivity
     EditText server, nick, password, channel;
     TextView text;
     ScrollView scroll;
-    //IRCClientTask task = null;
-    volatile ClientService cs;
 
-    ServiceConnection sc = new ServiceConnection() {
+    ClientSettings clientSettings;
+    volatile ClientService clientService;
+
+    ServiceConnection serviceConnection = new ServiceConnection() {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            cs = ((ClientService.Binder) service).getService();
-            cs.changeActivity(TestActivity.this);
+            clientService = ((ClientService.Binder) service).getService();
+            clientService.changeActivity(TestActivity.this);
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            cs.changeActivity(null);
-            cs = null;
+            clientService.changeActivity(null);
+            clientService = null;
         }
     };
 
@@ -83,6 +80,10 @@ public class TestActivity extends AppCompatActivity
             text.setText(savedInstanceState.getString("Text"));
 
             if (savedInstanceState.getBoolean("isConnected")) {
+                clientSettings = (ClientSettings) savedInstanceState.getSerializable("ClientSettings");
+                Intent intent = new Intent(this, ClientService.class);
+                intent.putExtra("ClientSettings", clientSettings);
+                bindService(intent, serviceConnection, BIND_AUTO_CREATE);
                 disableEdits();
             }
         } else {
@@ -104,19 +105,20 @@ public class TestActivity extends AppCompatActivity
         server.setVisibility(GONE);
         nick.setVisibility(GONE);
         password.setVisibility(GONE);
-        //channel.setInputType();
+        channel.setEnabled(false);
         findViewById(R.id.connectButton).setVisibility(GONE);
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean("isConnected", sc != null);
+        outState.putBoolean("isConnected", clientService != null);
         outState.putString("Server", server.getText().toString());
         outState.putString("Nick", nick.getText().toString());
         outState.putString("Password", password.getText().toString());
         outState.putString("Channel", channel.getText().toString());
         outState.putString("Text", text.getText().toString());
+        outState.putSerializable("ClientSettings", clientSettings);
     }
 
     @Override
@@ -129,8 +131,8 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
-        if (cs != null) {
-            unbindService(sc);
+        if (clientService != null) {
+            unbindService(serviceConnection);
         }
     }
 
@@ -141,18 +143,19 @@ public class TestActivity extends AppCompatActivity
         try {
             Intent intent = new Intent(this, ClientService.class);
             if (addrport.find()) {
-                ClientSettings cs = new ClientSettings()
+                clientSettings = new ClientSettings()
                         .setAddress(addrport.group(1))
                         .setPort(Integer.decode(addrport.group(2)))
                         .setPassword(password.getText().toString())
                         .addNicks(nick.getText().toString())
                         .addChannels(channel.getText().toString().split(","));
-                intent.putExtra("ClientSettings", cs);
+                intent.putExtra("ClientSettings", clientSettings);
 
-                bindService(intent, sc, BIND_AUTO_CREATE);
+                bindService(intent, serviceConnection, BIND_AUTO_CREATE);
             }
         } catch (UnknownHostException x) {
             Toast.makeText(this, x.getMessage(), Toast.LENGTH_SHORT).show();
         }
+        disableEdits();
     }
 }
