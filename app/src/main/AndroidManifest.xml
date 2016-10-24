@@ -10,16 +10,21 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity android:name=".ChannelsListActivity">
+        <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".TestActivity" />
+        <activity android:name=".TestActivity" android:theme="@style/Theme.AppCompat"/>
         <activity android:name=".ChatActivity" />
-        <activity android:name=".LoginActivity" />
+        <activity android:name=".ChannelsListActivity" />
+
+        <service
+            android:name=".client.ClientService"
+            android:enabled="true"
+            android:exported="true" />
     </application>
 
 </manifest>
