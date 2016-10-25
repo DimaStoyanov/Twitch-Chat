@@ -1,6 +1,8 @@
 package irc.android_2016.ifmo.ru.irc.client;
 
+import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -101,13 +103,14 @@ public class Client implements IClient, Runnable {
 
         } catch (IOException e) {
             Log.e("Client.run()", e.toString());
+            Toast.makeText((Context) activity, e.getMessage(), Toast.LENGTH_SHORT).show();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             try {
-                in.close();
-                out.close();
-                socket.close();
+                if (socket != null) {
+                    socket.close();
+                }
             } catch (IOException e) {
                 Log.e("Client.run()", e.toString());
             }

@@ -57,7 +57,8 @@ public class ClientService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
-        return true;
+        Log.i("onUnbind", "onUnbind");
+        return !super.onUnbind(intent);
     }
 
     @Override
