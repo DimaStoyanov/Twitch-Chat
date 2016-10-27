@@ -49,6 +49,7 @@ public class TestActivity extends AppCompatActivity
             });
         }
     };
+    private EditText typeMessage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +61,7 @@ public class TestActivity extends AppCompatActivity
         channel = (EditText) findViewById(R.id.channel);
         text = (TextView) findViewById(R.id.text);
         scroll = (ScrollView) findViewById(R.id.scroll);
+        typeMessage = (EditText) findViewById(R.id.typeMessage);
 
         if (savedInstanceState != null) {
             server.setText(savedInstanceState.getString("Server"));
@@ -79,7 +81,14 @@ public class TestActivity extends AppCompatActivity
         findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                LocalBroadcastManager
+                        .getInstance(TestActivity.this)
+                        .sendBroadcast(new Intent("send-message")
+                                .putExtra("irc.Message",
+                                        new Message(
+                                                nick.getText().toString(),
+                                                channel.getText().toString(),
+                                                typeMessage.getText().toString())));
             }
         });
         LocalBroadcastManager.getInstance(this)

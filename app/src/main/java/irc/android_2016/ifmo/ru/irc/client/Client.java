@@ -1,6 +1,9 @@
 package irc.android_2016.ifmo.ru.irc.client;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -15,7 +18,7 @@ import java.util.regex.Pattern;
  * Created by ghost on 10/24/2016.
  */
 
-public class Client implements IClient, Runnable {
+public class Client implements Runnable {
     private static final String TAG = Client.class.getSimpleName();
 
     private boolean isRunning = true;
@@ -31,20 +34,18 @@ public class Client implements IClient, Runnable {
         this.clientService = clientService;
     }
 
-    @Override
     public boolean connect(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
         clientService.executor.execute(this);
+        clientService.lbm.registerReceiver(sendMessage, new IntentFilter("send-message"));
         Log.i(TAG, "Client started");
         return true;
     }
 
-    @Override
     public Exception getLastError() {
         return null;
     }
 
-    @Override
     public boolean joinChannel(String channel) {
         if (isRunning) {
             out.println("JOIN " + channel);
@@ -52,17 +53,17 @@ public class Client implements IClient, Runnable {
         return false;
     }
 
-    @Override
-    public boolean sendMessage(Message message) {
-        if (isRunning) {
-            out.println("PRIVMSG " + message.to + " :" + message.text);
-            callbackMessage(message);
-            return true;
+    private BroadcastReceiver sendMessage = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Message message = (Message) intent.getSerializableExtra("irc.Message");
+            if (isRunning) {
+                out.println("PRIVMSG " + message.to + " :" + message.text);
+                callbackMessage(message);
+            }
         }
-        return false;
-    }
+    };
 
-    @Override
     public void close() {
         isRunning = false;
     }
@@ -146,7 +147,6 @@ public class Client implements IClient, Runnable {
         return true;
     }
 
-    @Override
     public boolean isConnected() {
         return isRunning;
     }
