@@ -66,6 +66,7 @@ public class Client implements Runnable {
 
     public void close() {
         isRunning = false;
+        clientService.lbm.unregisterReceiver(sendMessage);
     }
 
     @Override

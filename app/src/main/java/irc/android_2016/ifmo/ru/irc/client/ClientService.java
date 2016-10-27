@@ -16,6 +16,7 @@ public class ClientService extends Service {
 
     public static final String START_FOREGROUND = "start-foreground";
     public static final String START_CLIENT = "start-client";
+    public static final String STOP_CLIENT = "stop-client";
     LocalBroadcastManager lbm;
     Executor executor = Executors.newCachedThreadPool();
     private Client client = null;
@@ -44,6 +45,12 @@ public class ClientService extends Service {
                 if (client == null) {
                     client = new Client(this);
                     client.connect((ClientSettings) intent.getSerializableExtra("ClientSettings"));
+                }
+                break;
+            case STOP_CLIENT:
+                if (client != null) {
+                    client.close();
+                    client = null;
                 }
                 break;
             default:

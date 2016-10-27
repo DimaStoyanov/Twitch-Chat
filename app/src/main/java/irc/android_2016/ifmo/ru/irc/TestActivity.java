@@ -133,6 +133,8 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
+        startService(new Intent(this, ClientService.class).setAction(ClientService.STOP_CLIENT));
     }
 
     @Override
