@@ -38,7 +38,7 @@ public class ClientService extends Service {
                 startForeground(1, new Notification.Builder(this)
                         .setSmallIcon(android.R.mipmap.sym_def_app_icon)
                         .setContentTitle("Чёт делаем")
-                        .setContentText("ыуеСщтеутеЕуче")
+                        .setContentText("лол")
                         .build());
                 break;
             case START_CLIENT:

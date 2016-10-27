@@ -8,9 +8,11 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -67,6 +69,11 @@ public class Client implements Runnable {
     public void close() {
         isRunning = false;
         clientService.lbm.unregisterReceiver(sendMessage);
+        try {
+            socket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -86,9 +93,10 @@ public class Client implements Runnable {
             while (socket.isConnected()) {
                 if (in.ready()) {
                     String s = in.readLine();
-                    Log.i("Client.run()", s);
+                    Log.i(TAG, s);
                     parse(s);
                 } else {
+                    Log.i(TAG, "Thread.sleep(100)");
                     Thread.sleep(100);
                 }
                 if (!isRunning) {
@@ -97,8 +105,11 @@ public class Client implements Runnable {
                 }
             }
 
+        } catch (SocketException e) {
+            //
+            Log.e(TAG, e.toString());
         } catch (IOException e) {
-            Log.e("Client.run()", e.toString());
+            Log.e(TAG, e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {

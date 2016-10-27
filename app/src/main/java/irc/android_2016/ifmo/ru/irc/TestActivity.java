@@ -38,7 +38,6 @@ public class TestActivity extends AppCompatActivity
     BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.i(TAG, "received " + intent.getStringExtra("string"));
             Message msg = (Message) intent.getSerializableExtra("irc.Message");
             text.append("<" + msg.from + " to " + msg.to + "> " + msg.text + "\n");
             scroll.post(new Runnable() {
