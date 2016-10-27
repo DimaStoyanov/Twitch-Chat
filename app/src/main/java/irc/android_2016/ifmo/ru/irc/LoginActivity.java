@@ -41,7 +41,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         });
         test.setText("TEST");
         ((RelativeLayout) findViewById(R.id.connectButton).getParent()).addView(test);
-        startService(new Intent(this, ClientService.class));
+        Intent intent = new Intent(this, ClientService.class);
+        intent.setAction(ClientService.START_FOREGROUND);
+        startService(intent);
         /* Test */
     }
 

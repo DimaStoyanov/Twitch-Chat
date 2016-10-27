@@ -1,75 +1,54 @@
 package irc.android_2016.ifmo.ru.irc;
 
-import android.content.ComponentName;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.ServiceConnection;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import java.net.UnknownHostException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import irc.android_2016.ifmo.ru.irc.client.Client;
 import irc.android_2016.ifmo.ru.irc.client.ClientService;
-import irc.android_2016.ifmo.ru.irc.client.ClientServiceCallback;
 import irc.android_2016.ifmo.ru.irc.client.ClientSettings;
 import irc.android_2016.ifmo.ru.irc.client.Message;
 
 import static android.view.View.GONE;
+import static irc.android_2016.ifmo.ru.irc.client.ClientSettings.Builder;
 
 public class TestActivity extends AppCompatActivity
-        implements View.OnClickListener, ClientServiceCallback {
+        implements View.OnClickListener {
+    private static final String TAG = TestActivity.class.getSimpleName();
 
     EditText server, nick, password, channel;
     TextView text;
     ScrollView scroll;
+    private ClientSettings clientSettings;
+    private boolean isConnected = false;
 
-    ClientService.Binder binder = null;
-    ClientSettings clientSettings;
-    Client client;
 
-    ServiceConnection serviceConnection = new ServiceConnection() {
+    BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            binder = (ClientService.Binder) service;
-            Log.i("onServiceConnected", name.toString());
-            ClientService.Binder binder = (ClientService.Binder) service;
-            client = binder.getClient();
-            client.attachActivity(TestActivity.this);
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            client.attachActivity(null);
-            client = null;
-            binder = null;
+        public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, "received " + intent.getStringExtra("string"));
+            Message msg = (Message) intent.getSerializableExtra("irc.Message");
+            text.append("<" + msg.from + " to " + msg.to + "> " + msg.text + "\n");
+            scroll.post(new Runnable() {
+                @Override
+                public void run() {
+                    scroll.fullScroll(ScrollView.FOCUS_DOWN);
+                }
+            });
         }
     };
-
-    @Override
-    public void onMessageReceived(final Message msg) {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                text.append("<" + msg.from + " to " + msg.to + "> " + msg.text + "\n");
-                scroll.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        scroll.fullScroll(ScrollView.FOCUS_DOWN);
-                    }
-                });
-            }
-        });
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,7 +67,6 @@ public class TestActivity extends AppCompatActivity
             password.setText(savedInstanceState.getString("Password"));
             channel.setText(savedInstanceState.getString("Channel"));
             text.setText(savedInstanceState.getString("Text"));
-            clientSettings = (ClientSettings) savedInstanceState.getSerializable("ClientSettings");
 
             if (savedInstanceState.getBoolean("isConnected")) {
                 disableEdits();
@@ -101,20 +79,11 @@ public class TestActivity extends AppCompatActivity
         findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (client != null) {
-                    if (!client.sendMessage(new Message(
-                            nick.getText().toString(),
-                            channel.getText().toString(),
-                            ((EditText) findViewById(R.id.typeMessage)).getText().toString()))) {
-                        Toast.makeText(TestActivity.this, "Something went wrong", Toast.LENGTH_SHORT).show();
-                    }
-                } else {
-                    Toast.makeText(TestActivity.this, "Connect first!", Toast.LENGTH_SHORT).show();
-                }
+
             }
         });
-
-        bindService(new Intent(this, ClientService.class), serviceConnection, BIND_AUTO_CREATE);
+        LocalBroadcastManager.getInstance(this)
+                .registerReceiver(messageReceiver, new IntentFilter("new-message"));
     }
 
     private void load() {
@@ -131,27 +100,18 @@ public class TestActivity extends AppCompatActivity
         password.setVisibility(GONE);
         channel.setEnabled(false);
         findViewById(R.id.connectButton).setVisibility(GONE);
+        isConnected = true;
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putBoolean("isConnected", client != null);
+        outState.putBoolean("isConnected", isConnected);
         outState.putString("Server", server.getText().toString());
         outState.putString("Nick", nick.getText().toString());
         outState.putString("Password", password.getText().toString());
         outState.putString("Channel", channel.getText().toString());
         outState.putString("Text", text.getText().toString());
-        outState.putSerializable("ClientSettings", clientSettings);
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressed();
-        Log.i("TestActivity", "onBackPressed");
-        if (client != null) {
-            client.close();
-        }
     }
 
     @Override
@@ -164,30 +124,25 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.commit();
-        unbindService(serviceConnection);
     }
 
     @Override
     public void onClick(View v) {
         Matcher addrport = Pattern.compile("([\\w.]+):?(\\d+)?").matcher(server.getText().toString());
 
-        try {
-            if (addrport.find()) {
-                clientSettings = new ClientSettings()
-                        .setAddress(addrport.group(1))
-                        .setPort(Integer.decode(addrport.group(2)))
-                        .setPassword(password.getText().toString())
-                        .addNicks(nick.getText().toString())
-                        .addChannels(channel.getText().toString().split(", "));
+        if (addrport.find()) {
+            clientSettings = new Builder()
+                    .setAddress(addrport.group(1))
+                    .setPort(Integer.decode(addrport.group(2)))
+                    .setPassword(password.getText().toString())
+                    .addNicks(nick.getText().toString())
+                    .addChannels(channel.getText().toString().split(", "))
+                    .build();
 
-                if (client.connect(clientSettings)) {
-                    Log.i("onClick", "LUL");
-                } else {
-                    Toast.makeText(this, "Can't connect to server", Toast.LENGTH_SHORT).show();
-                }
-            }
-        } catch (UnknownHostException x) {
-            Toast.makeText(this, x.getMessage(), Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(TestActivity.this, ClientService.class);
+            intent.setAction(ClientService.START_CLIENT);
+            intent.putExtra("ClientSettings", clientSettings);
+            startService(intent);
         }
         disableEdits();
     }

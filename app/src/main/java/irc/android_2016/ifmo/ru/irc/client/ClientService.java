@@ -4,29 +4,21 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class ClientService extends Service {
-    private ClientService.Binder binder = new ClientService.Binder();
-    private Queue<Message> messages = new ConcurrentLinkedQueue<>();
+    private static final String TAG = ClientService.class.getSimpleName();
+
+    public static final String START_FOREGROUND = "start-foreground";
+    public static final String START_CLIENT = "start-client";
+    LocalBroadcastManager lbm;
     Executor executor = Executors.newCachedThreadPool();
-
-    public class Binder extends android.os.Binder {
-        Client client;
-
-        public Client getClient() {
-            if (client == null) {
-                client = new Client(ClientService.this);
-            }
-            return client;
-        }
-    }
+    private Client client = null;
 
     public ClientService() {
     }
@@ -34,37 +26,39 @@ public class ClientService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        Toast.makeText(this, "ClientService.onCreate()", Toast.LENGTH_SHORT).show();
-        startForeground(1, new Notification());
+        Log.i(TAG, "onCreate");
+        lbm = LocalBroadcastManager.getInstance(this);
     }
-
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
+        switch (intent.getAction()) {
+            case START_FOREGROUND:
+                startForeground(1, new Notification.Builder(this)
+                        .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                        .setContentTitle("Чёт делаем")
+                        .setContentText("ыуеСщтеутеЕуче")
+                        .build());
+                break;
+            case START_CLIENT:
+                if (client == null) {
+                    client = new Client(this);
+                    client.connect((ClientSettings) intent.getSerializableExtra("ClientSettings"));
+                }
+                break;
+            default:
+        }
+        return START_STICKY;
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        Log.i("onBind", "onBind");
-        return binder;
-    }
-
-    @Override
-    public void onRebind(Intent intent) {
-        Log.i("onRebind", "onRebind");
-    }
-
-    @Override
-    public boolean onUnbind(Intent intent) {
-        Log.i("onUnbind", "onUnbind");
-        return !super.onUnbind(intent);
+        return null;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
         Toast.makeText(this, "ClientService.onDestroy()", Toast.LENGTH_SHORT).show();
-        stopForeground(true);
     }
 }

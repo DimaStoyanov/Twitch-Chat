@@ -8,7 +8,6 @@ public interface IClient {
     boolean connect(ClientSettings clientSettings);
     boolean isConnected();
     Exception getLastError();
-    boolean attachActivity(ClientServiceCallback activity);
     boolean joinChannel(String channel);
     boolean sendMessage(Message message);
     void close();

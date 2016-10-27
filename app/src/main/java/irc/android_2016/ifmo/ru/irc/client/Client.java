@@ -1,8 +1,7 @@
 package irc.android_2016.ifmo.ru.irc.client;
 
-import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -17,11 +16,12 @@ import java.util.regex.Pattern;
  */
 
 public class Client implements IClient, Runnable {
+    private static final String TAG = Client.class.getSimpleName();
+
     private boolean isRunning = true;
 
     private ClientService clientService;
     private ClientSettings clientSettings;
-    private ClientServiceCallback activity;
 
     private Socket socket;
     private BufferedReader in;
@@ -35,19 +35,13 @@ public class Client implements IClient, Runnable {
     public boolean connect(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
         clientService.executor.execute(this);
+        Log.i(TAG, "Client started");
         return true;
     }
 
     @Override
     public Exception getLastError() {
         return null;
-    }
-
-    @Override
-    public boolean attachActivity(ClientServiceCallback activity) {
-        //TODO: временный код
-        this.activity = activity;
-        return true;
     }
 
     @Override
@@ -103,7 +97,6 @@ public class Client implements IClient, Runnable {
 
         } catch (IOException e) {
             Log.e("Client.run()", e.toString());
-            Toast.makeText((Context) activity, e.getMessage(), Toast.LENGTH_SHORT).show();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
@@ -149,11 +142,8 @@ public class Client implements IClient, Runnable {
     }
 
     private boolean callbackMessage(Message msg) {
-        if (activity != null) {
-            activity.onMessageReceived(msg);
-            return true;
-        }
-        return false;
+        clientService.lbm.sendBroadcast(new Intent("new-message").putExtra("irc.Message", msg));
+        return true;
     }
 
     @Override
