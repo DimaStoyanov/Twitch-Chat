@@ -50,7 +50,7 @@ public class Client implements Runnable {
 
     public boolean joinChannel(String channel) {
         if (isRunning) {
-            out.println("JOIN " + channel);
+            print("JOIN " + channel);
         }
         return false;
     }
@@ -60,7 +60,7 @@ public class Client implements Runnable {
         public void onReceive(Context context, Intent intent) {
             Message message = (Message) intent.getSerializableExtra("irc.Message");
             if (isRunning) {
-                out.println("PRIVMSG " + message.to + " :" + message.text);
+                print("PRIVMSG " + message.to + " :" + message.text);
                 callbackMessage(message);
             }
         }
@@ -134,18 +134,22 @@ public class Client implements Runnable {
             callbackMessage(new Message(message.group()));
         }
         if (ping.find()) {
-            out.println("PONG :" + ping.group(1));
+            print("PONG :" + ping.group(1));
         }
     }
 
     private void enterPassword() {
-        out.println("PASS " + clientSettings.password);
+        print("PASS " + clientSettings.password);
     }
 
     private void enterNick() {
         for (String nick : clientSettings.nicks) {
-            out.println("NICK " + nick);
+            print("NICK " + nick);
         }
+    }
+
+    private void print(String s) {
+        out.println(s);
     }
 
     private void autoJoin() {
