@@ -5,7 +5,7 @@
 ### 28.10.2016
 * Появилась первая версия интегрирования emoticons twitch в приложение
 
-  <img alt="Channel list view" src="https://pp.vk.me/c636919/v636919212/3347b/iRA3SA8WfKU.jpg" width="300px" height="187px">
+  <img alt="Channel list view" src="https://pp.vk.me/c636919/v636919212/334ef/cp-_viV8E7c.jpg" height="178px">
 
 ### 24.10.2016
 * Появилась тестовая версия экрана со списком сохраенных каналов.
