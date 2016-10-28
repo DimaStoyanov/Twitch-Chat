@@ -84,8 +84,6 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         simple_regex_emoticons = new HashSet<>();
         regex_emoticons = new ArrayList<>();
         prepareEmoticons("global");
-        String ch = getIntent().getExtras().getString("Channel");
-        prepareEmoticons("forsenlol");
         initAlert();
     }
 
@@ -223,6 +221,10 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             protected void onPostExecute(Void aVoid) {
                 pb.setVisibility(View.GONE);
                 if (channel.equals("global")) {
+                    String ch = getIntent().getExtras().getString("Channel");
+                    if(ch == null) return;
+                    prepareEmoticons(ch.substring(1));
+                } else {
                     initTask(saveState);
                 }
             }
@@ -315,6 +317,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         protected void onCancelled() {
             super.onCancelled();
             try {
+                if(socket != null)
                 socket.close();
             } catch (IOException x) {
                 Log.e("IRCTask.onCanceled", x.getMessage());
@@ -388,7 +391,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
                     boolean is_emoticon = false;
                     for (int i = 0; i < regex_emoticons.size(); i++) {
                         if (Pattern.compile(regex_emoticons.get(i)).matcher(t).matches()) {
-                            attachEmoticon(builder, emoticons.get(t));
+                            attachEmoticon(builder, emoticons.get(regex_emoticons.get(i)));
                             is_emoticon = true;
                             break;
                         }
@@ -435,7 +438,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
     public void onBackPressed() {
         super.onBackPressed();
         Log.d(TAG, "on back pressed");
-       if(task != null) task.cancel(true);
+        if (task != null) task.cancel(true);
         cancelTask = true;
     }
 

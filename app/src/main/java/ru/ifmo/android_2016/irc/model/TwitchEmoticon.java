@@ -36,13 +36,13 @@ public class TwitchEmoticon {
     public TwitchEmoticon(@NonNull String regex, @NonNull String emoticon_url) {
         this.regex = regex;
         this.emoticon_url = emoticon_url;
+        this.isAlphabetic = true;
         for (int i = 0; i < regex.length(); i++) {
             char c = regex.charAt(i);
-            if ((c < 'A' || c > 'Z' && c < 'a' || c > 'z')) {
+            if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z')) {
                 this.isAlphabetic = false;
             }
         }
-        this.isAlphabetic = true;
     }
 
     @Override
