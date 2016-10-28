@@ -12,6 +12,8 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
+import irc.android_2016.ifmo.ru.irc.client.ClientService;
+
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
     EditText server, nick, password, channel;
@@ -40,8 +42,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 startActivity(new Intent(LoginActivity.this, TestActivity.class));
             }
         });
-        test.setText(R.string.test);
+        test.setText("TEST");
         ((RelativeLayout) findViewById(R.id.connectButton).getParent()).addView(test);
+        Intent intent = new Intent(this, ClientService.class);
+        intent.setAction(ClientService.START_FOREGROUND);
+        startService(intent);
         /* Test */
     }
 
@@ -79,6 +84,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.apply();
+        /* Test */
+        stopService(new Intent(this, ClientService.class));
+        /* Test */
     }
 
     private void init() {
