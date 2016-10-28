@@ -33,9 +33,9 @@ public class LoginData {
     String channel;
 
     public LoginData(String... data) {
-//        if(data.length != 4){
-//            throw new RuntimeException("Invalid args");
-//        }
+        if(data.length != 4){
+            throw new RuntimeException("Invalid args");
+        }
         server = data[0];
         nick = data[1];
         password = data[2];

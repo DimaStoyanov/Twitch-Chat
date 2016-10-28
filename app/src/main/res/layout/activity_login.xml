@@ -6,6 +6,13 @@
     android:layout_height="match_parent"
     tools:context="irc.android_2016.ifmo.ru.irc.LoginActivity">
 
+    <ProgressBar
+        android:id="@+id/pbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:visibility="gone"/>
+
     <EditText
         android:id="@+id/server"
         android:layout_width="300dp"

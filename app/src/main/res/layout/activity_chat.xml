@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_chat"
     android:layout_width="match_parent"
@@ -11,53 +11,69 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="irc.android_2016.ifmo.ru.irc.ChatActivity">
 
-    <TextView
-        android:id="@+id/chanel"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginBottom="10dp"
-        android:layout_weight="0.26"
-        android:gravity="center"
-        android:text="@string/forsenlol"
-        android:textAllCaps="true"
-        android:textSize="30sp"
-        android:textStyle="normal|bold" />
 
-    <ScrollView
-        android:id="@+id/scrollv"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1.66">
-
-        <LinearLayout
-            android:id="@+id/messages"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+    <ProgressBar
+        android:id="@+id/pbar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
 
     <LinearLayout
-        android:id="@+id/answer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="horizontal">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/text_message"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="6.14"
-            android:hint="@string/your_message" />
 
-        <Button
-            android:id="@+id/send"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1.52"
-            android:background="?attr/colorControlHighlight"
-            android:text="@string/send" />
+        <TextView
+            android:id="@+id/chanel"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="10dp"
+            android:layout_weight="0.26"
+            android:gravity="center"
+            android:text="@string/forsenlol"
+            android:textAllCaps="true"
+            android:textSize="30sp"
+            android:textStyle="normal|bold" />
 
+        <ScrollView
+            android:id="@+id/scrollv"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1.66">
+
+
+            <LinearLayout
+                android:id="@+id/messages"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <LinearLayout
+            android:id="@+id/answer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/text_message"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="6.14"
+                android:hint="@string/your_message" />
+
+            <Button
+                android:id="@+id/send"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1.52"
+                android:background="?attr/colorControlHighlight"
+                android:text="@string/send" />
+
+        </LinearLayout>
     </LinearLayout>
 
-</LinearLayout>
+</FrameLayout>

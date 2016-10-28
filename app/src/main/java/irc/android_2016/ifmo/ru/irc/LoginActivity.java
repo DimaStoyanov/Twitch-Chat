@@ -9,11 +9,13 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
     EditText server, nick, password, channel;
+    ProgressBar pb;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +47,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     // Пока нету шаблона логина, все же пусть будет чтения с кэша
     private void readFromCache() {
+        pb.setVisibility(View.VISIBLE);
         (new AsyncTask<Void, String[], String[]>() {
             @Override
             protected String[] doInBackground(Void... voids) {
@@ -60,6 +63,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 nick.setText(res[1]);
                 password.setText(res[2]);
                 channel.setText(res[3]);
+                pb.setVisibility(View.GONE);
             }
         }).execute();
 
@@ -82,6 +86,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         nick = (EditText) findViewById(R.id.nick);
         password = (EditText) findViewById(R.id.password);
         channel = (EditText) findViewById(R.id.channel);
+        pb = (ProgressBar) findViewById(R.id.pbar);
     }
 
     private void readFromBundle(Bundle bundle) {

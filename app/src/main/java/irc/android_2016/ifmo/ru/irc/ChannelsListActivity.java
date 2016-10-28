@@ -1,9 +1,12 @@
 package irc.android_2016.ifmo.ru.irc;
 
+
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.ContextMenu;
@@ -14,55 +17,55 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.util.concurrent.ExecutionException;
 
+import irc.android_2016.ifmo.ru.irc.constant.FilePathConstant;
+import irc.android_2016.ifmo.ru.irc.loader.DeleteDataTask;
+import irc.android_2016.ifmo.ru.irc.loader.LoadResult;
+import irc.android_2016.ifmo.ru.irc.loader.LoginReadTask;
+import irc.android_2016.ifmo.ru.irc.loader.ResultType;
 import irc.android_2016.ifmo.ru.irc.model.LoginData;
-import irc.android_2016.ifmo.ru.irc.utils.FileUtils;
 
 public class ChannelsListActivity extends AppCompatActivity {
 
     private LinearLayout ll;
     private List<LoginData> data;
     private boolean updateDataFromCache = false;
-    private AsyncTask<Void, Void, String> loader = new FiePathLoader();
+    private FilePathConstant constant;
+    private ProgressBar pb;
+    private final String TAG = "IRC Channel list";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_channels_list);
-        Log.d("IRC", "On create");
+        Log.d(TAG, "On create");
+        constant = new FilePathConstant(this);
         ll = (LinearLayout) findViewById(R.id.channels_ll);
+        pb = (ProgressBar) findViewById(R.id.pbar);
         registerForContextMenu(findViewById(R.id.settings));
-        // Пока не вижу смысла, добавлять иф с чтением из savedInstanceState
-        // Потому что, если мы, например, добавили новый канал, а потом вернулись на экран списка каналов,
-        // То в savedInstanceState будут лежать не актуальные данные, и надо как-то это проверять.
-        // В случае чего, лезть в кэш. Пока что проще сразу лезть в кэш.
-        readFromCache();
-        updateDataFromCache = true;
     }
 
 
     @Override
     protected void onPause() {
         super.onPause();
-        Log.d("IRC", "On pause");
+        Log.d(TAG, "On pause");
         updateDataFromCache = false;
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d("IRC", "On start");
+        Log.d(TAG, "On start");
         // Способ не самый эффективный - возможно нужно добавить одну вьюшку, а мы все стираем, а потом добавляем.
-        // Но тут данных мало и пока сойдет.
+        // Но тут данных мало и пока сойдет. И я не знаю как понять какую вьюшку удалять, id не подходит,
+        // разве что с позицией придумать что-нибудь
         if (!updateDataFromCache) {
             ll.removeAllViews();
             readFromCache();
@@ -71,66 +74,72 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     }
 
-    public class FiePathLoader extends AsyncTask<Void, Void, String> {
-
-        @Override
-        protected String doInBackground(Void... voids) {
-            return getSharedPreferences("Logind_data", MODE_PRIVATE).getString("file path", "");
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-        }
-    }
-
 
     private void readFromCache() {
-        Log.d("IRC Chanel list", "Read from cache");
-        loader.execute();
-        String path = "";
-        try {
-            path = loader.get();
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
+        Log.d(TAG, "Read from cache");
+        Bundle bundle = new Bundle();
+        if (!(new File(constant.LOGIN_DATA)).isFile()) {
+            Log.d(TAG, "Login file not exists");
+            return;
         }
-
-        // Если файла нет или нет доступа к нему, ничего не делаем
-        if (!(new File(path)).exists()) return;
-        AsyncTask<String, Void, List<LoginData>> asyncTask = new AsyncTask<String, Void, List<LoginData>>() {
+        bundle.putString("data", constant.LOGIN_DATA);
+        getSupportLoaderManager().initLoader(0, bundle, new LoaderManager.LoaderCallbacks<LoadResult<List<LoginData>>>() {
             @Override
-            protected List<LoginData> doInBackground(String... params) {
-                return FileUtils.getData(params[0]);
+            public Loader<LoadResult<List<LoginData>>> onCreateLoader(int id, Bundle args) {
+
+                pb.setVisibility(View.VISIBLE);
+                return new LoginReadTask(ChannelsListActivity.this, args.getString("data", ""));
             }
 
             @Override
-            protected void onPostExecute(List<LoginData> data) {
-                super.onPostExecute(data);
-                Log.d("IRC Channel list", "Data read from cache");
-                addChannels(data);
+            public void onLoadFinished(Loader<LoadResult<List<LoginData>>> loader, LoadResult<List<LoginData>> result) {
+                Log.d(TAG, "Load login data finished");
+                if (result.resultType == ResultType.OK) {
+                    data = result.data;
+                    addChannels(data);
+                    Log.d(TAG, "Channel added");
+                } else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(ChannelsListActivity.this)
+                            .setCancelable(false).setTitle("File reading error")
+                            .setMessage("Can't read login data from external storage")
+                            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.cancel();
+                                }
+                            })
+                            .setNegativeButton("Retry", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    dialogInterface.cancel();
+                                    readFromCache();
+                                }
+                            });
+                    AlertDialog alert = builder.create();
+                    alert.show();
+                }
 
+                pb.setVisibility(View.GONE);
+                getSupportLoaderManager().destroyLoader(loader.getId());
             }
-        };
-        try {
-            BufferedReader temp = new BufferedReader(new FileReader(path));
-            temp.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        // TODO в случае неверного логина, тут может кинуться RuntimeException
-        // TODO Нужно что-то предпринять, лишние проверки и прочее
-        asyncTask.execute(path);
 
 
+            @Override
+            public void onLoaderReset(Loader<LoadResult<List<LoginData>>> loader) {
+            }
+        });
     }
 
 
     private void addChannels(List<LoginData> data) {
-        this.data = data;
+        if (data == null) {
+            Log.d(TAG, "Empty channel lists");
+            return;
+        }
         View item;
-        System.out.println("Login data");
+        Log.d(TAG, "LOGIN DATA:");
         for (int i = 0; i < data.size(); i++) {
-            System.out.println(data.get(i).toString());
+            Log.d(TAG, data.get(i).toString());
         }
         LayoutInflater inflater = LayoutInflater.from(this);
         for (int i = 0; i < data.size(); i++) {
@@ -155,7 +164,7 @@ public class ChannelsListActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View v) {
-            Log.d("IRC Channel list", "On select channel click");
+            Log.d(TAG, "On select channel click");
             for (LoginData d : data) {
                 if (d.id == id) {
                     Intent intent = new Intent(ChannelsListActivity.this, ChatActivity.class);
@@ -180,23 +189,38 @@ public class ChannelsListActivity extends AppCompatActivity {
 
         @Override
         public void onClick(View v) {
-            Log.d("IRC Channel list", "On delete channel click");
             for (LoginData d : data) {
                 if (d.id == id) {
                     // Получаем предка  предка кнопки - линеар лайаута, хранящий линеар лайауты, которые хранят 2 кнопки
                     // и удаляем у него  предка кнопки
                     ((ViewGroup) (v.getParent()).getParent()).removeView((View) v.getParent());
-                    AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
-                        @Override
-                        protected Void doInBackground(Void... params) {
-                            SharedPreferences pref = getSharedPreferences("Login_data", MODE_PRIVATE);
-                            FileUtils.deleteData(ChannelsListActivity.this, pref.getString("file_path", ""), String.valueOf(id));
-                            return null;
-                        }
-                    };
-                    deleteTask.execute();
-                    Log.d("IRC Channel list", "Delete channel");
+                    Bundle bundle = new Bundle();
+                    bundle.putString("path", constant.LOGIN_DATA);
+                    bundle.putString("package_name", constant.LOGIN_PACKAGE);
+                    bundle.putString("id", String.valueOf(id));
+                    getSupportLoaderManager().initLoader(1, bundle, new LoaderManager.LoaderCallbacks<LoadResult<Void>>() {
 
+
+                        @Override
+                        public Loader<LoadResult<Void>> onCreateLoader(int id, Bundle args) {
+                            return new DeleteDataTask(ChannelsListActivity.this,
+                                    args.getString("path"), args.getString("package_name"), args.getString("id"));
+                        }
+
+                        // Note: этото лоаедар ничего не возвращает, хоть и меняет файл.
+                        // На деле это ничего не меняет, так как мы используем data либо сразу при считывание,
+                        // либо при проверки нажатия кнопки удаления канала (т.е. чуть дольше искать будем)
+                        @Override
+                        public void onLoadFinished(Loader<LoadResult<Void>> loader, LoadResult<Void> data) {
+                            loader.reset();
+                        }
+
+                        @Override
+                        public void onLoaderReset(Loader<LoadResult<Void>> loader) {
+                            getSupportLoaderManager().destroyLoader(loader.getId());
+                        }
+                    });
+                    Log.d(TAG, "Delete channel");
                 }
             }
         }
@@ -204,7 +228,7 @@ public class ChannelsListActivity extends AppCompatActivity {
 
 
     public void onAddChannelClick(View v) {
-        Log.d("IRC Channel list", "On add channel click");
+        Log.d(TAG, "On add channel click");
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
     }
@@ -217,31 +241,45 @@ public class ChannelsListActivity extends AppCompatActivity {
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         super.onCreateContextMenu(menu, v, menuInfo);
-        menu.add(0, 1, 0, "Clear cache").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        menu.add(0, 1, 0, "Clear login data").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Log.d("IRC Channel list", "Clear cache");
-                loader.execute();
-                String path = "";
-                try {
-                    ll.removeAllViews();
-                    return new File(loader.get()).delete();
-                } catch (RuntimeException | ExecutionException | InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return false;
+                Log.d(TAG, "Clear login data");
+                ll.removeAllViews();
+                return (new File(constant.LOGIN_DATA).delete());
+            }
+        });
+        menu.add(0, 2, 0, "Clear emoticons").setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                Log.d(TAG, "Clear emoticons from external storage");
+                return deleteDirectory(new File(constant.EMOTICONS_PACKAGE));
             }
         });
 
     }
 
+    private boolean deleteDirectory(File f) {
+        if (!f.exists()) return false;
+        if (f.isFile())
+            return f.delete();
+        if (f.isDirectory()) {
+            File[] subfs = f.listFiles();
+            for (File t : subfs) {
+                deleteDirectory(t);
+            }
+            return f.delete();
+        }
+        return false;
+    }
+
     private void readFromSaveInstance(Bundle savedInstanceState) {
-        Log.d("IRC Chanel List", "Read from save instance");
-        String saveState = savedInstanceState.getString("Login_data");
+        Log.d(TAG, "Read from save instance");
+        String saveState = savedInstanceState.getString(constant.LOGIN_PACKAGE);
         data = new ArrayList<>();
-        StringTokenizer datas = new StringTokenizer(saveState, "\n");
+        StringTokenizer tokenizer = new StringTokenizer(saveState, "\n");
         final String DELIM = "↨";
-        for (String s = datas.nextToken(); datas.hasMoreTokens(); s = datas.nextToken()) {
+        for (String s = tokenizer.nextToken(); tokenizer.hasMoreTokens(); s = tokenizer.nextToken()) {
             StringTokenizer current_data = new StringTokenizer(s, DELIM);
             data.add(new LoginData(current_data));
         }
@@ -251,7 +289,7 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        Log.d("IRC Channel list", "Save state");
+        Log.d(TAG, "Save state");
         super.onSaveInstanceState(outState);
         if (data == null) return;
         StringBuilder result = new StringBuilder();

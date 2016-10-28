@@ -1,6 +1,9 @@
 package irc.android_2016.ifmo.ru.irc.utils;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -13,6 +16,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import irc.android_2016.ifmo.ru.irc.model.LoginData;
+import irc.android_2016.ifmo.ru.irc.model.TwitchEmoticon;
 
 /**
  * Created by Dima Stoyanov on 23.10.2016.
@@ -24,7 +28,7 @@ public class FileUtils {
     /**
      * Класс, реализующий операции в файле. Данные в файле хранятся в следующем виде
      * Каждый набор данных для подключения (server, nick, password, channel)
-     * Хранится в отдельной строке. Разделяется с помощью DELIM.
+     * хранится в отдельной строке. Разделяется с помощью DELIM.
      */
 
     // Символ который никогда не встречается в запросах
@@ -32,37 +36,42 @@ public class FileUtils {
 
 
     /**
-     * Создает временный пустой файл в папке приложения в External Storage
-     * Дтректория: /sdcard/Android/data/<application_package_name>/files/login_data
+     * Создает пустой файл в папке приложения в External Storage
+     * Дтректория: /sdcard/Android/data/<application_package_name>/files/<package_name>
      * <p>
-     * Имя файла генерируется случайным образом, к нему можно добавить расширение. Файл никак
+     * Имя файла задается входящим параметром или генерируется автоматически, если name == null. Файл никак
      * автоматически не удаляется -- получатель сам должен позаботиться об удалении после
      * использования.
      *
-     * @param context   контекст приложения
-     * @param extension расширение, которое будет добавлено в конце имени файла.
+     * @param context      Контекст приложения
+     * @param package_name Имя папки, в которой нужно создать файл
+     * @param name         Имя файла
+     * @param extension    Разширение файла
      * @return новый пустой файл
      * @throws IOException в случае ошибки создания файла.
      */
-    private static File createExternalFile(Context context, String extension) throws IOException {
-        File dir = new File(context.getExternalFilesDir(null), "login_data");
+    @NonNull
+    public static File createExternalFile(@NonNull Context context,
+                                          @NonNull String package_name,
+                                          @Nullable String name,
+                                          @Nullable String extension) throws IOException {
+        File dir = new File(context.getExternalFilesDir(null), package_name);
+
         if (dir.exists() && !dir.isDirectory()) {
             throw new IOException("Not a directory: " + dir);
         }
         if (!dir.exists() && !dir.mkdirs()) {
             throw new IOException("Failed to create directory: " + dir);
         }
-        return File.createTempFile("login_data", extension, dir);
-    }
-
-
-    /**
-     * @param context Контекст
-     * @return Возвращает путь созданного файла
-     * @throws IOException
-     */
-    public static String getPathOfExternalFile(Context context) throws IOException {
-        return createExternalFile(context, "txt").getPath();
+        if (name == null)
+            return File.createTempFile("tmp", extension, dir);
+        File result = new File(dir, name + "." + extension);
+        if (!result.createNewFile()) {
+            Log.d("WTF", result.getPath() + "\n" + result.exists() + " " + result.isFile());
+            throw new IOException("Can't create file " + name + extension + " at package " + package_name);
+        }
+        Log.d("IRC", "Created file " + result.getPath());
+        return result;
     }
 
 
@@ -71,18 +80,25 @@ public class FileUtils {
      *
      * @param path Путь до файла
      * @param data Данные, которые нужно записать
+     * @throws IOException В случае отсустсвтия возможности записи в файл.
      */
-    public static void addData(String path, LoginData data) {
-        File f;
-        try {
-            f = new File(path);
-            FileWriter out = new FileWriter(f, true);
-            int id = Integer.parseInt(getLastId(path)) + 1;
-            out.write(getDataString(String.valueOf(id), data.server, data.nick, data.password, data.channel));
-            out.close();
-        } catch (IOException e) {
-            throw new RuntimeException("Can't save data to storage");
+    public static void addLoginData(@NonNull String path,
+                                    @NonNull LoginData data) throws IOException {
+        File f = new File(path);
+        FileWriter out = new FileWriter(f, true);
+        int id = Integer.parseInt(getLastId(path)) + 1;
+        out.write(getDataString(String.valueOf(id), data.server, data.nick, data.password, data.channel));
+        out.close();
+    }
+
+    public static void addEmoticonData(@NonNull String path, @NonNull List<TwitchEmoticon> data) throws IOException {
+        File f = new File(path);
+        FileWriter out = new FileWriter(f);
+        for (int i = 0; i <data.size() ; i++) {
+            out.write(data.get(i).toString());
         }
+        out.close();
+        Log.d("Emotion data file utils", "Data saved in file " + f.getPath());
     }
 
     /**
@@ -91,7 +107,8 @@ public class FileUtils {
      * @param data Данные, которые нужно записать в файл
      * @return Сгенерированная строка для записи в файл
      */
-    public static String getDataString(String... data) {
+    @NonNull
+    public static String getDataString(@NonNull String... data) {
         StringBuilder result = new StringBuilder();
         for (String s : data) {
             result.append(s).append(DELIM);
@@ -104,12 +121,14 @@ public class FileUtils {
 
     /**
      * Функция, которая считывает весь файл, и вычисляет последний записанный id.
+     * Если файл пустой, возвращает 0.
      *
      * @param path Путь файла, в котором ищется
      * @return id строки данных в файле.
      * @throws IOException
      */
-    private static String getLastId(String path) throws IOException {
+    @NonNull
+    private static String getLastId(@NonNull String path) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(path));
         String temp, result = null;
         while ((temp = reader.readLine()) != null) {
@@ -119,25 +138,23 @@ public class FileUtils {
     }
 
     /**
-     * Считывает файл и возвращает список данных.
+     * Считывает файл и возвращает список данных о логине.
      *
      * @param path Путь до файла
      * @return список данных о логине
+     * @throws IOException Если нет доступа к чтению файла
      */
-    public static List<LoginData> getData(String path) {
+    @NonNull
+    public static List<LoginData> getData(@NonNull String path) throws IOException {
         List<LoginData> result = new ArrayList<>();
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(path));
-            String line;
-            StringTokenizer tokenizer;
-            while ((line = in.readLine()) != null) {
-                tokenizer = new StringTokenizer(line, DELIM);
-                result.add(new LoginData(tokenizer));
-            }
-            in.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        BufferedReader in = new BufferedReader(new FileReader(path));
+        String line;
+        StringTokenizer tokenizer;
+        while ((line = in.readLine()) != null) {
+            tokenizer = new StringTokenizer(line, DELIM);
+            result.add(new LoginData(tokenizer));
         }
+        in.close();
         return result;
     }
 
@@ -147,14 +164,21 @@ public class FileUtils {
      * И записывает все, кроме строчки с заданным id в временный файл
      * Переименовывает временный файл в исходный.
      *
-     * @param context Контекст
-     * @param path    Путь до файла
-     * @param id      id строки, которую нужно удалить
+     * @param context      Контекст активти.
+     * @param path         Путь до файла.
+     * @param package_name Название директории в external storage.
+     * @param extension    Расширение файла
+     * @param id           id строки, которую нужно удалить
+     * @throws IOException В случае отсутствия доступа на запись или чтения файла
      */
-    public static void deleteData(Context context, String path, String id) {
+    public static void deleteData(@NonNull Context context,
+                                  @NonNull String path,
+                                  @NonNull String package_name,
+                                  @NonNull String extension,
+                                  @NonNull String id) throws IOException {
         try {
             File source_file = new File(path);
-            File result_file = createExternalFile(context, "txt");
+            File result_file = createExternalFile(context, package_name, null, extension);
             BufferedReader reader = new BufferedReader(new FileReader(source_file));
             BufferedWriter writer = new BufferedWriter(new FileWriter(result_file));
             String line, current_id;
@@ -166,7 +190,7 @@ public class FileUtils {
             }
             writer.close();
             reader.close();
-            if (!result_file.renameTo(source_file)) {
+            if (!source_file.delete() && !result_file.renameTo(source_file)) {
                 throw new RuntimeException("Can't rename file");
             }
         } catch (IOException e) {
