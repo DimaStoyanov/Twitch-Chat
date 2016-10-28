@@ -4,7 +4,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "24.0.3"
     defaultConfig {
-        applicationId "irc.android_2016.ifmo.ru.irc"
+        applicationId "ru.ifmo.android_2016.irc"
         minSdkVersion 17
         targetSdkVersion 25
         versionCode 1

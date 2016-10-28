@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="irc.android_2016.ifmo.ru.irc"
+    package="ru.ifmo.android_2016.irc"
     android:installLocation="auto">
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
         <activity
-            android:name=".ChannelsListActivity"
+            android:name="ru.ifmo.android_2016.irc.ChannelsListActivity"
             android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,18 +23,18 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".TestActivity"
+            android:name="ru.ifmo.android_2016.irc.TestActivity"
             android:theme="@style/Theme.AppCompat"
             android:windowSoftInputMode="stateHidden" />
         <activity
-            android:name=".ChatActivity"
+            android:name="ru.ifmo.android_2016.irc.ChatActivity"
             android:windowSoftInputMode="stateHidden" />
         <activity
-            android:name=".LoginActivity"
+            android:name="ru.ifmo.android_2016.irc.LoginActivity"
             android:windowSoftInputMode="stateHidden" />
 
         <service
-            android:name=".client.ClientService"
+            android:name="ru.ifmo.android_2016.irc.client.ClientService"
             android:enabled="true"
             android:exported="true" />
     </application>

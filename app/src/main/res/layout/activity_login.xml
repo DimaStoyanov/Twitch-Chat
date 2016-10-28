@@ -4,7 +4,7 @@
     android:id="@+id/activity_login"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="irc.android_2016.ifmo.ru.irc.LoginActivity">
+    tools:context="ru.ifmo.android_2016.irc.LoginActivity">
 
     <ProgressBar
         android:id="@+id/pbar"
