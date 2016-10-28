@@ -11,6 +11,8 @@ import android.widget.Toast;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import irc.android_2016.ifmo.ru.irc.R;
+
 public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
 
@@ -36,7 +38,7 @@ public class ClientService extends Service {
         switch (intent.getAction()) {
             case START_FOREGROUND:
                 startForeground(1, new Notification.Builder(this)
-                        .setSmallIcon(android.R.mipmap.sym_def_app_icon)
+                        .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("Чёт делаем")
                         .setContentText("лол")
                         .build());
@@ -65,7 +67,7 @@ public class ClientService extends Service {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
         Toast.makeText(this, "ClientService.onDestroy()", Toast.LENGTH_SHORT).show();
+        super.onDestroy();
     }
 }

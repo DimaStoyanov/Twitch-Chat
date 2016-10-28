@@ -8,7 +8,6 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -22,8 +21,6 @@ import java.util.regex.Pattern;
 
 public class Client implements Runnable {
     private static final String TAG = Client.class.getSimpleName();
-
-    private boolean isRunning = true;
 
     private ClientService clientService;
     private ClientSettings clientSettings;
@@ -44,43 +41,42 @@ public class Client implements Runnable {
         return true;
     }
 
-    public Exception getLastError() {
-        return null;
-    }
-
-    public boolean joinChannel(String channel) {
-        if (isRunning) {
-            print("JOIN " + channel);
-        }
-        return false;
+    public void joinChannel(String channel) {
+        print("JOIN " + channel);
     }
 
     private BroadcastReceiver sendMessage = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             Message message = (Message) intent.getSerializableExtra("irc.Message");
-            if (isRunning) {
-                print("PRIVMSG " + message.to + " :" + message.text);
-                callbackMessage(message);
-            }
+            print("PRIVMSG " + message.to + " :" + message.text);
+            callbackMessage(message);
         }
     };
 
     public void close() {
-        isRunning = false;
         clientService.lbm.unregisterReceiver(sendMessage);
+        quit();
         try {
-            socket.close();
+            if (socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void quit() {
+        print("QUIT");
+    }
+
+    private void quit(String message) {
+        print("QUIT :" + message);
+    }
+
     @Override
     public void run() {
         try {
-            isRunning = true;
-
             socket = new Socket(clientSettings.address, clientSettings.port);
 
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -99,10 +95,6 @@ public class Client implements Runnable {
                     Log.i(TAG, "Thread.sleep(100)");
                     Thread.sleep(100);
                 }
-                if (!isRunning) {
-                    //TODO:
-                    break;
-                }
             }
 
         } catch (SocketException e) {
@@ -113,16 +105,7 @@ public class Client implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            try {
-                if (socket != null) {
-                    socket.close();
-                }
-            } catch (IOException e) {
-                Log.e("Client.run()", e.toString());
-            }
-            in = null;
-            out = null;
-            isRunning = false;
+            close();
         }
         Log.i("Client.run()", "closed");
     }
@@ -161,9 +144,5 @@ public class Client implements Runnable {
     private boolean callbackMessage(Message msg) {
         clientService.lbm.sendBroadcast(new Intent("new-message").putExtra("irc.Message", msg));
         return true;
-    }
-
-    public boolean isConnected() {
-        return isRunning;
     }
 }

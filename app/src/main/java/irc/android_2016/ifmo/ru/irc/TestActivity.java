@@ -124,7 +124,6 @@ public class TestActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         SharedPreferences pref = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor ed = pref.edit();
         ed.putString("Server", server.getText().toString());
@@ -134,6 +133,7 @@ public class TestActivity extends AppCompatActivity
         ed.commit();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
         startService(new Intent(this, ClientService.class).setAction(ClientService.STOP_CLIENT));
+        super.onDestroy();
     }
 
     @Override
