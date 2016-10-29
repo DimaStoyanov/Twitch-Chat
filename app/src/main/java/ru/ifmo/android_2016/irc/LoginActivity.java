@@ -142,8 +142,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
             @Override
             public void afterTextChanged(Editable editable) {
-                // TODO ya ne mogu v regex, danya sdelay normalno!!!
-
                 nick_status.setImageResource(Pattern.compile("^[_a-z-A-Z0-9]+$").matcher(editable).matches() ?
                         R.drawable.ok : R.drawable.not_ok);
             }
