@@ -127,6 +127,12 @@ public class TestActivity extends AppCompatActivity
     }
 
     @Override
+    public void onBackPressed() {
+        startService(new Intent(this, ClientService.class).setAction(ClientService.STOP_CLIENT));
+        super.onBackPressed();
+    }
+
+    @Override
     protected void onDestroy() {
         SharedPreferences pref = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor ed = pref.edit();
@@ -137,7 +143,6 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Port", port.getText().toString());
         ed.apply();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
-        startService(new Intent(this, ClientService.class).setAction(ClientService.STOP_CLIENT));
         super.onDestroy();
     }
 

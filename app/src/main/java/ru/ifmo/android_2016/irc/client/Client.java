@@ -121,6 +121,7 @@ public class Client implements Runnable {
             //return new Message(message.group());
         }
         if (ping.find()) {
+            Log.i(TAG, "PING caught");
             print("PONG :" + ping.group(1));
         }
         return null;
