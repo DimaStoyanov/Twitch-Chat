@@ -94,7 +94,7 @@ public class FileUtils {
     public static void addEmoticonData(@NonNull String path, @NonNull List<TwitchEmoticon> data) throws IOException {
         File f = new File(path);
         FileWriter out = new FileWriter(f);
-        for (int i = 0; i <data.size() ; i++) {
+        for (int i = 0; i < data.size(); i++) {
             out.write(data.get(i).toString());
         }
         out.close();
@@ -179,6 +179,7 @@ public class FileUtils {
         try {
             File source_file = new File(path);
             File result_file = createExternalFile(context, package_name, null, extension);
+            Log.d("FileUtils", "delete from " + source_file.isFile() + " temp " + result_file.isFile());
             BufferedReader reader = new BufferedReader(new FileReader(source_file));
             BufferedWriter writer = new BufferedWriter(new FileWriter(result_file));
             String line, current_id;

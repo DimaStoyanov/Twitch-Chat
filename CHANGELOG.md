@@ -4,9 +4,10 @@
 
 ### 28.10.2016
 * Появилась первая версия интегрирования emoticons twitch в приложение
-
-  <img alt="Channel list view" src="https://pp.vk.me/c636919/v636919212/3347b/iRA3SA8WfKU.jpg" width="300px" height="187px">
-
+* Появилась "онлайн" проверка формата вводимых данных на экране логина
+    <img alt="Chat view with some twitch emoticons" src="https://pp.vk.me/c636919/v636919212/334ef/cp-_viV8E7c.jpg" height="178px">
+    <img alt="Online checking format of login data" src="https://pp.vk.me/c636919/v636919212/33513/d0S8ff3W2JI.jpg" height="178px">
+  
 ### 24.10.2016
 * Появилась тестовая версия экрана со списком сохраенных каналов.
 * Добавлена возможность отправлять сообщения в чате

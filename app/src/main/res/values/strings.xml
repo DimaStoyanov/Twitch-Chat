@@ -13,4 +13,8 @@
     <string name="forsenlol">#Forsenlol</string>
     <string name="test">TEST</string>
     <string name="settings">settings</string>
+    <string name="id_status">id_status</string>
+    <string name="nick_status">nick_status</string>
+    <string name="pw_status">password_status</string>
+    <string name="channel_status">channel_status</string>
 </resources>

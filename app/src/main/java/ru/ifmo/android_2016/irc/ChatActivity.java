@@ -83,7 +83,9 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         emoticons = new HashMap<>();
         simple_regex_emoticons = new HashSet<>();
         regex_emoticons = new ArrayList<>();
-        prepareEmoticons("global");
+        String ch = getIntent().getExtras().getString("Channel");
+        if (ch == null) return;
+        prepareEmoticons(ch.substring(1));
         initAlert();
     }
 
@@ -220,16 +222,10 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             protected void onPostExecute(Void aVoid) {
                 pb.setVisibility(View.GONE);
-                if (channel.equals("global")) {
-                    String ch = getIntent().getExtras().getString("Channel");
-                    if(ch == null) return;
-                    prepareEmoticons(ch.substring(1));
-                } else {
                     initTask(saveState);
-                }
             }
         };
-        task.executeOnExecutor(Executors.newFixedThreadPool(2));
+        task.execute();
     }
 
 
@@ -317,8 +313,8 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         protected void onCancelled() {
             super.onCancelled();
             try {
-                if(socket != null)
-                socket.close();
+                if (socket != null)
+                    socket.close();
             } catch (IOException x) {
                 Log.e("IRCTask.onCanceled", x.getMessage());
             }

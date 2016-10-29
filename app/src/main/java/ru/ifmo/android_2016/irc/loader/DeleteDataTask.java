@@ -21,7 +21,7 @@ public class DeleteDataTask extends AsyncTaskLoader<LoadResult<Void>> {
     private final String path;
     private final String package_name;
     private final String id;
-    private final String extension = ".bin";
+    private final String extension = "bin";
 
 
     public DeleteDataTask(Context context, String path, String package_name, String id) {
@@ -32,6 +32,10 @@ public class DeleteDataTask extends AsyncTaskLoader<LoadResult<Void>> {
         this.id = id;
     }
 
+    @Override
+    protected void onStartLoading() {
+        forceLoad();
+    }
 
     @Override
     public LoadResult<Void> loadInBackground() {
@@ -41,7 +45,7 @@ public class DeleteDataTask extends AsyncTaskLoader<LoadResult<Void>> {
             resultType = ResultType.OK;
         } catch (IOException e) {
             e.printStackTrace();
-            Log.e(TAG, "Error deletting login data");
+            Log.e(TAG, "Error deleting login data");
         }
         return new LoadResult<>(resultType, null);
     }
