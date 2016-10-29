@@ -13,11 +13,25 @@
     android:weightSum="1"
     tools:context="ru.ifmo.android_2016.irc.TestActivity">
 
-    <EditText
-        android:id="@+id/server"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Server address:port" />
+        android:orientation="horizontal">
+
+        <EditText
+            android:id="@+id/server"
+            android:layout_weight="3"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:hint="Server address" />
+
+        <EditText
+            android:id="@+id/port"
+            android:hint="Port"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent" />
+    </LinearLayout>
 
     <EditText
         android:id="@+id/nick"
@@ -31,11 +45,12 @@
         android:layout_height="wrap_content"
         android:hint="Password (if required)"
         android:inputType="textPassword" />
+
     <EditText
         android:id="@+id/channel"
-        android:hint="#channel"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:hint="#channel" />
 
     <Button
         android:id="@+id/connectButton"
@@ -59,19 +74,20 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        >
+        android:orientation="horizontal">
+
         <EditText
             android:id="@+id/typeMessage"
-            android:hint="Type text"
             android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_height="match_parent" />
+            android:hint="Type text" />
+
         <Button
             android:id="@+id/sendButton"
-            android:text="Send"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent" />
+            android:layout_height="match_parent"
+            android:text="Send" />
     </LinearLayout>
 
 

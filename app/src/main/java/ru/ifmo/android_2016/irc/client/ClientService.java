@@ -45,19 +45,24 @@ public class ClientService extends Service {
                 break;
             case START_CLIENT:
                 if (client == null) {
-                    client = new Client(this);
-                    client.connect((ClientSettings) intent.getSerializableExtra("ClientSettings"));
+                    client = new TwitchClient(this);
+                    client.connect((ClientSettings) intent
+                            .getSerializableExtra("ru.ifmo.android_2016.irc.ClientSettings"));
                 }
                 break;
             case STOP_CLIENT:
-                if (client != null) {
-                    client.close();
-                    client = null;
-                }
+                closeClient();
                 break;
             default:
         }
         return START_STICKY;
+    }
+
+    protected void closeClient() {
+        if (client != null) {
+            client.close();
+            client = null;
+        }
     }
 
     @Override
@@ -68,6 +73,7 @@ public class ClientService extends Service {
     @Override
     public void onDestroy() {
         Toast.makeText(this, "ClientService.onDestroy()", Toast.LENGTH_SHORT).show();
+        closeClient();
         super.onDestroy();
     }
 }

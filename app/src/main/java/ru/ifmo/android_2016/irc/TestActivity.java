@@ -16,13 +16,11 @@ import android.widget.TextView;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.R;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.Message;
 
 import static android.view.View.GONE;
-import static ru.ifmo.android_2016.irc.client.ClientSettings.Builder;
 
 public class TestActivity extends AppCompatActivity
         implements View.OnClickListener {
@@ -38,7 +36,7 @@ public class TestActivity extends AppCompatActivity
     BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Message msg = (Message) intent.getSerializableExtra("irc.Message");
+            Message msg = (Message) intent.getSerializableExtra("ru.ifmo.android_2016.irc.Message");
             text.append("<" + msg.from + " to " + msg.to + "> " + msg.text + "\n");
             scroll.post(new Runnable() {
                 @Override
@@ -49,6 +47,7 @@ public class TestActivity extends AppCompatActivity
         }
     };
     private EditText typeMessage;
+    private EditText port;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,6 +60,7 @@ public class TestActivity extends AppCompatActivity
         text = (TextView) findViewById(R.id.text);
         scroll = (ScrollView) findViewById(R.id.scroll);
         typeMessage = (EditText) findViewById(R.id.typeMessage);
+        port = (EditText) findViewById(R.id.port);
 
         if (savedInstanceState != null) {
             server.setText(savedInstanceState.getString("Server"));
@@ -68,6 +68,7 @@ public class TestActivity extends AppCompatActivity
             password.setText(savedInstanceState.getString("Password"));
             channel.setText(savedInstanceState.getString("Channel"));
             text.setText(savedInstanceState.getString("Text"));
+            port.setText(savedInstanceState.getString("Port"));
 
             if (savedInstanceState.getBoolean("isConnected")) {
                 disableEdits();
@@ -83,7 +84,7 @@ public class TestActivity extends AppCompatActivity
                 LocalBroadcastManager
                         .getInstance(TestActivity.this)
                         .sendBroadcast(new Intent("send-message")
-                                .putExtra("irc.Message",
+                                .putExtra("ru.ifmo.android_2016.irc.Message",
                                         new Message(
                                                 nick.getText().toString(),
                                                 channel.getText().toString(),
@@ -100,6 +101,7 @@ public class TestActivity extends AppCompatActivity
         nick.setText(pref.getString("Nick", ""));
         password.setText(pref.getString("Password", ""));
         channel.setText(pref.getString("Channel", ""));
+        port.setText(pref.getString("Port", ""));
     }
 
     void disableEdits() {
@@ -108,6 +110,7 @@ public class TestActivity extends AppCompatActivity
         password.setVisibility(GONE);
         channel.setEnabled(false);
         findViewById(R.id.connectButton).setVisibility(GONE);
+        port.setVisibility(GONE);
         isConnected = true;
     }
 
@@ -120,6 +123,7 @@ public class TestActivity extends AppCompatActivity
         outState.putString("Password", password.getText().toString());
         outState.putString("Channel", channel.getText().toString());
         outState.putString("Text", text.getText().toString());
+        outState.putString("Port", port.getText().toString());
     }
 
     @Override
@@ -130,7 +134,8 @@ public class TestActivity extends AppCompatActivity
         ed.putString("Nick", nick.getText().toString());
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
-        ed.commit();
+        ed.putString("Port", port.getText().toString());
+        ed.apply();
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
         startService(new Intent(this, ClientService.class).setAction(ClientService.STOP_CLIENT));
         super.onDestroy();
@@ -138,22 +143,18 @@ public class TestActivity extends AppCompatActivity
 
     @Override
     public void onClick(View v) {
-        Matcher addrport = Pattern.compile("([\\w.]+):?(\\d+)?").matcher(server.getText().toString());
+        clientSettings = new ClientSettings.Builder()
+                .setAddress(server.getText().toString())
+                .setPort(Integer.decode(port.getText().toString()))
+                .setPassword(password.getText().toString())
+                .addNicks(nick.getText().toString())
+                .setChannels(channel.getText().toString())
+                .build();
 
-        if (addrport.find()) {
-            clientSettings = new Builder()
-                    .setAddress(addrport.group(1))
-                    .setPort(Integer.decode(addrport.group(2)))
-                    .setPassword(password.getText().toString())
-                    .addNicks(nick.getText().toString())
-                    .addChannels(channel.getText().toString().split(", "))
-                    .build();
-
-            Intent intent = new Intent(TestActivity.this, ClientService.class);
-            intent.setAction(ClientService.START_CLIENT);
-            intent.putExtra("ClientSettings", clientSettings);
-            startService(intent);
-        }
+        Intent intent = new Intent(TestActivity.this, ClientService.class);
+        intent.setAction(ClientService.START_CLIENT);
+        intent.putExtra("ru.ifmo.android_2016.irc.ClientSettings", clientSettings);
+        startService(intent);
         disableEdits();
     }
 }

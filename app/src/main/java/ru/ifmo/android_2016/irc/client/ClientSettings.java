@@ -10,18 +10,18 @@ import java.util.Queue;
  */
 
 public class ClientSettings implements Serializable {
-    final String address, username, password;
-    final Queue<String> nicks, joinList;
+    final String address, username, password, channels;
+    final Queue<String> nicks;
     final int port;
     final boolean ssl;
 
     private ClientSettings(String address, String username, String password, Queue<String> nicks,
-                           Queue<String> joinList, int port, boolean ssl) {
+                           String channels, int port, boolean ssl) {
         this.address = address;
         this.username = username;
         this.password = password;
         this.nicks = nicks;
-        this.joinList = joinList;
+        this.channels = channels;
         this.port = port;
         this.ssl = ssl;
     }
@@ -32,8 +32,8 @@ public class ClientSettings implements Serializable {
         boolean ssl = false;
         String username;
         String password;
+        String joinList;
         Queue<String> nicks = new LinkedList<>();
-        Queue<String> joinList = new LinkedList<>();
 
         public ClientSettings.Builder setAddress(String address) {
             this.address = address;
@@ -65,13 +65,13 @@ public class ClientSettings implements Serializable {
             return this;
         }
 
-        public ClientSettings.Builder addChannels(String... channels) {
-            Collections.addAll(this.joinList, channels);
-            return this;
-        }
-
         public ClientSettings build() {
             return new ClientSettings(address, username, password, nicks, joinList, port, ssl);
+        }
+
+        public ClientSettings.Builder setChannels(String string) {
+            joinList = string;
+            return this;
         }
     }
 }
