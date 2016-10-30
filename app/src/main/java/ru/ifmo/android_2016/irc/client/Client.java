@@ -10,9 +10,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.net.Socket;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by ghost on 10/24/2016.
@@ -95,7 +94,7 @@ public class Client implements Runnable {
 
     protected void actions() throws IOException, InterruptedException {
         enterPassword(clientSettings.password);
-        enterNick(clientSettings.nicks.element());
+        enterNick(clientSettings.nicks);
         joinChannels(clientSettings.channels);
 
         loop();
@@ -114,24 +113,25 @@ public class Client implements Runnable {
     }
 
     protected Message parse(String s) {
-        Matcher message = Message.pattern.matcher(s);
-        Matcher ping = Pattern.compile("PING ?:?(.*)").matcher(s);
-        if (message.find()) {
-            return Message.fromString(message.group());
-            //return new Message(message.group());
+        Message msg = Message.fromString(s);
+        switch (msg.command) {
+            case "PING":
+                Log.i(TAG, "PING caught");
+                print("PONG " + msg.trailing);
+                return null;
+            case "PRIVMSG":
+                return msg;
+            default:
+                return null;
         }
-        if (ping.find()) {
-            Log.i(TAG, "PING caught");
-            print("PONG :" + ping.group(1));
-        }
-        return null;
     }
 
     protected void enterPassword(String password) {
         print("PASS " + password);
     }
 
-    protected void enterNick(String nick) {
+    protected void enterNick(String[] nicks) {
+        String nick = nicks[0];
         print("NICK " + nick);
     }
 

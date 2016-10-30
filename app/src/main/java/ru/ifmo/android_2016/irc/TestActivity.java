@@ -13,9 +13,6 @@ import android.widget.EditText;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.Message;
@@ -36,7 +33,7 @@ public class TestActivity extends AppCompatActivity
     BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Message msg = (Message) intent.getSerializableExtra("ru.ifmo.android_2016.irc.Message");
+            Message msg = intent.getParcelableExtra("ru.ifmo.android_2016.irc.Message");
             text.append("<" + msg.from + " to " + msg.to + "> " + msg.text + "\n");
             scroll.post(new Runnable() {
                 @Override
@@ -157,7 +154,7 @@ public class TestActivity extends AppCompatActivity
                 .build();
 
         Intent intent = new Intent(TestActivity.this, ClientService.class);
-        intent.setAction(ClientService.START_CLIENT);
+        intent.setAction(ClientService.START_TWITCH_CLIENT);
         intent.putExtra("ru.ifmo.android_2016.irc.ClientSettings", clientSettings);
         startService(intent);
         disableEdits();

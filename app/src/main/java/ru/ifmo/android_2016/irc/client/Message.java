@@ -1,12 +1,11 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.util.Log;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -14,30 +13,19 @@ import java.util.regex.Pattern;
  * Created by ghost on 10/23/2016.
  */
 
-public class Message implements Serializable {
+public class Message implements Parcelable {
     private static final String TAG = Message.class.getSimpleName();
 
-    public static final Pattern pattern =
-            Pattern.compile(":([\\w]+)![\\w@.]+ [\\w]+ (#?[\\w]+) :(.*)");
     public String from, to, text;
     public Date date;
     String opt_prefix;
     String command;
     String params;
-    String param;
+    String trailing;
     String serverName;
     String nickName;
     String userName;
     String hostName;
-
-    public Message(String string) {
-        Matcher matcher = Message.pattern.matcher(string);
-        if (matcher.find()) {
-            from = matcher.group(1);
-            to = matcher.group(2);
-            text = matcher.group(3);
-        }
-    }
 
     protected Message() {
     }
@@ -53,11 +41,11 @@ public class Message implements Serializable {
             Prefix.parse(this, MessagePattern.group(matcher, "prefix"));
             command = MessagePattern.group(matcher, "command");
             params = MessagePattern.group(matcher, "params");
-            param = MessagePattern.group(matcher, "param");
+            trailing = MessagePattern.group(matcher, "trailing");
         }
         from = nickName;
         to = params;
-        text = param;
+        text = trailing;
         //Log.i(TAG, serverName + " " + nickName + " " + userName + " " + hostName);
         return this;
     }
@@ -91,14 +79,14 @@ public class Message implements Serializable {
                 "(?:@([^ ]+) )?" +  //opt-prefix
                         "(?::([^ ]+) )?" +  //prefix
                         "([\\w]+)" + //command
-                        "(?:(?: ([^: ][^ ]*))*(?: :(.*))?)?"); //params / param
+                        "(?:(?: ([^: ][^ ]*))*(?: :(.*))?)?"); //params / trailing
 
         static {
             map.put("opt-prefix", 1);
             map.put("prefix", 2);
             map.put("command", 3);
             map.put("params", 4);
-            map.put("param", 5);
+            map.put("trailing", 5);
         }
 
         public static String group(Matcher matcher, String group) {
@@ -109,4 +97,53 @@ public class Message implements Serializable {
             return message.matcher(s);
         }
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.from);
+        dest.writeString(this.to);
+        dest.writeString(this.text);
+        dest.writeLong(this.date != null ? this.date.getTime() : -1);
+        dest.writeString(this.opt_prefix);
+        dest.writeString(this.command);
+        dest.writeString(this.params);
+        dest.writeString(this.trailing);
+        dest.writeString(this.serverName);
+        dest.writeString(this.nickName);
+        dest.writeString(this.userName);
+        dest.writeString(this.hostName);
+    }
+
+    protected Message(Parcel in) {
+        this.from = in.readString();
+        this.to = in.readString();
+        this.text = in.readString();
+        long tmpDate = in.readLong();
+        this.date = tmpDate == -1 ? null : new Date(tmpDate);
+        this.opt_prefix = in.readString();
+        this.command = in.readString();
+        this.params = in.readString();
+        this.trailing = in.readString();
+        this.serverName = in.readString();
+        this.nickName = in.readString();
+        this.userName = in.readString();
+        this.hostName = in.readString();
+    }
+
+    public static final Parcelable.Creator<Message> CREATOR = new Parcelable.Creator<Message>() {
+        @Override
+        public Message createFromParcel(Parcel source) {
+            return new Message(source);
+        }
+
+        @Override
+        public Message[] newArray(int size) {
+            return new Message[size];
+        }
+    };
 }

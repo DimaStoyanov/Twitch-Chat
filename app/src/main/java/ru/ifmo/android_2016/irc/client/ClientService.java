@@ -17,7 +17,7 @@ public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
 
     public static final String START_FOREGROUND = "start-foreground";
-    public static final String START_CLIENT = "start-client";
+    public static final String START_TWITCH_CLIENT = "start-client";
     public static final String STOP_CLIENT = "stop-client";
     LocalBroadcastManager lbm;
     Executor executor = Executors.newCachedThreadPool();
@@ -43,11 +43,12 @@ public class ClientService extends Service {
                         .setContentText("лол")
                         .build());
                 break;
-            case START_CLIENT:
+            case START_TWITCH_CLIENT:
                 if (client == null) {
                     client = new TwitchClient(this);
-                    client.connect((ClientSettings) intent
-                            .getSerializableExtra("ru.ifmo.android_2016.irc.ClientSettings"));
+                    client.connect(intent
+                            .<ClientSettings>getParcelableExtra(
+                                    "ru.ifmo.android_2016.irc.ClientSettings"));
                 }
                 break;
             case STOP_CLIENT:

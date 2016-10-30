@@ -18,11 +18,11 @@ public final class TwitchClient extends Client {
     @Override
     protected void actions() throws IOException, InterruptedException {
         enterPassword(clientSettings.password);
-        enterNick(clientSettings.nicks.element());
-        joinChannels(clientSettings.channels);
+        enterNick(clientSettings.nicks);
         capReq("twitch.tv/membership");
         capReq("twitch.tv/commands");
         capReq("twitch.tv/tags");
+        joinChannels(clientSettings.channels);
 
         loop();
     }
