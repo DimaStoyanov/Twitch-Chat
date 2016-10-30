@@ -1,7 +1,5 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.util.Log;
-
 import java.io.IOException;
 
 /**
@@ -29,5 +27,10 @@ public final class TwitchClient extends Client {
 
     private void capReq(String s) {
         print("CAP REQ :" + s);
+    }
+
+    @Override
+    protected Message getMessageFromString(String s) {
+        return TwitchMessage.fromString(s);
     }
 }

@@ -1,12 +1,48 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.graphics.Color;
+import android.support.annotation.NonNull;
+import android.util.Log;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.UnknownFormatConversionException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by ghost on 10/29/2016.
  */
 
 public final class TwitchMessage extends Message {
+    private final static String TAG = TwitchMessage.class.getSimpleName();
+
+    private Badge[] badges;
+    private int color;
+    private String displayName;
+    private String id;
+    private boolean mod;
+    private boolean subscriber;
+    private boolean turbo;
+    private String roomId;
+    private String userId;
+    private boolean r9k;
+    private boolean subsOnly;
+    private int slow;
+    private String msgId;
+    private int msg;
+    private String systemMsg;
+    private String login;
+    private int banDuration;
+    private String banReason;
+    private List<Emote> emotes;
+    private String userType;
+    private int bits;
+    private String broadcasterLang;
+    private String emoteSets;
 
     private TwitchMessage() {
     }
@@ -32,7 +68,164 @@ public final class TwitchMessage extends Message {
                 }
                 map.put(key, value);
             }
+            addToMessage(map);
         }
         return this;
+    }
+
+    private void addToMessage(HashMap<String, String> map) {
+        Log.i(TAG, map.values().toString());
+        badges = parseBadges(map.get("badges"));
+        color = parseColor(map.get("color"));
+        displayName = map.get("display-name");
+        emotes = parseEmotes(map.get("emotes"));
+        id = map.get("id");
+        mod = parseBool(map.get("mod"));
+        subscriber = parseBool(map.get("subscriber"));
+        turbo = parseBool(map.get("turbo"));
+        roomId = map.get("room-id");
+        userId = map.get("user-id");
+        userType = parseUserType(map.get("user-type"));
+        bits = parseNumber(map.get("bits"));
+
+        emoteSets = map.get("emote-sets");
+
+        broadcasterLang = map.get("broadcaster-lang");
+        r9k = parseBool(map.get("r9k"));
+        subsOnly = parseBool(map.get("subs-only"));
+        slow = parseNumber(map.get("slow"));
+
+        msgId = parseMsgId(map.get("msg-id"));
+        msg = parseNumber(map.get("msg-param-months"));
+        systemMsg = parseMessage(map.get("system-msg"));
+        login = map.get("login");
+
+        banDuration = parseNumber(map.get("ban-duration"));
+        banReason = parseMessage(map.get("ban-reason"));
+    }
+
+    private int parseColor(String color) {
+        if (color == null) {
+            return 0;
+        }
+        return Color.parseColor(color);
+    }
+
+    private static int parseNumber(String number) {
+        if (number == null) {
+            return 0;
+        }
+        return Integer.parseInt(number);
+    }
+
+    private String parseUserType(String type) {
+        //TODO:
+        return type;
+    }
+
+    private List<Emote> parseEmotes(String emotes) {
+        if (emotes == null) {
+            return null;
+        }
+        String[] emote = emotes.split("/");
+        List<Emote> result = new ArrayList<>(4);
+
+        for (String e : emote) {
+            Matcher matcher = Emote.pattern.matcher(e);
+            if(matcher.matches()) {
+                for (int i = 2; i < matcher.groupCount(); i += 2) {
+                    result.add(new Emote(
+                            matcher.group(1),
+                            parseNumber(matcher.group(i)),
+                            parseNumber(matcher.group(i + 1))));
+                }
+                Collections.sort(result);
+            } else {
+                throw null;
+            }
+        }
+        return result;
+    }
+
+    private Badge[] parseBadges(String badges) {
+        if (badges == null) {
+            return null;
+        }
+        String[] badge = badges.split(",");
+        Badge[] result = new Badge[badge.length];
+        for (int i = 0; i < badge.length; i++) {
+            result[i] = new Badge(badge[i]);
+        }
+        return result;
+    }
+
+    private String parseMsgId(String msgId) {
+        //TODO:
+        return null;
+    }
+
+    private String parseMessage(String message) {
+        if (message == null) {
+            return null;
+        }
+        return message.replaceAll("\\s", " ");
+    }
+
+    private boolean parseBool(String value) {
+        if (value == null) {
+            return false;
+        }
+        switch (value) {
+            case "false":
+            case "0":
+                return false;
+            case "true":
+            case "1":
+                return true;
+            default:
+                throw new UnknownFormatConversionException(value);
+        }
+    }
+
+    private static class Badge {
+        private final int value;
+        private final String name;
+
+        public Badge(String badge) {
+            String[] p = badge.split("/");
+            if (p.length >= 2) {
+                name = p[0];
+                value = parseNumber(p[1]);
+            } else {
+                name = null;
+                value = 0;
+            }
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    private static class Emote implements Comparable<Emote> {
+        private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:(\\d+)-(\\d+),)*(?:(\\d+)-(\\d+))");
+        private final String emoteName;
+        private final int begin;
+        private final int end;
+
+        public Emote(String emoteName, int begin, int end) {
+            this.emoteName = emoteName;
+            this.begin = begin;
+            this.end = end;
+        }
+
+        @Override
+        public int compareTo(@NonNull Emote o) {
+            return this.begin - o.begin;
+        }
     }
 }

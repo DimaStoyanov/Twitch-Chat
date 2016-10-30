@@ -61,13 +61,15 @@ public class Message implements Parcelable {
                 Pattern.compile("([\\w.-]+)|(?:([\\w_]+)(?:(?:!([\\w]+))?@([\\w.-]+))?)");
 
         private static boolean parse(Message message, String s) {
-            Matcher matcher = pattern.matcher(s);
-            if (matcher.matches()) {
-                message.serverName = matcher.group(1);
-                message.nickName = matcher.group(2);
-                message.userName = matcher.group(3);
-                message.hostName = matcher.group(4);
-                return true;
+            if (s != null) {
+                Matcher matcher = pattern.matcher(s);
+                if (matcher.matches()) {
+                    message.serverName = matcher.group(1);
+                    message.nickName = matcher.group(2);
+                    message.userName = matcher.group(3);
+                    message.hostName = matcher.group(4);
+                    return true;
+                }
             }
             return false;
         }

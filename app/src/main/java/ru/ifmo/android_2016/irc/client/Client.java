@@ -113,7 +113,7 @@ public class Client implements Runnable {
     }
 
     protected Message parse(String s) {
-        Message msg = Message.fromString(s);
+        Message msg = getMessageFromString(s);
         switch (msg.command) {
             case "PING":
                 Log.i(TAG, "PING caught");
@@ -124,6 +124,10 @@ public class Client implements Runnable {
             default:
                 return null;
         }
+    }
+
+    protected Message getMessageFromString(String s) {
+        return Message.fromString(s);
     }
 
     protected void enterPassword(String password) {
