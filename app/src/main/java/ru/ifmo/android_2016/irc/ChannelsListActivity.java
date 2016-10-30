@@ -1,36 +1,50 @@
 package ru.ifmo.android_2016.irc;
 
 
+import android.app.Activity;
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import ru.ifmo.android_2016.irc.R;
 import ru.ifmo.android_2016.irc.constant.FilePathConstant;
 import ru.ifmo.android_2016.irc.loader.DeleteDataTask;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
 import ru.ifmo.android_2016.irc.loader.LoginReadTask;
 import ru.ifmo.android_2016.irc.loader.ResultType;
+import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
 import ru.ifmo.android_2016.irc.model.LoginData;
+import ru.ifmo.android_2016.irc.utils.SessionStore;
+
+import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.OAUTH_URL;
+import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.REDIRECT_URL;
 
 public class ChannelsListActivity extends AppCompatActivity {
 
@@ -49,7 +63,7 @@ public class ChannelsListActivity extends AppCompatActivity {
         constant = new FilePathConstant(this);
         ll = (LinearLayout) findViewById(R.id.channels_ll);
         pb = (ProgressBar) findViewById(R.id.pbar);
-        registerForContextMenu(findViewById(R.id.settings));
+//        registerForContextMenu(findViewById(R.id.settings));
     }
 
 
@@ -131,6 +145,199 @@ public class ChannelsListActivity extends AppCompatActivity {
         });
     }
 
+
+    public void onTwitchLoginClick(View v) {
+
+        final Dialog dialog = new Dialog(this);
+        dialog.getWindow().setTitle("Twitch OAuth 2.0");
+
+        dialog.setCancelable(true);
+        dialog.setContentView(R.layout.twitch_dialog);
+        WebView wv = (WebView) dialog.findViewById(R.id.wv);
+        final ProgressBar progressBar = (ProgressBar) dialog.findViewById(R.id.pbar);
+        wv.getSettings().setJavaScriptEnabled(true);
+        wv.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                progressBar.setProgress(newProgress);
+            }
+        });
+        wv.setWebViewClient(new WebViewClient() {
+
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                progressBar.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                progressBar.setVisibility(View.GONE);
+                progressBar.setMax(100);
+                progressBar.setProgress(0);
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                if (url.startsWith(REDIRECT_URL)) {
+                    dialog.cancel();
+                    parseResult(url);
+                    return true;
+                }
+                return false;
+
+            }
+        });
+        wv.loadUrl(OAUTH_URL);
+        dialog.show();
+        pb.setVisibility(View.VISIBLE);
+//        alert.show();
+    }
+
+    private void parseResult(String url) {
+        final Uri uri = Uri.parse(url);
+        final String fragment = uri.getFragment();
+
+        if (fragment == null) {
+            finish();
+            return;
+        }
+
+        String error = null;
+        String accessToken = null;
+        String sessionSecretKey = null;
+
+        int off = 0;
+        int equalSignPosition;
+        int length = fragment.length();
+
+        while (off < length && (equalSignPosition = fragment.indexOf('=', off)) != -1) {
+            final String key = fragment.substring(off, equalSignPosition);
+            final int andSignPosition = fragment.indexOf('&', equalSignPosition + 1);
+            final int valueEnd = andSignPosition > equalSignPosition ? andSignPosition : length;
+            final String value = fragment.substring(equalSignPosition + 1, valueEnd);
+            switch (key) {
+                case "access_token":
+                    accessToken = value;
+                    break;
+                case "session_secret_key":
+                    sessionSecretKey = value;
+                    break;
+                case "error":
+                    error = value;
+                    break;
+            }
+            off = valueEnd + 1;
+        }
+
+        final Intent data = new Intent();
+        if (!TextUtils.isEmpty(accessToken) /*&& !TextUtils.isEmpty(sessionSecretKey)*/) {
+            SessionStore.getInstance().updateKeys(this, accessToken, sessionSecretKey);
+            setResult(Activity.RESULT_OK);
+        }
+        if (!TextUtils.isEmpty(error)) {
+            data.putExtra("error", error);
+        }
+        Log.d("token", accessToken);
+        getSupportLoaderManager().initLoader(10, null, new NickLoaderCallback(accessToken));
+    }
+
+    private class NickLoaderCallback implements LoaderManager.LoaderCallbacks<LoadResult<String>> {
+        private final String token;
+
+        NickLoaderCallback(String access_token) {
+            token = access_token;
+        }
+
+        @Override
+        public Loader<LoadResult<String>> onCreateLoader(int id, Bundle args) {
+            return new TwitchUserNickLoader(ChannelsListActivity.this, token);
+        }
+
+        @Override
+        public void onLoadFinished(Loader<LoadResult<String>> loader, final LoadResult<String> result) {
+            Log.d(TAG, "Load login data finished");
+            AlertDialog.Builder builder;
+            final AlertDialog alert;
+            if (result.resultType == ResultType.OK) {
+                final EditText text = new EditText(ChannelsListActivity.this);
+                text.setText("#");
+                text.setSelection(1);
+                builder = new AlertDialog.Builder(ChannelsListActivity.this)
+                        .setCancelable(true)
+                        .setTitle("Type channel")
+                        .setMessage("You can also type several channels, separated by a comma")
+                        .setView(text)
+                        .setPositiveButton("OK", null)
+                        .setNegativeButton("Cancel", null);
+
+                alert = builder.create();
+                alert.setOnShowListener(new DialogInterface.OnShowListener() {
+                    @Override
+                    public void onShow(DialogInterface dialogInterface) {
+                        alert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                            Toast toast = new Toast(ChannelsListActivity.this);
+
+                            @Override
+                            public void onClick(View view) {
+                                Log.d(TAG, "EditText view " + text.getText());
+                                if (!text.getText().toString().equals("#")) {
+                                    Intent intent = new Intent(ChannelsListActivity.this, ChatActivity.class);
+                                    intent.putExtra("Server", "irc.chat.twitch.tv:6667");
+                                    intent.putExtra("Nick", result.data);
+                                    intent.putExtra("Password", "oauth:" + token);
+                                    intent.putExtra("Channel", text.getText().toString());
+                                    intent.putExtra("Saved", false);
+                                    Log.d("nick", result.data);
+                                    startActivity(intent);
+                                    alert.dismiss();
+                                } else {
+                                    toast.cancel();
+                                    toast = Toast.makeText(ChannelsListActivity.this, "Empty channel", Toast.LENGTH_SHORT);
+                                    toast.show();
+                                }
+                            }
+                        });
+                        alert.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                alert.dismiss();
+                            }
+                        });
+                    }
+                });
+                pb.setVisibility(View.GONE);
+                alert.show();
+                Log.d(TAG, "Twitch Authorized successfully");
+            } else {
+                builder = new AlertDialog.Builder(ChannelsListActivity.this)
+                        .setCancelable(false).setTitle("File reading error")
+                        .setMessage("Can't read login data from external storage")
+                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.cancel();
+                            }
+                        })
+                        .setNegativeButton("Retry", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                dialogInterface.cancel();
+                                readFromCache();
+                            }
+                        });
+                alert = builder.create();
+                alert.show();
+            }
+
+            pb.setVisibility(View.GONE);
+            getSupportLoaderManager().destroyLoader(loader.getId());
+        }
+
+        @Override
+        public void onLoaderReset(Loader<LoadResult<String>> loader) {
+
+        }
+    }
 
     private void addChannels(List<LoginData> data) {
         if (data == null) {

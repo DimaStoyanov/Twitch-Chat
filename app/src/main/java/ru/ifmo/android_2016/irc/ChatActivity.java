@@ -34,11 +34,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.R;
 import ru.ifmo.android_2016.irc.constant.FilePathConstant;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;

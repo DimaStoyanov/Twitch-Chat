@@ -17,4 +17,6 @@
     <string name="nick_status">nick_status</string>
     <string name="pw_status">password_status</string>
     <string name="channel_status">channel_status</string>
+    <string name="connect_via_twitch">connect via Twitch</string>
+    <string name="edit">edit</string>
 </resources>

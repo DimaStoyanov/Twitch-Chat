@@ -21,7 +21,6 @@ import ru.ifmo.android_2016.irc.api.TwitchApi;
 import ru.ifmo.android_2016.irc.constant.FilePathConstant;
 import ru.ifmo.android_2016.irc.exception.BadResponseException;
 import ru.ifmo.android_2016.irc.model.TwitchEmoticon;
-import ru.ifmo.android_2016.irc.utils.DownloadUtils;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
 import ru.ifmo.android_2016.irc.utils.IOUtils;
 
@@ -110,7 +109,7 @@ public class TwitchEmotionsLoader extends AsyncTaskLoader<LoadResult<List<Twitch
         private final String SUB_ROOT = "emoticons";
         private final FilePathConstant constant;
 
-        public Parser(Context context, String channel, FilePathConstant constant) {
+        Parser(Context context, String channel, FilePathConstant constant) {
             this.context = context;
             this.channel = channel;
             this.constant = constant;

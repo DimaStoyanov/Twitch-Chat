@@ -10,7 +10,7 @@ import java.io.File;
  * Start time : 22:59
  */
 
-public class FilePathConstant {
+public final class FilePathConstant {
 
     /**
      * Путь до файла, хранящего данные для входа на каналы.

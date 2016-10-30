@@ -33,4 +33,5 @@ dependencies {
     compile 'com.facebook.stetho:stetho-urlconnection:1.4.1'
     compile 'com.facebook.fresco:fresco:0.10.0'
     compile 'com.facebook.fresco:animated-gif:0.10.0'
+    compile 'com.android.support:design:25.0.0'
 }
