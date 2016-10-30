@@ -1,6 +1,7 @@
 package ru.ifmo.android_2016.irc.client;
 
 import android.graphics.Color;
+import android.os.Parcel;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -20,7 +21,7 @@ import java.util.regex.Pattern;
 public final class TwitchMessage extends Message {
     private final static String TAG = TwitchMessage.class.getSimpleName();
 
-    private Badge[] badges;
+    private List<Badge> badges;
     private int color;
     private String displayName;
     private String id;
@@ -147,14 +148,14 @@ public final class TwitchMessage extends Message {
         return result;
     }
 
-    private Badge[] parseBadges(String badges) {
+    private List<Badge> parseBadges(String badges) {
         if (badges == null) {
             return null;
         }
         String[] badge = badges.split(",");
-        Badge[] result = new Badge[badge.length];
+        List<Badge> result = new ArrayList<>(badge.length);
         for (int i = 0; i < badge.length; i++) {
-            result[i] = new Badge(badge[i]);
+            result.add(i, new Badge(badge[i]));
         }
         return result;
     }
@@ -228,4 +229,78 @@ public final class TwitchMessage extends Message {
             return this.begin - o.begin;
         }
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        super.writeToParcel(dest, flags);
+        dest.writeList(this.badges);
+        dest.writeInt(this.color);
+        dest.writeString(this.displayName);
+        dest.writeString(this.id);
+        dest.writeByte(this.mod ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.subscriber ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.turbo ? (byte) 1 : (byte) 0);
+        dest.writeString(this.roomId);
+        dest.writeString(this.userId);
+        dest.writeByte(this.r9k ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.subsOnly ? (byte) 1 : (byte) 0);
+        dest.writeInt(this.slow);
+        dest.writeString(this.msgId);
+        dest.writeInt(this.msg);
+        dest.writeString(this.systemMsg);
+        dest.writeString(this.login);
+        dest.writeInt(this.banDuration);
+        dest.writeString(this.banReason);
+        dest.writeList(this.emotes);
+        dest.writeString(this.userType);
+        dest.writeInt(this.bits);
+        dest.writeString(this.broadcasterLang);
+        dest.writeString(this.emoteSets);
+    }
+
+    protected TwitchMessage(Parcel in) {
+        super(in);
+        this.badges = new ArrayList<Badge>();
+        in.readList(this.badges, Badge.class.getClassLoader());
+        this.color = in.readInt();
+        this.displayName = in.readString();
+        this.id = in.readString();
+        this.mod = in.readByte() != 0;
+        this.subscriber = in.readByte() != 0;
+        this.turbo = in.readByte() != 0;
+        this.roomId = in.readString();
+        this.userId = in.readString();
+        this.r9k = in.readByte() != 0;
+        this.subsOnly = in.readByte() != 0;
+        this.slow = in.readInt();
+        this.msgId = in.readString();
+        this.msg = in.readInt();
+        this.systemMsg = in.readString();
+        this.login = in.readString();
+        this.banDuration = in.readInt();
+        this.banReason = in.readString();
+        this.emotes = new ArrayList<Emote>();
+        in.readList(this.emotes, Emote.class.getClassLoader());
+        this.userType = in.readString();
+        this.bits = in.readInt();
+        this.broadcasterLang = in.readString();
+        this.emoteSets = in.readString();
+    }
+
+    public static final Creator<TwitchMessage> CREATOR = new Creator<TwitchMessage>() {
+        @Override
+        public TwitchMessage createFromParcel(Parcel source) {
+            return new TwitchMessage(source);
+        }
+
+        @Override
+        public TwitchMessage[] newArray(int size) {
+            return new TwitchMessage[size];
+        }
+    };
 }
