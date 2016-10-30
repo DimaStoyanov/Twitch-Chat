@@ -5,6 +5,7 @@
 ### 28.10.2016
 * Появилась первая версия интегрирования emoticons twitch в приложение
 * Появилась "онлайн" проверка формата вводимых данных на экране логина
+
     <img alt="Chat view with some twitch emoticons" src="https://pp.vk.me/c636919/v636919212/334ef/cp-_viV8E7c.jpg" height="178px">
     <img alt="Online checking format of login data" src="https://pp.vk.me/c636919/v636919212/33513/d0S8ff3W2JI.jpg" height="178px">
   
