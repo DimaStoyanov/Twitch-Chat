@@ -17,7 +17,7 @@ public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
 
     public static final String START_FOREGROUND = "start-foreground";
-    public static final String START_CLIENT = "start-client";
+    public static final String START_TWITCH_CLIENT = "start-client";
     public static final String STOP_CLIENT = "stop-client";
     LocalBroadcastManager lbm;
     Executor executor = Executors.newCachedThreadPool();
@@ -43,21 +43,27 @@ public class ClientService extends Service {
                         .setContentText("лол")
                         .build());
                 break;
-            case START_CLIENT:
+            case START_TWITCH_CLIENT:
                 if (client == null) {
-                    client = new Client(this);
-                    client.connect((ClientSettings) intent.getSerializableExtra("ClientSettings"));
+                    client = new TwitchClient(this);
+                    client.connect(intent
+                            .<ClientSettings>getParcelableExtra(
+                                    "ru.ifmo.android_2016.irc.ClientSettings"));
                 }
                 break;
             case STOP_CLIENT:
-                if (client != null) {
-                    client.close();
-                    client = null;
-                }
+                closeClient();
                 break;
             default:
         }
         return START_STICKY;
+    }
+
+    protected void closeClient() {
+        if (client != null) {
+            client.close();
+            client = null;
+        }
     }
 
     @Override
@@ -68,6 +74,7 @@ public class ClientService extends Service {
     @Override
     public void onDestroy() {
         Toast.makeText(this, "ClientService.onDestroy()", Toast.LENGTH_SHORT).show();
+        closeClient();
         super.onDestroy();
     }
 }
