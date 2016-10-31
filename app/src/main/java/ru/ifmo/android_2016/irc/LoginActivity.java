@@ -5,25 +5,19 @@ import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.content.res.AppCompatResources;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
-import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
-
-import com.facebook.common.util.UriUtil;
 
 import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.R;
 import ru.ifmo.android_2016.irc.client.ClientService;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
@@ -38,8 +32,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.activity_login);
         init();
         findViewById(R.id.connectButton).setOnClickListener(this);
-        // TODO Планирую добавить диалговое окно вначале, которое предлагает заполнить текстовые поля по шаблону
-        // TODO (уже имеющемуся), или создать новый шаблон, или забить на шаблоны и просто ввести логин
         if (savedInstanceState != null) {
             Log.d("IRC Login", "Read from saved state");
             readFromBundle(savedInstanceState);
@@ -193,8 +185,9 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
 
     @Override
     public void onClick(View v) {
-        Intent intent = new Intent(this, ChatActivity.class);
+        Intent intent = new Intent(this, NewChatActivity.class);
         intent.putExtra("Server", server.getText().toString());
+        intent.putExtra("Port", "6667");
         intent.putExtra("Nick", nick.getText().toString());
         intent.putExtra("Password", password.getText().toString());
         intent.putExtra("Channel", channel.getText().toString());

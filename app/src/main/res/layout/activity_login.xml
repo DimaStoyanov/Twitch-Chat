@@ -27,8 +27,13 @@
         android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_above="@id/nick"
-        android:layout_toEndOf="@id/server"
+        android:layout_toRightOf="@id/server"
         android:contentDescription="@string/id_status" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
     <EditText
         android:id="@+id/nick"
         android:layout_width="300dp"
@@ -43,7 +48,7 @@
         android:layout_width="wrap_content"
         android:layout_height="50dp"
         android:layout_above="@id/password"
-        android:layout_toEndOf="@id/nick"
+        android:layout_toRightOf="@id/nick"
         android:contentDescription="@string/nick_status"/>
 
     <EditText
@@ -62,7 +67,7 @@
         android:layout_height="50dp"
         android:contentDescription="@string/pw_status"
         android:layout_centerVertical="true"
-        android:layout_toEndOf="@+id/password" />
+        android:layout_toRightOf="@+id/password" />
 
     <EditText
         android:id="@+id/channel"
@@ -71,7 +76,7 @@
         android:gravity="center"
         android:hint="@string/channel"
         android:layout_below="@id/password"
-        android:layout_alignStart="@id/password" />
+        android:layout_alignLeft="@id/password" />
 
 
     <ImageView
@@ -80,7 +85,7 @@
         android:layout_height="50dp"
         android:contentDescription="@string/channel_status"
         android:layout_below="@id/password"
-        android:layout_toEndOf="@id/channel" />
+        android:layout_toRightOf="@id/channel" />
 
     <Button
         android:id="@+id/connectButton"

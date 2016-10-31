@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -155,7 +156,7 @@ public class TestActivity extends AppCompatActivity
 
         Intent intent = new Intent(TestActivity.this, ClientService.class);
         intent.setAction(ClientService.START_TWITCH_CLIENT);
-        intent.putExtra("ru.ifmo.android_2016.irc.ClientSettings", clientSettings);
+        intent.putExtra("ru.ifmo.android_2016.irc.ClientSettings", (Parcelable) clientSettings);
         startService(intent);
         disableEdits();
     }

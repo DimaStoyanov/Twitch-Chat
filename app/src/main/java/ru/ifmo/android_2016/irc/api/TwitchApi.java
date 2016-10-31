@@ -10,6 +10,8 @@ import java.net.URL;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.BASE_CHAT_URI;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.BASE_URI;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.CLIENT_ID;
+import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.EMOTICON_MEDIUM;
+import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.EMOTICON_URI;
 
 /**
  * Created by Dima Stoyanov on 24.10.2016.
@@ -36,7 +38,7 @@ public class TwitchApi {
      * @throws IOException
      */
     public static HttpURLConnection getTwitchChannelEmotiсons(@NonNull String channel) throws IOException {
-        if("global".equals(channel))
+        if ("global".equals(channel))
             return getTwitchGlobalEmotiсons();
         Uri uri = BASE_CHAT_URI.buildUpon().appendPath(channel).appendPath("emoticons").appendQueryParameter("client_id", CLIENT_ID).build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
@@ -60,6 +62,14 @@ public class TwitchApi {
     public static HttpURLConnection getUserTwitchRequest(String token) throws IOException {
         Uri uri = BASE_URI.buildUpon().appendQueryParameter("oauth_token", token).build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
+    }
+
+    public static String getEmoticonUrl(String id, String size) {
+        return EMOTICON_URI + id + "/" + size;
+    }
+
+    public static String getEmoticonUrl(String id) {
+        return getEmoticonUrl(id, EMOTICON_MEDIUM);
     }
 
 }

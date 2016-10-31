@@ -71,7 +71,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_chat);
         saveState = savedInstanceState;
         scrollView = (ScrollView) findViewById(R.id.scrollv);
-        chanel = (TextView) findViewById(R.id.chanel);
+        chanel = (TextView) findViewById(R.id.channel);
         ll = (LinearLayout) findViewById(R.id.messages);
         msg = (EditText) findViewById(R.id.text_message);
         pb = (ProgressBar) findViewById(R.id.pbar);

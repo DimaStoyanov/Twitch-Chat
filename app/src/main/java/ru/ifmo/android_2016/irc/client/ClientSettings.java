@@ -4,15 +4,12 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Queue;
 
 /**
  * Created by ghost on 10/23/2016.
  */
 
-public class ClientSettings implements Parcelable {
+public class ClientSettings implements Parcelable, Serializable {
     final String address, username, password, channels;
     final String[] nicks;
     final int port;

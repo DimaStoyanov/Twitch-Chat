@@ -5,7 +5,6 @@ import android.os.Parcel;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -78,7 +77,7 @@ public final class TwitchMessage extends Message {
         Log.i(TAG, map.values().toString());
         badges = parseBadges(map.get("badges"));
         color = parseColor(map.get("color"));
-        displayName = map.get("display-name");
+        displayName = map.get("display-name") == null ? nickName : map.get("display-name");
         emotes = parseEmotes(map.get("emotes"));
         id = map.get("id");
         mod = parseBool(map.get("mod"));
@@ -133,7 +132,7 @@ public final class TwitchMessage extends Message {
 
         for (String e : emote) {
             Matcher matcher = Emote.pattern.matcher(e);
-            if(matcher.matches()) {
+            if (matcher.matches()) {
                 for (int i = 2; i < matcher.groupCount(); i += 2) {
                     result.add(new Emote(
                             matcher.group(1),
@@ -212,7 +211,7 @@ public final class TwitchMessage extends Message {
         }
     }
 
-    private static class Emote implements Comparable<Emote> {
+    public static class Emote implements Comparable<Emote> {
         private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:(\\d+)-(\\d+),)*(?:(\\d+)-(\\d+))");
         private final String emoteName;
         private final int begin;
@@ -227,6 +226,27 @@ public final class TwitchMessage extends Message {
         @Override
         public int compareTo(@NonNull Emote o) {
             return this.begin - o.begin;
+        }
+
+        public String getEmoteName() {
+            return emoteName;
+        }
+
+        public int getBegin() {
+            return begin;
+        }
+
+        public int getEnd() {
+            return end;
+        }
+
+        public int getLength() {
+            return end == begin ? 0 : end - begin + 1;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + getBegin() + "-" + getEnd() + "]:" + getEmoteName();
         }
     }
 
@@ -303,4 +323,19 @@ public final class TwitchMessage extends Message {
             return new TwitchMessage[size];
         }
     };
+
+
+    public String getNickname() {
+        return nickName;
+    }
+
+    public List<Emote> getEmotes() {
+        return emotes;
+    }
+
+    public int getColor() {
+        return color;
+    }
 }
+
+

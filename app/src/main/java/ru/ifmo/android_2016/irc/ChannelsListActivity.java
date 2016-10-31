@@ -281,8 +281,9 @@ public class ChannelsListActivity extends AppCompatActivity {
                             public void onClick(View view) {
                                 Log.d(TAG, "EditText view " + text.getText());
                                 if (!text.getText().toString().equals("#")) {
-                                    Intent intent = new Intent(ChannelsListActivity.this, ChatActivity.class);
-                                    intent.putExtra("Server", "irc.chat.twitch.tv:6667");
+                                    Intent intent = new Intent(ChannelsListActivity.this, NewChatActivity.class);
+                                    intent.putExtra("Server", "irc.chat.twitch.tv");
+                                    intent.putExtra("Port", "6667");
                                     intent.putExtra("Nick", result.data);
                                     intent.putExtra("Password", "oauth:" + token);
                                     intent.putExtra("Channel", text.getText().toString());
@@ -309,24 +310,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                 alert.show();
                 Log.d(TAG, "Twitch Authorized successfully");
             } else {
-                builder = new AlertDialog.Builder(ChannelsListActivity.this)
-                        .setCancelable(false).setTitle("File reading error")
-                        .setMessage("Can't read login data from external storage")
-                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.cancel();
-                            }
-                        })
-                        .setNegativeButton("Retry", new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                dialogInterface.cancel();
-                                readFromCache();
-                            }
-                        });
-                alert = builder.create();
-                alert.show();
+                Toast.makeText(ChannelsListActivity.this, "error request api", Toast.LENGTH_SHORT).show();
             }
 
             pb.setVisibility(View.GONE);
@@ -375,8 +359,9 @@ public class ChannelsListActivity extends AppCompatActivity {
             Log.d(TAG, "On select channel click");
             for (LoginData d : data) {
                 if (d.id == id) {
-                    Intent intent = new Intent(ChannelsListActivity.this, ChatActivity.class);
-                    intent.putExtra("Server", d.server);
+                    Intent intent = new Intent(ChannelsListActivity.this, NewChatActivity.class);
+                    intent.putExtra("Server", d.server.substring(0, d.server.indexOf(":")));
+                    intent.putExtra("Port", "6667");
                     intent.putExtra("Nick", d.nick);
                     intent.putExtra("Password", d.password);
                     intent.putExtra("Channel", d.channel);

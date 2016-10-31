@@ -32,7 +32,9 @@
         <activity
             android:name="ru.ifmo.android_2016.irc.LoginActivity"
             android:windowSoftInputMode="stateHidden" />
-
+        <activity
+            android:name=".NewChatActivity"
+            android:windowSoftInputMode="stateHidden" />
         <service
             android:name="ru.ifmo.android_2016.irc.client.ClientService"
             android:enabled="true"

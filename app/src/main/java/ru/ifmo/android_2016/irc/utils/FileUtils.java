@@ -7,10 +7,16 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -198,4 +204,45 @@ public class FileUtils {
             throw new RuntimeException("Can't open file");
         }
     }
+
+    private byte[] serialize(Object object) throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutput out;
+        byte[] result;
+        try {
+            out = new ObjectOutputStream(bos);
+            out.writeObject(object);
+            out.flush();
+            result = bos.toByteArray();
+        } finally {
+            try {
+                bos.close();
+            } catch (IOException ex) {
+                Log.d(TAG, "Can't close baos " + ex.getMessage());
+            }
+        }
+        return result;
+    }
+
+    private Object deserialize(byte[] bytes) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        ObjectInput in = null;
+        Object result;
+        try {
+            in = new ObjectInputStream(bis);
+            result = in.readObject();
+        } finally {
+            try {
+                if (in != null) {
+                    in.close();
+                }
+            } catch (IOException ex) {
+                Log.d(TAG, "Can't close input stream" + ex.getMessage());
+            }
+        }
+        return result;
+    }
+
+
+    private final String TAG = FileUtils.class.getSimpleName();
 }
