@@ -139,7 +139,7 @@ public class Client implements Runnable {
     }
 
     protected final void print(String s) {
-        out.println(s);
+        if (out != null) out.println(s);
     }
 
     protected void callbackMessage(Message msg) {

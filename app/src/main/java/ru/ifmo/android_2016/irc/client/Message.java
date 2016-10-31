@@ -2,9 +2,7 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.util.Log;
 
-import java.io.Serializable;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.regex.Matcher;
@@ -160,4 +158,8 @@ public class Message implements Parcelable {
             return new Message[size];
         }
     };
+
+    public boolean getAction() {
+        return action;
+    }
 }

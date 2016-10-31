@@ -44,7 +44,7 @@ public final class DownloadUtils {
      * @param context          Контекст активити.
      * @param downloadUrl      URL - откуда скачивать (http:// или https://)
      * @param package_name     В какую папку сохранить файл.
-     * @param name             Имя создаваемого файла
+     * @param path             Путь создаваемого файла
      * @param extension        Расширение файла.
      * @param progressCallback опциональный callback для уведомления о прогрессе скачивания
      *                         файлы. Его метод onProgressChanged вызывается синхронно
@@ -54,12 +54,12 @@ public final class DownloadUtils {
     public static String downloadFile(@NonNull Context context,
                                       @NonNull String downloadUrl,
                                       @NonNull String package_name,
-                                      @Nullable String name,
+                                      @NonNull String path,
                                       @NonNull String extension,
                                       @Nullable ProgressCallback progressCallback) throws IOException {
         Log.d(TAG, "Start downloading url: " + downloadUrl);
         Log.d(TAG, "Saving to package: " + package_name);
-        File destFile = FileUtils.createExternalFile(context, package_name, name, extension);
+        File destFile = FileUtils.createFile(package_name, path);
         StethoURLConnectionManager stethoManager = new StethoURLConnectionManager("Download");
 
         // Выполняем запрос по указанному урлу. Поскольку мы используем только http:// или https://

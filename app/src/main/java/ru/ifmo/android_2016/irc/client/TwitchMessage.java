@@ -256,7 +256,7 @@ public final class TwitchMessage extends Message {
         }
 
         public int getLength() {
-            return end == begin ? 0 : end - begin + 1;
+            return end - begin + 1;
         }
 
         @Override

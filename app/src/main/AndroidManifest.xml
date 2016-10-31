@@ -23,17 +23,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="ru.ifmo.android_2016.irc.TestActivity"
-            android:theme="@style/Theme.AppCompat"
-            android:windowSoftInputMode="stateHidden" />
-        <activity
-            android:name="ru.ifmo.android_2016.irc.ChatActivity"
-            android:windowSoftInputMode="stateHidden" />
-        <activity
-            android:name="ru.ifmo.android_2016.irc.LoginActivity"
-            android:windowSoftInputMode="stateHidden" />
-        <activity
-            android:name=".NewChatActivity"
+            android:name=".ChatActivity"
             android:windowSoftInputMode="stateHidden" />
         <service
             android:name="ru.ifmo.android_2016.irc.client.ClientService"

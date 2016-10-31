@@ -2,21 +2,26 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.TextUtils;
 
 import java.io.Serializable;
+import java.util.Arrays;
+
+import static ru.ifmo.android_2016.irc.utils.ObjectUtils.getSeparatedString;
 
 /**
  * Created by ghost on 10/23/2016.
  */
 
 public class ClientSettings implements Parcelable, Serializable {
-    final String address, username, password, channels;
+    final String name, address, username, password, channels;
     final String[] nicks;
     final int port;
     final boolean ssl;
 
-    private ClientSettings(String address, String username, String password, String[] nicks,
+    private ClientSettings(String name, String address, String username, String password, String[] nicks,
                            String channels, int port, boolean ssl) {
+        this.name = TextUtils.isEmpty(name) ? channels : name;
         this.address = address;
         this.username = username;
         this.password = password;
@@ -27,6 +32,7 @@ public class ClientSettings implements Parcelable, Serializable {
     }
 
     public static class Builder {
+        String name;
         String address;
         int port = 6667;
         boolean ssl = false;
@@ -34,6 +40,11 @@ public class ClientSettings implements Parcelable, Serializable {
         String password;
         String joinList;
         String[] nicks;
+
+        public ClientSettings.Builder setName(String name) {
+            this.name = name;
+            return this;
+        }
 
         public ClientSettings.Builder setAddress(String address) {
             this.address = address;
@@ -66,7 +77,7 @@ public class ClientSettings implements Parcelable, Serializable {
         }
 
         public ClientSettings build() {
-            return new ClientSettings(address, username, password, nicks, joinList, port, ssl);
+            return new ClientSettings(name, address, username, password, nicks, joinList, port, ssl);
         }
 
         public ClientSettings.Builder setChannels(String string) {
@@ -95,6 +106,8 @@ public class ClientSettings implements Parcelable, Serializable {
         this.address = in.readString();
         this.username = in.readString();
         this.password = in.readString();
+        // xz chto eto no zadam name kak channel tut
+        this.name = this.username;
         this.channels = in.readString();
         this.nicks = in.createStringArray();
         this.port = in.readInt();
@@ -112,4 +125,48 @@ public class ClientSettings implements Parcelable, Serializable {
             return new ClientSettings[size];
         }
     };
+
+
+    public String getName() {
+        return name;
+    }
+
+    public String getServer() {
+        return address;
+    }
+
+    public String getPort() {
+        return String.valueOf(port);
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getChannels() {
+        return channels;
+    }
+
+    public boolean getSSL() {
+        return ssl;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ClientSettings)) return false;
+        ClientSettings o = (ClientSettings) obj;
+        return username.equals(o.username) && address.equals(o.address)
+                && password.equals(o.password) && channels.equals(o.channels)
+                && port == o.port && ssl == o.ssl && Arrays.equals(nicks, o.nicks);
+    }
+
+
+    @Override
+    public String toString() {
+        return getSeparatedString(username, address, port, username, password, channels, ssl);
+    }
 }

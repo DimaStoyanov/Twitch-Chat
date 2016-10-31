@@ -64,6 +64,14 @@ public class TwitchApi {
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }
 
+
+    /**
+     * Возвращает URL ссылку на изобренрие emoticon с заданным id заданного размера.
+     *
+     * @param id   Номер картинки
+     * @param size Размер картинки. Один из {1.0, 2.0, 3.0}
+     * @return URL ссылка на картинку
+     */
     public static String getEmoticonUrl(String id, String size) {
         return EMOTICON_URI + id + "/" + size;
     }

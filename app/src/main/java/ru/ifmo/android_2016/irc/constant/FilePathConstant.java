@@ -49,7 +49,7 @@ public final class FilePathConstant {
         LOGIN_DATA = context.getExternalFilesDir(null) + File.separator + "data" + File.separator + "login.bin";
         EMOTICONS_PACKAGE = context.getExternalFilesDir(null) + File.separator + "emoticons";
         EMOTICON_INFO_NAME = "info";
-        LOGIN_PACKAGE = "data";
+        LOGIN_PACKAGE = context.getExternalFilesDir(null) + File.separator + "data";
         EMOTICON_INFO_EXTENSION = "bin";
         EMOTION_PACKAGE_NAME = "emoticons";
     }

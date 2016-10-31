@@ -15,8 +15,9 @@
         style="?attr/buttonStyle" />
 
     <ImageButton
+        android:id="@+id/edit_channel"
         android:layout_width="0dp"
-        android:layout_marginStart="5dp"
+        android:layout_marginLeft="5dp"
         android:contentDescription="@string/edit"
         android:layout_weight="1"
         android:src="@drawable/edit_icon"
@@ -27,7 +28,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
 
-        android:layout_marginStart="5dp"
+        android:layout_marginLeft="5dp"
         android:src="@drawable/delete_icon"
         android:layout_weight="1"
         android:contentDescription="@string/delete" />

@@ -19,4 +19,12 @@
     <string name="channel_status">channel_status</string>
     <string name="connect_via_twitch">connect via Twitch</string>
     <string name="edit">edit</string>
+    <string name="name_optionally">Name (optionally)</string>
+    <string name="server">Server</string>
+    <string name="default_port">6667</string>
+    <string name="port">Port</string>
+    <string name="username">Username</string>
+    <string name="use_ssl">Use SSL</string>
+    <string name="server_status">Server status</string>
+    <string name="username_status">Username status</string>
 </resources>
