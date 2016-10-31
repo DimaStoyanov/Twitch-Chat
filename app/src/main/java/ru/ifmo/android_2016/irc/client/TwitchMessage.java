@@ -24,6 +24,11 @@ public final class TwitchMessage extends Message {
     private int color;
     private String displayName;
     private String id;
+
+    public TwitchMessage(String from, String to, String text) {
+        super(from, to, text);
+    }
+
     private boolean mod;
     private boolean subscriber;
     private boolean turbo;
@@ -102,6 +107,8 @@ public final class TwitchMessage extends Message {
 
         banDuration = parseNumber(map.get("ban-duration"));
         banReason = parseMessage(map.get("ban-reason"));
+
+        nickName = (displayName == null ? nickName : displayName);
     }
 
     private int parseColor(String color) {
@@ -130,14 +137,21 @@ public final class TwitchMessage extends Message {
         String[] emote = emotes.split("/");
         List<Emote> result = new ArrayList<>(4);
 
+        Log.i(TAG, emotes);
+
         for (String e : emote) {
             Matcher matcher = Emote.pattern.matcher(e);
             if (matcher.matches()) {
-                for (int i = 2; i < matcher.groupCount(); i += 2) {
-                    result.add(new Emote(
-                            matcher.group(1),
-                            parseNumber(matcher.group(i)),
-                            parseNumber(matcher.group(i + 1))));
+                String[] p = e.split(":");
+                String eId = p[0];
+                for (String range : p[1].split(",")) {
+                    Matcher matcher1 = Emote.range.matcher(range);
+                    if (matcher1.matches()) {
+                        result.add(new Emote(
+                                eId,
+                                Integer.parseInt(matcher1.group(1)),
+                                Integer.parseInt(matcher1.group(2))));
+                    }
                 }
                 Collections.sort(result);
             } else {
@@ -212,7 +226,8 @@ public final class TwitchMessage extends Message {
     }
 
     public static class Emote implements Comparable<Emote> {
-        private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:(\\d+)-(\\d+),)*(?:(\\d+)-(\\d+))");
+        private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:\\d+-\\d+)(?:,\\d+-\\d+)*");
+        private static Pattern range = Pattern.compile("(\\d+)-(\\d+)");
         private final String emoteName;
         private final int begin;
         private final int end;
@@ -248,6 +263,19 @@ public final class TwitchMessage extends Message {
         public String toString() {
             return "[" + getBegin() + "-" + getEnd() + "]:" + getEmoteName();
         }
+    }
+
+
+    public String getNickname() {
+        return nickName;
+    }
+
+    public List<Emote> getEmotes() {
+        return emotes;
+    }
+
+    public int getColor() {
+        return color;
     }
 
     @Override
@@ -323,19 +351,6 @@ public final class TwitchMessage extends Message {
             return new TwitchMessage[size];
         }
     };
-
-
-    public String getNickname() {
-        return nickName;
-    }
-
-    public List<Emote> getEmotes() {
-        return emotes;
-    }
-
-    public int getColor() {
-        return color;
-    }
 }
 
 

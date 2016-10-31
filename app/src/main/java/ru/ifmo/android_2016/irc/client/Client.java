@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.io.Serializable;
 import java.net.Socket;
 
 /**
@@ -46,7 +45,7 @@ public class Client implements Runnable {
     protected BroadcastReceiver sendMessage = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Message message = (Message) intent.getSerializableExtra("ru.ifmo.android_2016.irc.Message");
+            Message message = intent.getParcelableExtra("ru.ifmo.android_2016.irc.Message");
             print("PRIVMSG " + message.to + " :" + message.text);
             callbackMessage(message);
         }

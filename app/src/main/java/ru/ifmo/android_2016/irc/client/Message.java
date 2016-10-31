@@ -2,6 +2,7 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -51,7 +52,7 @@ public class Message implements Parcelable {
     }
 
     public Message(String from, String to, String text) {
-        this.from = from;
+        this.nickName = from;
         this.to = to;
         this.text = text;
     }

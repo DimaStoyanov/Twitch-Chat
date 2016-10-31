@@ -67,7 +67,7 @@ public class NewChatActivity extends AppCompatActivity {
                         .getInstance(NewChatActivity.this)
                         .sendBroadcast(new Intent("send-message")
                                 .putExtra("ru.ifmo.android_2016.irc.Message",
-                                        new Message(nick, channel, typeMessage.getText().toString())));
+                                        new TwitchMessage(nick, channel, typeMessage.getText().toString())));
             }
         });
         LocalBroadcastManager.getInstance(this)
