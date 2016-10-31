@@ -27,6 +27,8 @@ public class Message implements Parcelable {
     String nickName;
     String userName;
     String hostName;
+    private static final Pattern actionPattern = Pattern.compile("\1ACTION ([^\1]+)\1");
+    boolean action = false;
 
     protected Message() {
     }
@@ -46,7 +48,16 @@ public class Message implements Parcelable {
         }
         from = nickName;
         to = params;
-        text = trailing;
+
+        if (trailing != null) {
+            Matcher matcher1 = actionPattern.matcher(trailing);
+            if (matcher1.matches()) {
+                text = matcher1.group(1);
+                action = true;
+            } else {
+                text = trailing;
+            }
+        }
         //Log.i(TAG, serverName + " " + nickName + " " + userName + " " + hostName);
         return this;
     }
