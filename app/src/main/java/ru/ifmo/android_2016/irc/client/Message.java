@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 public class Message implements Parcelable {
     private static final String TAG = Message.class.getSimpleName();
 
-    public String from, to, text;
+    public String to, text;
     public Date date;
     String opt_prefix;
     String command;
@@ -44,10 +44,14 @@ public class Message implements Parcelable {
             params = MessagePattern.group(matcher, "params");
             trailing = MessagePattern.group(matcher, "trailing");
         }
-        from = nickName;
         to = params;
+        text = parseTrailing(trailing);
+        return this;
+    }
 
+    private String parseTrailing(String trailing) {
         if (trailing != null) {
+            String text;
             Matcher matcher1 = actionPattern.matcher(trailing);
             if (matcher1.matches()) {
                 text = matcher1.group(1);
@@ -55,9 +59,10 @@ public class Message implements Parcelable {
             } else {
                 text = trailing;
             }
+            return text;
+        } else {
+            return null;
         }
-        //Log.i(TAG, serverName + " " + nickName + " " + userName + " " + hostName);
-        return this;
     }
 
     public Message(String from, String to, String text) {
@@ -110,6 +115,10 @@ public class Message implements Parcelable {
         }
     }
 
+    public String getNickName() {
+        return nickName;
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -117,7 +126,6 @@ public class Message implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.from);
         dest.writeString(this.to);
         dest.writeString(this.text);
         dest.writeLong(this.date != null ? this.date.getTime() : -1);
@@ -129,10 +137,10 @@ public class Message implements Parcelable {
         dest.writeString(this.nickName);
         dest.writeString(this.userName);
         dest.writeString(this.hostName);
+        dest.writeByte(this.action ? (byte) 1 : (byte) 0);
     }
 
     protected Message(Parcel in) {
-        this.from = in.readString();
         this.to = in.readString();
         this.text = in.readString();
         long tmpDate = in.readLong();
@@ -145,9 +153,10 @@ public class Message implements Parcelable {
         this.nickName = in.readString();
         this.userName = in.readString();
         this.hostName = in.readString();
+        this.action = in.readByte() != 0;
     }
 
-    public static final Parcelable.Creator<Message> CREATOR = new Parcelable.Creator<Message>() {
+    public static final Creator<Message> CREATOR = new Creator<Message>() {
         @Override
         public Message createFromParcel(Parcel source) {
             return new Message(source);

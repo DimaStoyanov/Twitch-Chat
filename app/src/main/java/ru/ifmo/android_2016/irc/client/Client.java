@@ -47,7 +47,7 @@ public class Client implements Runnable {
         public void onReceive(Context context, Intent intent) {
             Message message = intent.getParcelableExtra("ru.ifmo.android_2016.irc.Message");
             print("PRIVMSG " + message.to + " :" + message.text);
-            callbackMessage(message);
+            sendToActivity(message);
         }
     };
 
@@ -81,7 +81,7 @@ public class Client implements Runnable {
 
             actions();
 
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             Log.e(TAG, e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -104,7 +104,7 @@ public class Client implements Runnable {
             if (in.ready()) {
                 String s = in.readLine();
                 Log.i(TAG, s);
-                callbackMessage(parse(s));
+                sendToActivity(parse(s));
             } else {
                 Thread.sleep(100);
             }
@@ -119,6 +119,7 @@ public class Client implements Runnable {
                 print("PONG " + msg.trailing);
                 return null;
             case "PRIVMSG":
+            case "WHISPER":
                 return msg;
             default:
                 return null;
@@ -133,7 +134,7 @@ public class Client implements Runnable {
         print("PASS " + password);
     }
 
-    protected void enterNick(String[] nicks) {
+    protected void enterNick(String... nicks) {
         String nick = nicks[0];
         print("NICK " + nick);
     }
@@ -142,7 +143,7 @@ public class Client implements Runnable {
         if (out != null) out.println(s);
     }
 
-    protected void callbackMessage(Message msg) {
+    protected void sendToActivity(Message msg) {
         if (msg != null) {
             clientService.lbm.sendBroadcast(new Intent("new-message")
                     .putExtra("ru.ifmo.android_2016.irc.Message", msg));
