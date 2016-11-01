@@ -28,9 +28,13 @@ import ru.ifmo.android_2016.irc.api.TwitchApi;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.Message;
+import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
+
+import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
+import static ru.ifmo.android_2016.irc.client.ClientService.STOP_CLIENT;
 
 public class NewChatActivity extends AppCompatActivity {
     private static final String TAG = NewChatActivity.class.getSimpleName();
@@ -42,6 +46,7 @@ public class NewChatActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private String server, port, nick, password, channel;
     private Context context;
+    private long id = 0;
 
 
     @Override
@@ -55,6 +60,7 @@ public class NewChatActivity extends AppCompatActivity {
             nick = savedInstanceState.getString("Nick");
             password = savedInstanceState.getString("Password");
             channel = savedInstanceState.getString("Channel");
+            id = savedInstanceState.getLong("Id");
         } else {
             load();
         }
@@ -157,17 +163,12 @@ public class NewChatActivity extends AppCompatActivity {
             throw new RuntimeException("Invalid login data");
         }
 
-        clientSettings = new ClientSettings.Builder()
-                .setAddress(server)
-                .setPort(Integer.parseInt(port))
-                .setPassword(password)
-                .addNicks(nick)
-                .setChannels(channel)
-                .build();
+        id = ServerList.getInstance().add(ClientSettings
+                .getTwitchSettings(password.substring(6), false).setNicks(nick).setChannels(channel));
 
         Intent intent = new Intent(NewChatActivity.this, ClientService.class);
         intent.setAction(ClientService.START_TWITCH_CLIENT);
-        intent.putExtra("ru.ifmo.android_2016.irc.ClientSettings", (Parcelable) clientSettings);
+        intent.putExtra(SERVER_ID, id);
         startService(intent);
     }
 
@@ -189,11 +190,12 @@ public class NewChatActivity extends AppCompatActivity {
         outState.putString("Channel", channel);
         outState.putStringArrayList("Messages", getMessages());
         outState.putString("Port", port);
+        outState.putLong("Id", id);
     }
 
     @Override
     public void onBackPressed() {
-        startService(new Intent(this, ClientService.class).setAction(ClientService.STOP_CLIENT));
+        startService(new Intent(this, ClientService.class).setAction(STOP_CLIENT).putExtra(SERVER_ID, id));
         super.onBackPressed();
     }
 

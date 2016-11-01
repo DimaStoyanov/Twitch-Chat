@@ -111,7 +111,7 @@ public final class TwitchMessage extends Message {
         nickName = (displayName == null ? nickName : displayName);
     }
 
-    private int parseColor(String color) {
+    private static int parseColor(String color) {
         if (color == null) {
             return 0;
         }
@@ -125,12 +125,12 @@ public final class TwitchMessage extends Message {
         return Integer.parseInt(number);
     }
 
-    private String parseUserType(String type) {
+    private static String parseUserType(String type) {
         //TODO:
         return type;
     }
 
-    private List<Emote> parseEmotes(String emotes) {
+    private static List<Emote> parseEmotes(String emotes) {
         if (emotes == null) {
             return null;
         }
@@ -161,7 +161,7 @@ public final class TwitchMessage extends Message {
         return result;
     }
 
-    private List<Badge> parseBadges(String badges) {
+    private static List<Badge> parseBadges(String badges) {
         if (badges == null) {
             return null;
         }
@@ -173,19 +173,19 @@ public final class TwitchMessage extends Message {
         return result;
     }
 
-    private String parseMsgId(String msgId) {
+    private static String parseMsgId(String msgId) {
         //TODO:
         return null;
     }
 
-    private String parseMessage(String message) {
+    private static String parseMessage(String message) {
         if (message == null) {
             return null;
         }
         return message.replaceAll("\\s", " ");
     }
 
-    private boolean parseBool(String value) {
+    private static boolean parseBool(String value) {
         if (value == null) {
             return false;
         }

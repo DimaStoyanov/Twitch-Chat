@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.constant.FilePathConstant;
 import ru.ifmo.android_2016.irc.loader.DeleteDataTask;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
@@ -43,6 +44,8 @@ import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
 import ru.ifmo.android_2016.irc.model.LoginData;
 import ru.ifmo.android_2016.irc.utils.SessionStore;
 
+import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
+import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.OAUTH_URL;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.REDIRECT_URL;
 
@@ -64,6 +67,7 @@ public class ChannelsListActivity extends AppCompatActivity {
         ll = (LinearLayout) findViewById(R.id.channels_ll);
         pb = (ProgressBar) findViewById(R.id.pbar);
 //        registerForContextMenu(findViewById(R.id.settings));
+        startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
     }
 
 
@@ -493,5 +497,9 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     }
 
-
+    @Override
+    protected void onDestroy() {
+        startService(new Intent(this, ClientService.class).setAction(STOP_SERVICE));
+        super.onDestroy();
+    }
 }

@@ -39,21 +39,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             Log.d("IRC Login", "Read from cache");
             readFromCache();
         }
-
-        /* Test */
-        Button test = new Button(this);
-        test.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(LoginActivity.this, TestActivity.class));
-            }
-        });
-        test.setText("TEST");
-        ((RelativeLayout) findViewById(R.id.connectButton).getParent()).addView(test);
-        Intent intent = new Intent(this, ClientService.class);
-        intent.setAction(ClientService.START_FOREGROUND);
-        startService(intent);
-        /* Test */
     }
 
     // Пока нету шаблона логина, все же пусть будет чтения с кэша
@@ -90,9 +75,6 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         ed.putString("Password", password.getText().toString());
         ed.putString("Channel", channel.getText().toString());
         ed.apply();
-        /* Test */
-        stopService(new Intent(this, ClientService.class));
-        /* Test */
     }
 
     private void init() {
