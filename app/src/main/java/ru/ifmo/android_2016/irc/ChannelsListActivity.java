@@ -3,16 +3,20 @@ package ru.ifmo.android_2016.irc;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
@@ -33,20 +37,21 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.regex.Pattern;
 
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
-import ru.ifmo.android_2016.irc.constant.FilePathConstant;
+import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
 import ru.ifmo.android_2016.irc.loader.ResultType;
 import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
-import ru.ifmo.android_2016.irc.utils.FileManager;
 import ru.ifmo.android_2016.irc.utils.IOUtils;
 
+import static ru.ifmo.android_2016.irc.client.ClientService.GET_SERVER_LIST;
+import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
+import static ru.ifmo.android_2016.irc.client.ClientService.START_TWITCH_CLIENT;
 import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.OAUTH_URL;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.REDIRECT_URL;
@@ -56,10 +61,11 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     private LinearLayout ll;
     private boolean updateDataFromCache = false;
-    private FileManager fileManager;
+    //private FileManager fileManager;
     private ProgressBar pb;
     public final String TAG = ChannelsListActivity.class.getSimpleName();
     private Context context;
+    private LocalBroadcastManager lbm;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,10 +73,17 @@ public class ChannelsListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_channels_list);
         ll = (LinearLayout) findViewById(R.id.channels_ll);
         pb = (ProgressBar) findViewById(R.id.pbar);
-        fileManager = new FileManager(FileManager.FileType.Login, new FilePathConstant(this));
+        //fileManager = new FileManager(FileManager.FileType.Login, new FilePathConstant(this));
         context = this;
         Log.d(TAG, "On create");
         startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
+        lbm = LocalBroadcastManager.getInstance(this);
+        lbm.registerReceiver(new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                updateChannelList();
+            }
+        }, new IntentFilter(ServerList.class.getCanonicalName()));
     }
 
 
@@ -87,68 +100,65 @@ public class ChannelsListActivity extends AppCompatActivity {
         Log.d(TAG, "On start");
         if (!updateDataFromCache) {
             ll.removeAllViews();
-            readFromCache();
+            //readFromCache();
+            startService(new Intent(this, ClientService.class).setAction(GET_SERVER_LIST));
             updateDataFromCache = true;
         }
 
     }
 
     @UiThread
+    @Deprecated
     private void readFromCache() {
-        Log.d(TAG, "Read from cache");
-        pb.setVisibility(View.VISIBLE);
-
-        // мб сделать чтобы при повороте экрана не начиналась новая загрузка
-        AsyncTask<Void, Void, ArrayList<ClientSettings>> readTask = new AsyncTask<Void, Void, ArrayList<ClientSettings>>() {
-
-            @Override
-            protected void onPostExecute(ArrayList<ClientSettings> clientSettingses) {
-                super.onPostExecute(clientSettingses);
-                addChannels(clientSettingses);
-            }
-
-            @Override
-            @WorkerThread
-            protected ArrayList<ClientSettings> doInBackground(Void... voids) {
-                ArrayList<ClientSettings> data = null;
-                try {
-                    data = (ArrayList<ClientSettings>) fileManager.getData();
-                } catch (Exception e) {
-                    Log.d(TAG, e.getMessage() == null ? "null" : e.getMessage());
-                }
-                return data;
-
-            }
-        };
-        readTask.execute();
+//        Log.d(TAG, "Read from cache");
+//        pb.setVisibility(View.VISIBLE);
+//
+//        // мб сделать чтобы при повороте экрана не начиналась новая загрузка
+//        // - сделаем
+//        AsyncTask<Void, Void, ArrayList<ClientSettings>> readTask = new AsyncTask<Void, Void, ArrayList<ClientSettings>>() {
+//
+//            @Override
+//            protected void onPostExecute(ArrayList<ClientSettings> clientSettingses) {
+//                super.onPostExecute(clientSettingses);
+//                updateChannelList(clientSettingses);
+//            }
+//
+//            @Override
+//            @WorkerThread
+//            protected ArrayList<ClientSettings> doInBackground(Void... voids) {
+//                ArrayList<ClientSettings> data = null;
+//                try {
+//                    data = (ArrayList<ClientSettings>) fileManager.getData();
+//                } catch (Exception e) {
+//                    Log.d(TAG, e.getMessage() == null ? "null" : e.getMessage());
+//                }
+//                return data;
+//
+//            }
+//        };
+//        readTask.execute();
     }
 
 
     @UiThread
-    private void addChannels(ArrayList<ClientSettings> data) {
+    private void updateChannelList() {
         pb.setVisibility(View.GONE);
-        if (data == null) {
-            Log.d(TAG, "Empty channel lists");
-            return;
-        }
         ll.removeAllViews();
+        Collection<ClientSettings> data = ServerList.getInstance().values();
         View item;
         Log.d(TAG, "LOGIN DATA:");
-        for (int i = 0; i < data.size(); i++) {
-            Log.d(TAG, data.get(i).toString());
+        for (ClientSettings aData : data) {
+            Log.d(TAG, aData.toString());
         }
         LayoutInflater inflater = LayoutInflater.from(this);
-        for (int i = 0; i < data.size(); i++) {
+        for (ClientSettings aData : data) {
             item = inflater.inflate(R.layout.chanel_item, null);
             Button selectChannel = (Button) item.findViewById(R.id.selected_channel);
-            if (data.get(i) == null) {
-                Log.d(TAG, "data " + i + " = null");
-                continue;
-            }
-            selectChannel.setText(data.get(i).getName());
-            selectChannel.setOnClickListener(new OnSelectChannelListener(data.get(i)));
-            (item.findViewById(R.id.delete_channel)).setOnClickListener(new OnDeleteChannelListener(data.get(i)));
-            (item.findViewById(R.id.edit_channel)).setOnClickListener(new OnEditChannelListener(data.get(i)));
+
+            selectChannel.setText(aData.getName());
+            selectChannel.setOnClickListener(new OnSelectChannelListener(aData));
+            (item.findViewById(R.id.delete_channel)).setOnClickListener(new OnDeleteChannelListener(aData));
+            (item.findViewById(R.id.edit_channel)).setOnClickListener(new OnEditChannelListener(aData));
             ll.addView(item);
         }
     }
@@ -156,34 +166,27 @@ public class ChannelsListActivity extends AppCompatActivity {
     @UiThread
     private class OnSelectChannelListener implements View.OnClickListener {
 
-        private ClientSettings data;
+        private final long id;
 
         OnSelectChannelListener(ClientSettings data) {
-            this.data = data;
+            this.id = data.getId();
         }
 
         @Override
         public void onClick(View v) {
             Log.d(TAG, "On select channel click");
-            Intent intent = new Intent(ChannelsListActivity.this, ChatActivity.class);
-            intent.putExtra("Name", data.getName());
-            intent.putExtra("Server", data.getAddress());
-            intent.putExtra("Port", data.getPort());
-            intent.putExtra("Username", data.getUsername());
-            intent.putExtra("Password", data.getPassword());
-            intent.putExtra("Channel", data.getChannels());
-            intent.putExtra("SSL", data.isSsl());
-            startActivity(intent);
+            startActivity(new Intent(ChannelsListActivity.this, ChatActivity.class)
+                    .putExtra(SERVER_ID, id));
         }
     }
 
     @UiThread
     private class OnDeleteChannelListener implements View.OnClickListener {
 
-        private ClientSettings data;
+        private long id;
 
         OnDeleteChannelListener(ClientSettings data) {
-            this.data = data;
+            this.id = data.getId();
         }
 
         @Override
@@ -192,11 +195,8 @@ public class ChannelsListActivity extends AppCompatActivity {
             AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... voids) {
-                    try {
-                        fileManager.deleteData(data);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    //fileManager.deleteData(data);
+                    ServerList.getInstance().remove(id);
                     return null;
                 }
             };
@@ -258,7 +258,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                                     && !TextUtils.isEmpty(channel.getText())) {
 
                                 dialog.cancel();
-                                new EditChannelTask().execute(data, buildClientSettings(name.getText().toString(), server.getText().toString(),
+                                new EditChannelTask().execute(data.getId(), buildClientSettings(name.getText().toString(), server.getText().toString(),
                                         port.getText().toString(), username.getText().toString(), password.getText().toString(),
                                         channel.getText().toString(), String.valueOf(ssl.isChecked())));
                             } else {
@@ -275,15 +275,11 @@ public class ChannelsListActivity extends AppCompatActivity {
     }
 
 
-    class EditChannelTask extends AsyncTask<ClientSettings, Void, Void> {
+    class EditChannelTask extends AsyncTask<Object, Void, Void> {
         @Override
         @WorkerThread
-        protected Void doInBackground(ClientSettings... clientSettingses) {
-            try {
-                fileManager.editData(clientSettingses[0], clientSettingses[1]);
-            } catch (IOException e) {
-                Log.e(TAG, e.getMessage());
-            }
+        protected Void doInBackground(Object... params) {
+            ServerList.getInstance().put((Long) params[0], (ClientSettings) params[1]);
             return null;
         }
 
@@ -291,7 +287,8 @@ public class ChannelsListActivity extends AppCompatActivity {
         @UiThread
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            readFromCache();
+            updateChannelList();
+            //readFromCache();
         }
     }
 
@@ -333,22 +330,19 @@ public class ChannelsListActivity extends AppCompatActivity {
                                 && !TextUtils.isEmpty(password.getText())
                                 && !TextUtils.isEmpty(channel.getText())) {
 
-                            Intent intent = new Intent(context, ChatActivity.class);
-
-                            intent.putExtra("Name", name.getText().toString());
-                            intent.putExtra("Server", server.getText().toString());
-                            intent.putExtra("Port", port.getText().toString());
-                            intent.putExtra("Username", username.getText().toString());
-                            intent.putExtra("Password", password.getText().toString());
-                            intent.putExtra("Channel", channel.getText().toString());
-                            intent.putExtra("SSL", ssl != null && ssl.isChecked());
+                            long id = ServerList.getInstance().add(new ClientSettings()
+                                    .setName(name.getText().toString())
+                                    .setAddress(server.getText().toString())
+                                    .setPort(Integer.parseInt(port.getText().toString()))
+                                    .setUsername(username.getText().toString())
+                                    .setPassword(password.getText().toString())
+                                    .setChannels(channel.getText().toString())
+                                    .setSsl(ssl != null && ssl.isChecked()));
 
                             dialog.cancel();
-                            (new AddChannelsTask()).execute(buildClientSettings(name.getText().toString(), server.getText().toString(),
-                                    port.getText().toString(), username.getText().toString(), password.getText().toString(),
-                                    channel.getText().toString(), String.valueOf(ssl.isChecked())));
-                            startActivity(intent);
 
+                            startActivity(new Intent(context, ChatActivity.class)
+                                    .putExtra(SERVER_ID, id));
                         } else {
                             toast.cancel();
                             toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
@@ -474,14 +468,17 @@ public class ChannelsListActivity extends AppCompatActivity {
         }
 
         @Override
-        protected Void doInBackground(ClientSettings... clientSettingses) {
-            try {
-                fileManager.addData(clientSettingses[0]);
-            } catch (IOException e) {
-                Log.d(TAG, "Can't add files to storage " + e.getMessage());
-            }
+        protected Void doInBackground(ClientSettings... params) {
+            ServerList.getInstance().add(params[0]);
+            //fileManager.addData(params[0]);
             return null;
 
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            updateChannelList();
         }
     }
 
@@ -604,22 +601,18 @@ public class ChannelsListActivity extends AppCompatActivity {
                                 final EditText channel = (EditText) alert.findViewById(R.id.channel);
                                 final CheckBox ssl = (CheckBox) alert.findViewById(R.id.use_ssl);
                                 if (!TextUtils.isEmpty(channel.getText())) {
-                                    Intent intent = new Intent(ChannelsListActivity.this, ChatActivity.class);
-                                    intent.putExtra("Name", TextUtils.isEmpty(name.getText()) ?
-                                            channel.getText().toString() : name.getText().toString());
-                                    intent.putExtra("Server", "irc.chat.twitch.tv");
-                                    intent.putExtra("Port", "6667");
-                                    intent.putExtra("Username", result.data);
-                                    intent.putExtra("Password", "oauth:" + token);
-                                    intent.putExtra("Channel", channel.getText().toString());
-                                    intent.putExtra("SSL", ssl.isChecked());
+                                    long id = ServerList.getInstance()
+                                            .add(ClientSettings.getTwitchSettings(token, ssl.isChecked())
+                                                    .setName(TextUtils.isEmpty(name.getText()) ?
+                                                            channel.getText().toString() :
+                                                            name.getText().toString())
+                                                    .setNicks(result.data)
+                                                    .setChannels(channel.getText().toString()));
+
                                     alert.dismiss();
-                                    new AddChannelsTask().execute(buildClientSettings(name.getText().toString(),
-                                            "irc.chat.twitch.tv", "6667", result.data,
-                                            "oauth:" + token, channel.getText().toString(), String.valueOf(ssl.isChecked())));
-                                    startActivity(intent);
 
-
+                                    startActivity(new Intent(context, ChatActivity.class)
+                                            .putExtra(SERVER_ID, id));
                                 } else {
                                     toast.cancel();
                                     toast = Toast.makeText(ChannelsListActivity.this, "Empty channel", Toast.LENGTH_SHORT);

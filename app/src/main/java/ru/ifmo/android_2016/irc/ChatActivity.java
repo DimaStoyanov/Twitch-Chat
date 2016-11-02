@@ -34,6 +34,7 @@ import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
 import ru.ifmo.android_2016.irc.utils.ObjectUtils;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
+import static ru.ifmo.android_2016.irc.client.ClientService.START_TWITCH_CLIENT;
 
 public class ChatActivity extends AppCompatActivity {
     private static final String TAG = ChatActivity.class.getSimpleName();
@@ -42,9 +43,8 @@ public class ChatActivity extends AppCompatActivity {
     private ScrollView scroll;
     private EditText typeMessage;
     private ProgressBar progressBar;
-    private String name, server, port, nick, password, channel;
-    private boolean ssl;
     private long id = 0;
+    private ClientSettings clientSettings;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,27 +52,21 @@ public class ChatActivity extends AppCompatActivity {
         initView();
 
         if (savedInstanceState != null) {
-            name = savedInstanceState.getString("Name");
-            server = savedInstanceState.getString("Server");
-            port = savedInstanceState.getString("Port");
-            nick = savedInstanceState.getString("Username");
-            password = savedInstanceState.getString("Password");
-            channel = savedInstanceState.getString("Channel");
-            ssl = savedInstanceState.getBoolean("SSL");
             id = savedInstanceState.getLong("Id");
+            clientSettings = ServerList.getInstance().get(id);
         } else {
             load();
         }
-        ((TextView) findViewById(R.id.channel)).setText(channel);
+        ((TextView) findViewById(R.id.channel)).setText(clientSettings.getChannels());
         findViewById(R.id.send).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, nick + " " + channel + " " + typeMessage.getText().toString());
+                Log.d(TAG, clientSettings.getNicks()[0] + " " + clientSettings.getChannels() + " " + typeMessage.getText().toString());
                 LocalBroadcastManager
                         .getInstance(ChatActivity.this)
                         .sendBroadcast(new Intent("send-message")
                                 .putExtra(Message.class.getCanonicalName(),
-                                        new TwitchMessage(nick, channel, typeMessage.getText().toString())));
+                                        new TwitchMessage(clientSettings.getNicks()[0], clientSettings.getChannels(), typeMessage.getText().toString())));
             }
         });
         LocalBroadcastManager.getInstance(this)
@@ -151,47 +145,19 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void load() {
-        Bundle data = getIntent().getExtras();
-        name = data.getString("Name");
-        server = data.getString("Server");
-        port = data.getString("Port");
-        nick = data.getString("Username");
-        password = data.getString("Password");
-        channel = data.getString("Channel");
-        ssl = data.getBoolean("SSL");
-        Log.d(TAG, "name=" + name + " " + ", server=" + server + ", port=" + port + ", nick=" + nick
-                + ", password=" + password + ", channel=" + channel + " ssl=" + ssl);
-        if (!ObjectUtils.checkNonNull(server, port, nick, password, channel, ssl)) {
-            throw new RuntimeException("Invalid login data");
-        }
+        id = getIntent().getLongExtra(SERVER_ID, 0);
+        clientSettings = ServerList.getInstance().get(id);
 
-        id = ServerList.getInstance().add(new ClientSettings()
-                .setName(name)
-                .setAddress(server)
-                .setPort(Integer.parseInt(port))
-                .setPassword(password)
-                .setNicks(nick)
-                .setChannels(channel)
-                .setSsl(ssl)
-                .setTwitch(true));
-
-        Intent intent = new Intent(ChatActivity.this, ClientService.class);
-        intent.setAction(ClientService.START_TWITCH_CLIENT);
-        intent.putExtra(SERVER_ID, id);
-        startService(intent);
+        startService(
+                new Intent(ChatActivity.this, ClientService.class)
+                .setAction(START_TWITCH_CLIENT)
+                .putExtra(SERVER_ID, id));
     }
 
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("Name", name);
-        outState.putString("Server", server);
-        outState.putString("Port", port);
-        outState.putString("Username", nick);
-        outState.putString("Password", password);
-        outState.putString("Channel", channel);
-        outState.putBoolean("SSL", ssl);
         outState.putStringArrayList("Messages", getMessages());
         outState.putLong("Id", id);
     }

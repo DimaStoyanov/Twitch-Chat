@@ -1,9 +1,16 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.os.AsyncTask;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.HashMap;
+
+import ru.ifmo.android_2016.irc.utils.FileUtils;
 
 /**
  * Created by ghost3432 on 01.11.16.
@@ -34,7 +41,23 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
 
     @WorkerThread
     static ServerList loadFromFile(String filename) {
-        return instance = new ServerList();
+        if (instance == null) {
+            Log.i(TAG, "Loading " + filename);
+            instance = FileUtils.readObject(filename);
+            instance = instance == null ? new ServerList() : instance;
+        }
+        return instance;
+    }
+
+    static class SaveToFile extends AsyncTask<String, Void, Void> {
+        @Override
+        protected Void doInBackground(String... strings) {
+            if (instance != null) {
+                Log.i(TAG, "Saving to " + strings[0]);
+                FileUtils.writeObject(strings[0], instance);
+            }
+            return null;
+        }
     }
 
     public long add(ClientSettings clientSettings) {

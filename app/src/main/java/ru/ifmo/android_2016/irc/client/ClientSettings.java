@@ -12,7 +12,7 @@ import java.io.Serializable;
 public class ClientSettings implements Parcelable, Serializable {
     String address, username, password, channels;
     String[] nicks;
-    int port;
+    int port = 6667;
     boolean ssl, twitch;
     long id = 0;
     String name;

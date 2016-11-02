@@ -24,21 +24,18 @@ public class ClientService extends Service {
     public static final String START_TWITCH_CLIENT = "start-twitch-client";
     public static final String GET_SERVER_LIST = "server-list";
     public static final String STOP_CLIENT = "stop-client";
-    private static final String SERVER_LIST_FILE = null;    //TODO:
+    private String SERVER_LIST_FILE = "/data.obj";    //TODO:
     LocalBroadcastManager lbm;
     public ServerList serverList;
-    private Map<Long, Client> clients;
-
-    public ClientService() {
-    }
+    private Map<Long, Client> clients = new HashMap<>();
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.i(TAG, "onCreate");
         lbm = LocalBroadcastManager.getInstance(this);
-        clients = new HashMap<>();
-        loadServerList.execute(SERVER_LIST_FILE);
+        SERVER_LIST_FILE = getFilesDir() + SERVER_LIST_FILE;
+        new LoadServerListTask().execute(SERVER_LIST_FILE);
     }
 
     @Override
@@ -51,29 +48,37 @@ public class ClientService extends Service {
                         .setContentText("лол")
                         .build());
                 break;
+
             case FORCE_STOP_SERVICE:
-                forceServiceStop.execute();
+                new ForceServiceStopTask().execute();
                 break;
+
             case STOP_SERVICE:
                 if (clients.isEmpty()) {
                     stopSelf();
                 }
                 break;
+
             case START_TWITCH_CLIENT:
-                startClient.execute(intent.getLongExtra(SERVER_ID, 0));
+                new StartClientTask().execute(intent.getLongExtra(SERVER_ID, 0));
                 break;
+
             case GET_SERVER_LIST:
-                loadServerList.execute(SERVER_LIST_FILE);
+                if (serverList != null) {
+                    lbm.sendBroadcast(new Intent(ServerList.class.getCanonicalName()));
+                }
                 break;
+
             case STOP_CLIENT:
-                closeClient.execute(intent.getLongExtra(SERVER_ID, 0));
+                new CloseClientTask().execute(intent.getLongExtra(SERVER_ID, 0));
                 break;
+
             default:
         }
         return START_STICKY;
     }
 
-    private AsyncTask<String, Void, ServerList> loadServerList = new AsyncTask<String, Void, ServerList>() {
+    private class LoadServerListTask extends AsyncTask<String, Void, ServerList> {
         @Override
         protected ServerList doInBackground(String... strings) {
             return ServerList.loadFromFile(strings[0]);
@@ -85,9 +90,9 @@ public class ClientService extends Service {
             lbm.sendBroadcast(new Intent(ServerList.class.getCanonicalName()));
             super.onPostExecute(serverList);
         }
-    };
+    }
 
-    private AsyncTask<Void, Void, Void> forceServiceStop = new AsyncTask<Void, Void, Void>() {
+    private class ForceServiceStopTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
             for (Client client : clients.values()) {
@@ -101,9 +106,9 @@ public class ClientService extends Service {
             super.onPostExecute(aVoid);
             stopSelf();
         }
-    };
+    }
 
-    private AsyncTask<Long, Void, Void> startClient = new AsyncTask<Long, Void, Void>() {
+    private class StartClientTask extends AsyncTask<Long, Void, Void> {
         @Override
         protected Void doInBackground(Long... longs) {
             long id = longs[0];
@@ -122,9 +127,9 @@ public class ClientService extends Service {
             }
             return null;
         }
-    };
+    }
 
-    private AsyncTask<Long, Void, Void> closeClient = new AsyncTask<Long, Void, Void>() {
+    private class CloseClientTask extends AsyncTask<Long, Void, Void> {
         @Override
         protected Void doInBackground(Long... id) {
             Client client = clients.remove(id[0]);
@@ -133,7 +138,7 @@ public class ClientService extends Service {
             }
             return null;
         }
-    };
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -142,6 +147,7 @@ public class ClientService extends Service {
 
     @Override
     public void onDestroy() {
+        new ServerList.SaveToFile().execute(SERVER_LIST_FILE);
         Log.i(TAG, "onDestroy");
         super.onDestroy();
     }
