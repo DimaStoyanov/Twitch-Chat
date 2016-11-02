@@ -1,5 +1,6 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.support.annotation.WorkerThread;
 import android.util.Log;
 
 import java.util.HashMap;
@@ -31,7 +32,8 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
         return instance;
     }
 
-    static ServerList loadFromFile() {
+    @WorkerThread
+    static ServerList loadFromFile(String filename) {
         return instance = new ServerList();
     }
 
@@ -43,5 +45,11 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
             put(clientSettings.id, clientSettings);
             return clientSettings.id;
         }
+    }
+
+    @Override
+    public void clear() {
+        lastId = 1;
+        super.clear();
     }
 }

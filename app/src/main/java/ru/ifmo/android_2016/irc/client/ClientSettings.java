@@ -15,6 +15,7 @@ public class ClientSettings implements Parcelable, Serializable {
     int port;
     boolean ssl, twitch;
     long id = 0;
+    String name;
 
     public ClientSettings() {
     }
@@ -147,5 +148,14 @@ public class ClientSettings implements Parcelable, Serializable {
                 .setSsl(ssl)
                 .setPassword("oauth:" + token)
                 .setTwitch(true);
+    }
+
+    public ClientSettings setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+    public String getName() {
+        return name;
     }
 }

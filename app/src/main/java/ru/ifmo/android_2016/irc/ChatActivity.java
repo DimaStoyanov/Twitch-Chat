@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Typeface;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableStringBuilder;
@@ -27,10 +26,14 @@ import java.util.List;
 import ru.ifmo.android_2016.irc.api.TwitchApi;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
+import ru.ifmo.android_2016.irc.client.Message;
+import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
 import ru.ifmo.android_2016.irc.utils.ObjectUtils;
+
+import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 
 public class ChatActivity extends AppCompatActivity {
     private static final String TAG = ChatActivity.class.getSimpleName();
@@ -41,6 +44,7 @@ public class ChatActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private String name, server, port, nick, password, channel;
     private boolean ssl;
+    private long id = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +59,7 @@ public class ChatActivity extends AppCompatActivity {
             password = savedInstanceState.getString("Password");
             channel = savedInstanceState.getString("Channel");
             ssl = savedInstanceState.getBoolean("SSL");
+            id = savedInstanceState.getLong("Id");
         } else {
             load();
         }
@@ -66,7 +71,7 @@ public class ChatActivity extends AppCompatActivity {
                 LocalBroadcastManager
                         .getInstance(ChatActivity.this)
                         .sendBroadcast(new Intent("send-message")
-                                .putExtra("ru.ifmo.android_2016.irc.Message",
+                                .putExtra(Message.class.getCanonicalName(),
                                         new TwitchMessage(nick, channel, typeMessage.getText().toString())));
             }
         });
@@ -88,7 +93,7 @@ public class ChatActivity extends AppCompatActivity {
     BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            TwitchMessage msg = intent.getParcelableExtra("ru.ifmo.android_2016.irc.Message");
+            TwitchMessage msg = intent.getParcelableExtra(Message.class.getCanonicalName());
             DraweeTextView text = new DraweeTextView(context);
             text.setText(buildTextDraweeView(msg));
             chat_msg_container.addView(text);
@@ -160,19 +165,19 @@ public class ChatActivity extends AppCompatActivity {
             throw new RuntimeException("Invalid login data");
         }
 
-        ClientSettings clientSettings = new ClientSettings.Builder()
+        id = ServerList.getInstance().add(new ClientSettings()
                 .setName(name)
                 .setAddress(server)
                 .setPort(Integer.parseInt(port))
                 .setPassword(password)
-                .addNicks(nick)
+                .setNicks(nick)
                 .setChannels(channel)
                 .setSsl(ssl)
-                .build();
+                .setTwitch(true));
 
         Intent intent = new Intent(ChatActivity.this, ClientService.class);
         intent.setAction(ClientService.START_TWITCH_CLIENT);
-        intent.putExtra("ru.ifmo.android_2016.irc.ClientSettings", (Parcelable) clientSettings);
+        intent.putExtra(SERVER_ID, id);
         startService(intent);
     }
 
@@ -188,11 +193,14 @@ public class ChatActivity extends AppCompatActivity {
         outState.putString("Channel", channel);
         outState.putBoolean("SSL", ssl);
         outState.putStringArrayList("Messages", getMessages());
+        outState.putLong("Id", id);
     }
 
     @Override
     public void onBackPressed() {
-        startService(new Intent(this, ClientService.class).setAction(ClientService.STOP_CLIENT));
+        startService(new Intent(this, ClientService.class)
+                .setAction(ClientService.STOP_CLIENT)
+                .putExtra(SERVER_ID, id));
         super.onBackPressed();
     }
 

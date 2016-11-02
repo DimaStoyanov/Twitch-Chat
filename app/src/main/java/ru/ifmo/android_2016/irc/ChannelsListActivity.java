@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 
+import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.constant.FilePathConstant;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
@@ -45,6 +46,8 @@ import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
 import ru.ifmo.android_2016.irc.utils.FileManager;
 import ru.ifmo.android_2016.irc.utils.IOUtils;
 
+import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
+import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.OAUTH_URL;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.REDIRECT_URL;
 import static ru.ifmo.android_2016.irc.utils.WebUtils.getAccessToken;
@@ -67,6 +70,7 @@ public class ChannelsListActivity extends AppCompatActivity {
         fileManager = new FileManager(FileManager.FileType.Login, new FilePathConstant(this));
         context = this;
         Log.d(TAG, "On create");
+        startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
     }
 
 
@@ -163,12 +167,12 @@ public class ChannelsListActivity extends AppCompatActivity {
             Log.d(TAG, "On select channel click");
             Intent intent = new Intent(ChannelsListActivity.this, ChatActivity.class);
             intent.putExtra("Name", data.getName());
-            intent.putExtra("Server", data.getServer());
+            intent.putExtra("Server", data.getAddress());
             intent.putExtra("Port", data.getPort());
             intent.putExtra("Username", data.getUsername());
             intent.putExtra("Password", data.getPassword());
             intent.putExtra("Channel", data.getChannels());
-            intent.putExtra("SSL", data.getSSL());
+            intent.putExtra("SSL", data.isSsl());
             startActivity(intent);
         }
     }
@@ -230,12 +234,12 @@ public class ChannelsListActivity extends AppCompatActivity {
                     final EditText channel = (EditText) dialog.findViewById(R.id.channel);
                     final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
                     name.setText(data.getName());
-                    server.setText(data.getServer());
+                    server.setText(data.getAddress());
                     port.setText(data.getPort());
                     username.setText(data.getUsername());
                     password.setText(data.getPassword());
                     channel.setText(data.getChannels());
-                    ssl.setChecked(data.getSSL());
+                    ssl.setChecked(data.isSsl());
                     dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View view) {
@@ -449,15 +453,14 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     @UiThread
     private ClientSettings buildClientSettings(String... args) {
-        return new ClientSettings.Builder()
+        return new ClientSettings()
                 .setName(TextUtils.isEmpty(args[0]) ? args[5] : args[0])
                 .setAddress(args[1])
                 .setPort(Integer.parseInt(args[2]))
                 .setUsername(args[3])
                 .setPassword(args[4])
                 .setChannels(args[5])
-                .setSsl(Boolean.parseBoolean(args[6]))
-                .build();
+                .setSsl(Boolean.parseBoolean(args[6]));
     }
 
     @WorkerThread
@@ -648,5 +651,9 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     }
 
-
+    @Override
+    protected void onDestroy() {
+        startService(new Intent(this, ClientService.class).setAction(STOP_SERVICE));
+        super.onDestroy();
+    }
 }

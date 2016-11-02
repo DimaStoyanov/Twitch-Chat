@@ -11,6 +11,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 /**
  * Created by ghost on 10/24/2016.
@@ -18,6 +20,7 @@ import java.net.Socket;
 
 public class Client implements Runnable {
     private static final String TAG = Client.class.getSimpleName();
+    protected static final Executor executor = Executors.newCachedThreadPool();
 
     protected ClientService clientService;
     protected ClientSettings clientSettings;
@@ -32,7 +35,7 @@ public class Client implements Runnable {
 
     public boolean connect(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
-        clientService.executor.execute(this);
+        executor.execute(this);
         clientService.lbm.registerReceiver(sendMessage, new IntentFilter("send-message"));
         Log.i(TAG, "Client started");
         return true;
@@ -45,7 +48,7 @@ public class Client implements Runnable {
     protected BroadcastReceiver sendMessage = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Message message = intent.getParcelableExtra("ru.ifmo.android_2016.irc.Message");
+            Message message = intent.getParcelableExtra(Message.class.getCanonicalName());
             print("PRIVMSG " + message.to + " :" + message.text);
             sendToActivity(message);
         }
@@ -102,13 +105,17 @@ public class Client implements Runnable {
     protected void loop() throws IOException, InterruptedException {
         while (socket.isConnected()) {
             if (in.ready()) {
-                String s = in.readLine();
+                String s = read();
                 Log.i(TAG, s);
                 sendToActivity(parse(s));
             } else {
                 Thread.sleep(100);
             }
         }
+    }
+
+    private String read() throws IOException {
+        return in.readLine();
     }
 
     protected Message parse(String s) {
@@ -146,7 +153,7 @@ public class Client implements Runnable {
     protected void sendToActivity(Message msg) {
         if (msg != null) {
             clientService.lbm.sendBroadcast(new Intent("new-message")
-                    .putExtra("ru.ifmo.android_2016.irc.Message", msg));
+                    .putExtra(Message.class.getCanonicalName(), msg));
         }
     }
 }
