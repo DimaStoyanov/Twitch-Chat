@@ -84,7 +84,7 @@ public final class TwitchMessage extends Message {
         badges = parseBadges(map.get("badges"));
         color = parseColor(map.get("color"));
         displayName = map.get("display-name") == null ? nickName : map.get("display-name");
-        //emotes = parseEmotes(map.get("emotes"));
+        emotes = parseEmotes(map.get("emotes"));
         id = map.get("id");
         mod = parseBool(map.get("mod"));
         subscriber = parseBool(map.get("subscriber"));

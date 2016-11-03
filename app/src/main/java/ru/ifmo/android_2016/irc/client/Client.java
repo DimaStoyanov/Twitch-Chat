@@ -9,15 +9,20 @@ import android.support.annotation.UiThread;
 import android.util.Log;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 /**
  * Created by ghost on 10/24/2016.
@@ -34,7 +39,7 @@ public class Client implements Runnable {
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-    private final Queue<Message> messageQueue = new ConcurrentLinkedQueue<>();
+    private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
 
     Client(ClientService clientService) {
         this.clientService = clientService;
@@ -83,7 +88,13 @@ public class Client implements Runnable {
     @Override
     public final void run() {
         try {
-            socket = new Socket(clientSettings.address, clientSettings.port);
+            if (!clientSettings.isSsl()) {
+                socket = new Socket(clientSettings.address, clientSettings.port);
+            } else {
+                SSLSocketFactory sslFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
+                SSLSocket sslSocket = (SSLSocket) (socket = sslFactory.createSocket(clientSettings.getAddress(), clientSettings.getPort()));
+                sslSocket.startHandshake();
+            }
 
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
@@ -109,14 +120,11 @@ public class Client implements Runnable {
     }
 
     protected void loop() throws IOException, InterruptedException {
+        int i = 0;
         while (socket.isConnected()) {
-            if (in.ready()) {
-                String s = read();
-                Log.i(TAG, s);
-                messageQueue.add(parse(s));
-            } else {
-                Thread.sleep(100);
-            }
+            String s = read();
+            Log.i(TAG, s);
+            messageQueue.put(parse(s));
         }
     }
 
@@ -179,22 +187,23 @@ public class Client implements Runnable {
                 loop();
                 break;
             case "doCommand":
-                doCommand();
-                break;
+                while (true) {
+                    doCommand(messageQueue.take());
+                }
         }
     }
 
     private final class ThreadStarter implements Runnable {
-        private final String thread;
+        private final String method;
 
-        public ThreadStarter(String thread) {
-            this.thread = thread;
+        public ThreadStarter(String method) {
+            this.method = method;
         }
 
         @Override
         public final void run() {
             try {
-                threadStarter(thread);
+                threadStarter(method);
             } catch (Exception x) {
                 Log.e(TAG, Thread.currentThread().getName());
                 Log.e(TAG, x.toString());
