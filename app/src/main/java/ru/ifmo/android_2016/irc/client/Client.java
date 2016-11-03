@@ -4,6 +4,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -11,6 +13,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -24,16 +29,18 @@ public class Client implements Runnable {
 
     protected ClientService clientService;
     protected ClientSettings clientSettings;
+    protected String nickname;
 
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
+    private final Queue<Message> messageQueue = new ConcurrentLinkedQueue<>();
 
     Client(ClientService clientService) {
         this.clientService = clientService;
     }
 
-    public boolean connect(ClientSettings clientSettings) {
+    boolean connect(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
         executor.execute(this);
         clientService.lbm.registerReceiver(sendMessage, new IntentFilter("send-message"));
@@ -46,11 +53,10 @@ public class Client implements Runnable {
     }
 
     protected BroadcastReceiver sendMessage = new BroadcastReceiver() {
+        @UiThread
         @Override
         public void onReceive(Context context, Intent intent) {
-            Message message = intent.getParcelableExtra(Message.class.getCanonicalName());
-            print("PRIVMSG " + message.to + " :" + message.text);
-            sendToActivity(message);
+            executor.execute(new SendMessageTask(intent));
         }
     };
 
@@ -82,24 +88,24 @@ public class Client implements Runnable {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
+            executor.execute(new ThreadStarter("loop"));
+
             actions();
+
+            executor.execute(new ThreadStarter("doCommand"));
 
         } catch (IOException | RuntimeException e) {
             Log.e(TAG, e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            close();
         }
-        Log.i(TAG, "closed");
+        //Log.i(TAG, "closed");
     }
 
     protected void actions() throws IOException, InterruptedException {
         enterPassword(clientSettings.password);
         enterNick(clientSettings.nicks);
         joinChannels(clientSettings.channels);
-
-        loop();
     }
 
     protected void loop() throws IOException, InterruptedException {
@@ -107,7 +113,7 @@ public class Client implements Runnable {
             if (in.ready()) {
                 String s = read();
                 Log.i(TAG, s);
-                sendToActivity(parse(s));
+                messageQueue.add(parse(s));
             } else {
                 Thread.sleep(100);
             }
@@ -119,18 +125,24 @@ public class Client implements Runnable {
     }
 
     protected Message parse(String s) {
-        Message msg = getMessageFromString(s);
+        return getMessageFromString(s);
+    }
+
+    protected void doCommand(Message msg) {
         switch (msg.command) {
             case "PING":
                 Log.i(TAG, "PING caught");
-                print("PONG " + msg.trailing);
-                return null;
+                pong();
+                break;
+
             case "PRIVMSG":
-            case "WHISPER":
-                return msg;
-            default:
-                return null;
+                sendToActivity(msg);
+                break;
         }
+    }
+
+    protected void pong() {
+        print("PONG");
     }
 
     protected Message getMessageFromString(String s) {
@@ -144,10 +156,14 @@ public class Client implements Runnable {
     protected void enterNick(String... nicks) {
         String nick = nicks[0];
         print("NICK " + nick);
+        nickname = nick;
     }
 
     protected final void print(String s) {
-        if (out != null) out.println(s);
+        if (out != null) {
+            Log.i(TAG, s);
+            out.println(s);
+        }
     }
 
     protected void sendToActivity(Message msg) {
@@ -155,5 +171,56 @@ public class Client implements Runnable {
             clientService.lbm.sendBroadcast(new Intent("new-message")
                     .putExtra(Message.class.getCanonicalName(), msg));
         }
+    }
+
+    protected void threadStarter(String thread) throws Exception {
+        switch (thread) {
+            case "loop":
+                loop();
+                break;
+            case "doCommand":
+                doCommand();
+                break;
+        }
+    }
+
+    private final class ThreadStarter implements Runnable {
+        private final String thread;
+
+        public ThreadStarter(String thread) {
+            this.thread = thread;
+        }
+
+        @Override
+        public final void run() {
+            try {
+                threadStarter(thread);
+            } catch (Exception x) {
+                Log.e(TAG, Thread.currentThread().getName());
+                Log.e(TAG, x.toString());
+            }
+        }
+    }
+
+    private class SendMessageTask implements Runnable {
+        private final
+        @Nullable
+        Message msg;
+
+        public SendMessageTask(Intent intent) {
+            this.msg = intent.getParcelableExtra(Message.class.getCanonicalName());
+        }
+
+        @Override
+        public void run() {
+            if (msg != null) {
+                sendPrivmsg(msg);
+            }
+        }
+    }
+
+    protected void sendPrivmsg(Message msg) {
+        print(msg.toString());
+        sendToActivity(msg.setNickName(nickname));
     }
 }

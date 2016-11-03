@@ -2,6 +2,8 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -15,20 +17,21 @@ import java.util.regex.Pattern;
 public class Message implements Parcelable {
     private static final String TAG = Message.class.getSimpleName();
 
+    @Deprecated
     public String to, text;
     public Date date;
-    String opt_prefix;
-    String command;
-    String params;
-    String trailing;
-    String serverName;
-    String nickName;
-    String userName;
-    String hostName;
+    @Nullable String optPrefix;
+    @NonNull String command;
+    @Nullable String params;
+    @Nullable String trailing;
+    @Nullable String serverName;
+    @Nullable String nickName;
+    @Nullable String userName;
+    @Nullable String hostName;
     private static final Pattern actionPattern = Pattern.compile("\1ACTION ([^\1]+)\1");
     boolean action = false;
 
-    protected Message() {
+    public Message() {
     }
 
     public static Message fromString(String rawMessage) {
@@ -38,14 +41,14 @@ public class Message implements Parcelable {
     protected Message parse(String rawMessage) {
         Matcher matcher = MessagePattern.matcher(rawMessage);
         if (matcher.matches()) {
-            opt_prefix = MessagePattern.group(matcher, "opt-prefix");
+            optPrefix = MessagePattern.group(matcher, "opt-prefix");
             Prefix.parse(this, MessagePattern.group(matcher, "prefix"));
             command = MessagePattern.group(matcher, "command");
             params = MessagePattern.group(matcher, "params");
             trailing = MessagePattern.group(matcher, "trailing");
         }
         to = params;
-        text = parseTrailing(trailing);
+        trailing = parseTrailing(trailing);
         return this;
     }
 
@@ -65,10 +68,22 @@ public class Message implements Parcelable {
         }
     }
 
+    @Deprecated
     public Message(String from, String to, String text) {
         this.nickName = from;
         this.to = to;
         this.text = text;
+    }
+
+    public Message genPrivmsg(String channels, String message) {
+        return this
+                .setCommand("PRIVMSG")
+                .setParams(channels)
+                .setTrailing(message);
+    }
+
+    public String getTrailing() {
+        return trailing;
     }
 
     private static class Prefix {
@@ -129,7 +144,7 @@ public class Message implements Parcelable {
         dest.writeString(this.to);
         dest.writeString(this.text);
         dest.writeLong(this.date != null ? this.date.getTime() : -1);
-        dest.writeString(this.opt_prefix);
+        dest.writeString(this.optPrefix);
         dest.writeString(this.command);
         dest.writeString(this.params);
         dest.writeString(this.trailing);
@@ -145,7 +160,7 @@ public class Message implements Parcelable {
         this.text = in.readString();
         long tmpDate = in.readLong();
         this.date = tmpDate == -1 ? null : new Date(tmpDate);
-        this.opt_prefix = in.readString();
+        this.optPrefix = in.readString();
         this.command = in.readString();
         this.params = in.readString();
         this.trailing = in.readString();
@@ -170,5 +185,61 @@ public class Message implements Parcelable {
 
     public boolean getAction() {
         return action;
+    }
+
+    public Message setOptPrefix(String optPrefix) {
+        this.optPrefix = optPrefix;
+        return this;
+    }
+
+    public Message setCommand(String command) {
+        this.command = command;
+        return this;
+    }
+
+    public Message setParams(String params) {
+        this.params = params;
+        return this;
+    }
+
+    public Message setTrailing(String trailing) {
+        this.trailing = trailing;
+        return this;
+    }
+
+    public Message setServerName(String serverName) {
+        this.serverName = serverName;
+        return this;
+    }
+
+    public Message setNickName(String nickName) {
+        this.nickName = nickName;
+        return this;
+    }
+
+    public Message setUserName(String userName) {
+        this.userName = userName;
+        return this;
+    }
+
+    public Message setHostName(String hostName) {
+        this.hostName = hostName;
+        return this;
+    }
+
+    public Message setAction(boolean action) {
+        this.action = action;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (command != null) {
+            sb.append(command).append(" ");
+            sb.append(params).append(" ");
+            sb.append(":").append(trailing);
+        }
+        return sb.toString();
     }
 }

@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
+import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -73,6 +74,8 @@ public class ChannelsListActivity extends AppCompatActivity {
         setContentView(R.layout.activity_channels_list);
         ll = (LinearLayout) findViewById(R.id.channels_ll);
         pb = (ProgressBar) findViewById(R.id.pbar);
+        Button button = (Button) findViewById(R.id.twitch_login);
+        button.getBackground().setColorFilter(0xFF6441A5, PorterDuff.Mode.MULTIPLY);
         //fileManager = new FileManager(FileManager.FileType.Login, new FilePathConstant(this));
         context = this;
         Log.d(TAG, "On create");
@@ -224,6 +227,7 @@ public class ChannelsListActivity extends AppCompatActivity {
 
             dialog.setOnShowListener(new DialogInterface.OnShowListener() {
 
+                @SuppressLint("SetTextI18n")
                 @Override
                 public void onShow(DialogInterface dialogInterface) {
                     final EditText name = (EditText) dialog.findViewById(R.id.name);
@@ -235,7 +239,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                     final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
                     name.setText(data.getName());
                     server.setText(data.getAddress());
-                    port.setText(data.getPort());
+                    port.setText(Integer.toString(data.getPort()));
                     username.setText(data.getUsername());
                     password.setText(data.getPassword());
                     channel.setText(data.getChannels());
@@ -484,42 +488,43 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     @SuppressLint("SetJavaScriptEnabled")
     public void onTwitchLoginClick(View v) {
-        final Dialog dialog = new Dialog(this);
-        if (dialog.getWindow() != null)
-            dialog.getWindow().setTitle("Twitch OAuth 2.0");
-        dialog.setCancelable(true);
-        dialog.setContentView(R.layout.dialog_twitch_oauth);
-        WebView wv = (WebView) dialog.findViewById(R.id.wv);
-        final ProgressBar progressBar = (ProgressBar) dialog.findViewById(R.id.pbar);
-        wv.getSettings().setJavaScriptEnabled(true);
-
-        wv.setWebViewClient(new WebViewClient() {
-
-            @Override
-            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-                progressBar.setVisibility(View.VISIBLE);
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                progressBar.setVisibility(View.GONE);
-            }
-
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith(REDIRECT_URL)) {
-                    dialog.cancel();
-                    getSupportLoaderManager().initLoader(10, null, new NickLoaderCallback(getAccessToken(url, context)));
-                    return true;
-                }
-                return false;
-
-            }
-        });
-        if (checkInternetConnection(true)) {
-            wv.loadUrl(OAUTH_URL);
-            dialog.show();
-        }
+        startActivityForResult(new Intent(this, TwitchLoginActivity.class), 1);
+//        final Dialog dialog = new Dialog(this);
+//        if (dialog.getWindow() != null)
+//            dialog.getWindow().setTitle("Twitch OAuth 2.0");
+//        dialog.setCancelable(true);
+//        dialog.setContentView(R.layout.dialog_twitch_oauth);
+//        WebView wv = (WebView) dialog.findViewById(R.id.wv);
+//        final ProgressBar progressBar = (ProgressBar) dialog.findViewById(R.id.pbar);
+//        wv.getSettings().setJavaScriptEnabled(true);
+//
+//        wv.setWebViewClient(new WebViewClient() {
+//
+//            @Override
+//            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+//                progressBar.setVisibility(View.VISIBLE);
+//            }
+//
+//            @Override
+//            public void onPageFinished(WebView view, String url) {
+//                progressBar.setVisibility(View.GONE);
+//            }
+//
+//            @Override
+//            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+//                if (url.startsWith(REDIRECT_URL)) {
+//                    dialog.cancel();
+//                    getSupportLoaderManager().initLoader(10, null, new NickLoaderCallback(getAccessToken(url, context)));
+//                    return true;
+//                }
+//                return false;
+//
+//            }
+//        });
+//        if (checkInternetConnection(true)) {
+//            wv.loadUrl(OAUTH_URL);
+//            dialog.show();
+//        }
     }
 
     @UiThread
@@ -559,6 +564,13 @@ public class ChannelsListActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == 1 && resultCode == 200) {
+            getSupportLoaderManager().initLoader(10, null, new NickLoaderCallback(data.getStringExtra("ru.ifmo.android_2016.irc.Token")));
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 
     private class NickLoaderCallback implements LoaderManager.LoaderCallbacks<LoadResult<String>> {
         private final String token;
@@ -645,8 +657,8 @@ public class ChannelsListActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void finish() {
         startService(new Intent(this, ClientService.class).setAction(STOP_SERVICE));
-        super.onDestroy();
+        super.finish();
     }
 }

@@ -44,8 +44,8 @@ public class ClientService extends Service {
             case START_SERVICE:
                 startForeground(1, new Notification.Builder(this)
                         .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("Чёт делаем")
-                        .setContentText("лол")
+                        .setContentTitle("IRC client")
+                        .setContentText("Service is running")
                         .build());
                 break;
 

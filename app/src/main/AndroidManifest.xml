@@ -4,8 +4,7 @@
     android:installLocation="auto">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="true"
@@ -14,7 +13,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.NoActionBar">
         <activity
-            android:name="ru.ifmo.android_2016.irc.ChannelsListActivity"
+            android:name=".ChannelsListActivity"
             android:windowSoftInputMode="stateHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,10 +24,16 @@
         <activity
             android:name=".ChatActivity"
             android:windowSoftInputMode="stateHidden" />
+
         <service
-            android:name="ru.ifmo.android_2016.irc.client.ClientService"
+            android:name=".client.ClientService"
             android:enabled="true"
             android:exported="true" />
+
+        <activity
+            android:name=".TwitchLoginActivity"
+            android:label="Login"
+            android:theme="@style/Theme.AppCompat" />
     </application>
 
 </manifest>

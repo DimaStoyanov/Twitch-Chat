@@ -25,6 +25,7 @@ public final class TwitchMessage extends Message {
     private String displayName;
     private String id;
 
+    @Deprecated
     public TwitchMessage(String from, String to, String text) {
         super(from, to, text);
     }
@@ -49,7 +50,7 @@ public final class TwitchMessage extends Message {
     private String broadcasterLang;
     private String emoteSets;
 
-    private TwitchMessage() {
+    public TwitchMessage() {
     }
 
     public static TwitchMessage fromString(String rawMessage) {
@@ -60,8 +61,8 @@ public final class TwitchMessage extends Message {
     protected TwitchMessage parse(String rawMessage) {
         super.parse(rawMessage);
         HashMap<String, String> map = new HashMap<>();
-        if (opt_prefix != null) {
-            String[] params = opt_prefix.split(";");
+        if (optPrefix != null) {
+            String[] params = optPrefix.split(";");
             for (String param : params) {
                 String[] p = param.split("=");
                 String key = null, value = null;
@@ -83,7 +84,7 @@ public final class TwitchMessage extends Message {
         badges = parseBadges(map.get("badges"));
         color = parseColor(map.get("color"));
         displayName = map.get("display-name") == null ? nickName : map.get("display-name");
-        emotes = parseEmotes(map.get("emotes"));
+        //emotes = parseEmotes(map.get("emotes"));
         id = map.get("id");
         mod = parseBool(map.get("mod"));
         subscriber = parseBool(map.get("subscriber"));
@@ -199,6 +200,10 @@ public final class TwitchMessage extends Message {
             default:
                 throw new UnknownFormatConversionException(value);
         }
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 
     private static class Badge {
@@ -351,6 +356,25 @@ public final class TwitchMessage extends Message {
             return new TwitchMessage[size];
         }
     };
+
+    public TwitchMessage setDisplayName(String displayName) {
+        this.displayName = displayName;
+        this.nickName = displayName;
+        return this;
+    }
+
+    public TwitchMessage setColor(int color) {
+        this.color = color;
+        return this;
+    }
+
+    @Override
+    public Message genPrivmsg(String channels, String message) {
+        return this
+                .setCommand("PRIVMSG")
+                .setParams(channels)
+                .setTrailing(message);
+    }
 }
 
 

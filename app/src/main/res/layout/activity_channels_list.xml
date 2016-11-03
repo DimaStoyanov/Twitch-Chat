@@ -53,14 +53,14 @@
                 android:onClick="onAddChannelClick"
                 android:text="@string/add_channel" />
 
-            <ImageButton
+            <Button
                 android:id="@+id/twitch_login"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:onClick="onTwitchLoginClick"
                 android:layout_weight="1.2"
                 android:layout_marginStart="5dp"
-                android:background="@android:color/transparent"
+                android:text="Login with Twitch"
                 android:contentDescription="@string/connect_via_twitch"
                 android:src="@drawable/twitch_login" />
         </LinearLayout>

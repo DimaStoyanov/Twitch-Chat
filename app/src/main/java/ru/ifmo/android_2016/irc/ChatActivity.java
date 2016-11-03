@@ -66,7 +66,9 @@ public class ChatActivity extends AppCompatActivity {
                         .getInstance(ChatActivity.this)
                         .sendBroadcast(new Intent("send-message")
                                 .putExtra(Message.class.getCanonicalName(),
-                                        new TwitchMessage(clientSettings.getNicks()[0], clientSettings.getChannels(), typeMessage.getText().toString())));
+                                        new TwitchMessage().genPrivmsg(
+                                                clientSettings.getChannels(),
+                                                typeMessage.getText().toString())));
             }
         });
         LocalBroadcastManager.getInstance(this)
@@ -87,6 +89,7 @@ public class ChatActivity extends AppCompatActivity {
     BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.i(TAG, Thread.currentThread().getName());
             TwitchMessage msg = intent.getParcelableExtra(Message.class.getCanonicalName());
             DraweeTextView text = new DraweeTextView(context);
             text.setText(buildTextDraweeView(msg));
@@ -109,9 +112,9 @@ public class ChatActivity extends AppCompatActivity {
             builder.setSpan(new ForegroundColorSpan(msg.getColor()), 0, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         List<TwitchMessage.Emote> emotes = msg.getEmotes();
         if (emotes == null) {
-            return builder.append(msg.text);
+            return builder.append(msg.getTrailing());
         }
-        String msg_content = msg.text;
+        String msg_content = msg.getTrailing();
         int offset = 0;
         TwitchMessage.Emote cur_emote;
         for (int i = 0; i < emotes.size(); i++) {
