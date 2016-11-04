@@ -16,8 +16,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -30,7 +32,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 public class Client implements Runnable {
     private static final String TAG = Client.class.getSimpleName();
-    protected static final Executor executor = Executors.newCachedThreadPool();
+    protected final ExecutorService executor = Executors.newCachedThreadPool();
 
     protected ClientService clientService;
     protected ClientSettings clientSettings;
@@ -75,6 +77,7 @@ public class Client implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        executor.shutdownNow();
     }
 
     protected void quit() {
@@ -194,6 +197,7 @@ public class Client implements Runnable {
     }
 
     private final class ThreadStarter implements Runnable {
+        private final String TAG = ThreadStarter.class.getSimpleName();
         private final String method;
 
         public ThreadStarter(String method) {
@@ -203,10 +207,13 @@ public class Client implements Runnable {
         @Override
         public final void run() {
             try {
+                Log.i(TAG, method + " at " + Thread.currentThread().getName());
                 threadStarter(method);
-            } catch (Exception x) {
+            } catch (InterruptedException | SocketException x) {
+                Log.i(TAG, Thread.currentThread().getName() + " stopped");
+            } catch (Exception e) {
                 Log.e(TAG, Thread.currentThread().getName());
-                Log.e(TAG, x.toString());
+                e.printStackTrace();
             }
         }
     }

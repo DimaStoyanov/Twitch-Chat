@@ -1,5 +1,6 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
@@ -27,6 +28,8 @@ public class ClientService extends Service {
     private String SERVER_LIST_FILE = "/data.obj";    //TODO:
     LocalBroadcastManager lbm;
     public ServerList serverList;
+
+    @SuppressLint("UseSparseArrays")
     private Map<Long, Client> clients = new HashMap<>();
 
     @Override

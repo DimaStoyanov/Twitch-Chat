@@ -20,12 +20,15 @@ import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
@@ -87,6 +90,8 @@ public class ChannelsListActivity extends AppCompatActivity {
                 updateChannelList();
             }
         }, new IntentFilter(ServerList.class.getCanonicalName()));
+
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
     }
 
 
@@ -660,5 +665,21 @@ public class ChannelsListActivity extends AppCompatActivity {
     public void finish() {
         startService(new Intent(this, ClientService.class).setAction(STOP_SERVICE));
         super.finish();
+    }
+
+    @Override
+    public boolean onCreatePanelMenu(int featureId, Menu menu) {
+        getMenuInflater().inflate(R.menu.channel_list_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            //case R.id.dark_theme:
+
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 }

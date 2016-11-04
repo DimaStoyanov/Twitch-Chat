@@ -1,47 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_chanels_list"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/activity_vertical_margin"
-    android:paddingLeft="@dimen/activity_horizontal_margin"
-    android:paddingRight="@dimen/activity_horizontal_margin"
-    android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="ru.ifmo.android_2016.irc.ChannelsListActivity">
+    xmlns:android.support.v7.appcompat="http://schemas.android.com/tools"
+    android:orientation="vertical">
 
-
-    <TextView
-        android:id="@+id/irc"
+    <android.support.design.widget.AppBarLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="@string/irc_client"
-        android:textAllCaps="true"
-        android:textSize="30sp"
-        android:textStyle="bold|normal" />
+        android:layout_height="wrap_content">
+        <android.support.v7.widget.Toolbar
+            android.support.v7.appcompat:navigationIcon="@mipmap/ic_launcher"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/toolbar">
 
-    <WebView
-        android:id="@+id/webview"
-        android:visibility="gone"
-        android:layout_marginTop="50dp"
-        android:layout_width="300dp"
-        android:layout_centerInParent="true"
-        android:layout_height="300dp" />
+        </android.support.v7.widget.Toolbar>
+    </android.support.design.widget.AppBarLayout>
+
+    <RelativeLayout
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/activity_chanels_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        tools:context="ru.ifmo.android_2016.irc.ChannelsListActivity">
+
+
+        <!--<TextView-->
+            <!--android:id="@+id/irc"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:gravity="center"-->
+            <!--android:text="@string/irc_client"-->
+            <!--android:textAllCaps="true"-->
+            <!--android:textSize="30sp"-->
+            <!--android:textStyle="bold|normal" />-->
+
+        <WebView
+            android:id="@+id/webview"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="50dp"
+            android:visibility="gone" />
 
         <ProgressBar
             android:id="@+id/pbar"
-            android:visibility="gone"
-            android:layout_centerInParent="true"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:visibility="gone" />
 
         <LinearLayout
             android:id="@+id/ll"
             android:layout_width="match_parent"
-            android:layout_below="@id/irc"
-            android:layout_marginBottom="10dp"
             android:layout_height="50dp"
+            android:layout_marginBottom="10dp"
             android:layout_marginTop="10dp"
             android:orientation="horizontal">
 
@@ -57,12 +74,11 @@
                 android:id="@+id/twitch_login"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:onClick="onTwitchLoginClick"
                 android:layout_weight="1.2"
-                android:layout_marginStart="5dp"
-                android:text="Login with Twitch"
                 android:contentDescription="@string/connect_via_twitch"
-                android:src="@drawable/twitch_login" />
+                android:onClick="onTwitchLoginClick"
+                android:src="@drawable/twitch_login"
+                android:text="Login with Twitch" />
         </LinearLayout>
 
         <ScrollView
@@ -78,4 +94,5 @@
                 android:orientation="vertical" />
         </ScrollView>
 
-</RelativeLayout>
+    </RelativeLayout>
+</LinearLayout>
