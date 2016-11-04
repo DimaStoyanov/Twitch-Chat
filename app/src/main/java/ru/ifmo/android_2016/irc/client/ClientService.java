@@ -46,7 +46,7 @@ public class ClientService extends Service {
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("IRC client")
                         .setContentText("Service is running")
-                        .build());
+                        .getNotification());
                 break;
 
             case FORCE_STOP_SERVICE:
