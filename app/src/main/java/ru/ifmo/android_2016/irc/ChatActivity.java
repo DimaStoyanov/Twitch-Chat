@@ -5,10 +5,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.LocalBroadcastManager;
+import android.support.v4.widget.NestedScrollView;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
@@ -41,7 +45,7 @@ public class ChatActivity extends AppCompatActivity {
     private static final String TAG = ChatActivity.class.getSimpleName();
 
     private LinearLayout chat_msg_container;
-    private ScrollView scroll;
+    private NestedScrollView scroll;
     private EditText typeMessage;
     private ProgressBar progressBar;
     private long id = 0;
@@ -58,7 +62,6 @@ public class ChatActivity extends AppCompatActivity {
         } else {
             load();
         }
-        ((TextView) findViewById(R.id.channel)).setText(clientSettings.getChannels());
         findViewById(R.id.send).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -76,32 +79,47 @@ public class ChatActivity extends AppCompatActivity {
                 .registerReceiver(messageReceiver, new IntentFilter("new-message"));
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
-        tabLayout.addTab(tabLayout.newTab().setText("Forsen"));
+        tabLayout.addTab(tabLayout.newTab().setText(clientSettings.getChannels()));
         tabLayout.addTab(tabLayout.newTab().setText("Lol"));
         tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
-        tabLayout.addTab(tabLayout.newTab().setText("1"));
+        tabLayout.addTab(tabLayout.newTab().setText("2"));
+        tabLayout.addTab(tabLayout.newTab().setText("3"));
+        tabLayout.addTab(tabLayout.newTab().setText("4"));
+        tabLayout.addTab(tabLayout.newTab().setText("5"));
+        tabLayout.addTab(tabLayout.newTab().setText("6"));
+        tabLayout.addTab(tabLayout.newTab().setText("7"));
+        tabLayout.addTab(tabLayout.newTab().setText("8"));
+        tabLayout.addTab(tabLayout.newTab().setText("9"));
+        tabLayout.addTab(tabLayout.newTab().setText("10"));
+        tabLayout.addTab(tabLayout.newTab().setText("11"));
+        tabLayout.addTab(tabLayout.newTab().setText("12"));
+        tabLayout.addTab(tabLayout.newTab().setText("13"));
+        tabLayout.addTab(tabLayout.newTab().setText("14"));
+        tabLayout.addTab(tabLayout.newTab().setText("15"));
+        tabLayout.addTab(tabLayout.newTab().setText("16"));
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
+
+        ActionBar actionBar = getSupportActionBar();
+
+        actionBar.setDisplayHomeAsUpEnabled(true);
+        actionBar.setDisplayShowHomeEnabled(true);
     }
 
 
     private void initView() {
         setContentView(R.layout.activity_chat);
         chat_msg_container = (LinearLayout) findViewById(R.id.messages);
-        scroll = (ScrollView) findViewById(R.id.scrollv);
+        scroll = (NestedScrollView) findViewById(R.id.scrollv);
         typeMessage = (EditText) findViewById(R.id.text_message);
         progressBar = (ProgressBar) findViewById(R.id.pbar);
     }

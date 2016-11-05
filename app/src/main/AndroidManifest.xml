@@ -24,7 +24,12 @@
         <activity
             android:theme="@style/AppTheme.Dark"
             android:name=".ChatActivity"
-            android:windowSoftInputMode="stateHidden" />
+            android:windowSoftInputMode="stateHidden" >
+            <!--<meta-data-->
+                <!--android:name="android.support.PARENT_ACTIVITY"-->
+                <!--android:value=".ChannelsListActivity" />-->
+
+        </activity>
 
         <service
             android:name=".client.ClientService"

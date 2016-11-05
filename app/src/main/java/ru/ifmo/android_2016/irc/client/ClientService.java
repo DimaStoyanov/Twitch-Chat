@@ -45,6 +45,7 @@ public class ClientService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getAction()) {
             case START_SERVICE:
+                //noinspection deprecation
                 startForeground(1, new Notification.Builder(this)
                         .setSmallIcon(R.mipmap.ic_launcher)
                         .setContentTitle("IRC client")
