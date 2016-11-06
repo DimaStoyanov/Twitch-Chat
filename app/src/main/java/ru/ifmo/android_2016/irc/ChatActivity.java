@@ -7,11 +7,14 @@ import android.content.IntentFilter;
 import android.graphics.Typeface;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.annotation.WorkerThread;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.widget.NestedScrollView;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -19,6 +22,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -44,12 +48,14 @@ import static ru.ifmo.android_2016.irc.client.ClientService.START_TWITCH_CLIENT;
 public class ChatActivity extends AppCompatActivity {
     private static final String TAG = ChatActivity.class.getSimpleName();
 
-    private LinearLayout chat_msg_container;
-    private NestedScrollView scroll;
+    //private LinearLayout chat_msg_container;
+    //private NestedScrollView scroll;
     private EditText typeMessage;
     private ProgressBar progressBar;
     private long id = 0;
     private ClientSettings clientSettings;
+    private RecyclerView messageRecycler;
+    private MessageAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +68,12 @@ public class ChatActivity extends AppCompatActivity {
         } else {
             load();
         }
+
+        ArrayList<SpannableStringBuilder> last = (ArrayList<SpannableStringBuilder>) getLastCustomNonConfigurationInstance();
+        if (last != null) {
+            adapter.messages = last;
+        }
+
         findViewById(R.id.send).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -118,29 +130,69 @@ public class ChatActivity extends AppCompatActivity {
 
     private void initView() {
         setContentView(R.layout.activity_chat);
-        chat_msg_container = (LinearLayout) findViewById(R.id.messages);
-        scroll = (NestedScrollView) findViewById(R.id.scrollv);
+//        chat_msg_container = (LinearLayout) findViewById(R.id.messages);
+//        scroll = (NestedScrollView) findViewById(R.id.scrollv);
+        messageRecycler = (RecyclerView) findViewById(R.id.messages);
         typeMessage = (EditText) findViewById(R.id.text_message);
         progressBar = (ProgressBar) findViewById(R.id.pbar);
+
+        messageRecycler.setLayoutManager(new LinearLayoutManager(this));
+        messageRecycler.setAdapter(adapter = new MessageAdapter());
+
+        messageRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            int lastState;
+            int lastDirection;
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                //Log.d(TAG, dx + ", " + dy);
+                lastDirection = dy;
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                //Log.d(TAG, String.valueOf(newState));
+                autoScroll = lastState == 2 && newState == 0 && (lastDirection >= 0);
+                lastState = newState;
+            }
+        });
     }
 
+    private boolean autoScroll = false;
     BroadcastReceiver messageReceiver = new BroadcastReceiver() {
         @Override
-        public void onReceive(Context context, Intent intent) {
+        public void onReceive(Context context, final Intent intent) {
             Log.i(TAG, Thread.currentThread().getName());
-            TwitchMessage msg = intent.getParcelableExtra(Message.class.getCanonicalName());
-            DraweeTextView text = new DraweeTextView(context);
-            text.setText(buildTextDraweeView(msg));
-            chat_msg_container.addView(text);
-            scroll.post(new Runnable() {
+            new AsyncTask<Message, Void, SpannableStringBuilder>() {
                 @Override
-                public void run() {
-                    scroll.fullScroll(ScrollView.FOCUS_DOWN);
+                protected SpannableStringBuilder doInBackground(Message... params) {
+                    adapter.messages
+                            .add((SpannableStringBuilder) buildTextDraweeView((TwitchMessage)
+                                    intent.getParcelableExtra(Message.class.getCanonicalName())));
+                    return null;
                 }
-            });
+
+                @Override
+                protected void onPostExecute(SpannableStringBuilder spannableStringBuilder) {
+                    adapter.notifyItemInserted(adapter.getItemCount());
+                    if (autoScroll) {
+                        messageRecycler.smoothScrollToPosition(adapter.getItemCount());
+                    }
+                    super.onPostExecute(spannableStringBuilder);
+                }
+            }.execute();
+//            text.setText(buildTextDraweeView(msg));
+//            chat_msg_container.addView(text);
+//            scroll.post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    scroll.fullScroll(ScrollView.FOCUS_DOWN);
+//                }
+//            });
         }
     };
 
+    @WorkerThread
     private CharSequence buildTextDraweeView(TwitchMessage msg) {
         SpannableStringBuilder builder = new SpannableStringBuilder();
         builder.append(msg.getNickname());
@@ -199,7 +251,7 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putStringArrayList("Messages", getMessages());
+//        outState.putStringArrayList("Messages", getMessages());
         outState.putLong("Id", id);
     }
 
@@ -217,12 +269,45 @@ public class ChatActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHolder> {
+        private List<SpannableStringBuilder> messages = new ArrayList<>();
 
-    public ArrayList<String> getMessages() {
-        ArrayList<String> result = new ArrayList<>();
-        for (int i = 0; i < chat_msg_container.getChildCount(); i++) {
-            result.add(((DraweeTextView) chat_msg_container.getChildAt(i)).getText().toString());
+        {
+            setHasStableIds(true);
         }
-        return result;
+
+        @Override
+        public MessageAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            return new ViewHolder(new DraweeTextView(ChatActivity.this));
+        }
+
+        @Override
+        public void onBindViewHolder(MessageAdapter.ViewHolder holder, int position) {
+            holder.itemView.setText(messages.get(position));
+        }
+
+        @Override
+        public int getItemCount() {
+            return messages.size();
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            private DraweeTextView itemView;
+
+            ViewHolder(View itemView) {
+                super(itemView);
+                this.itemView = (DraweeTextView) itemView;
+            }
+        }
+    }
+
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        return this.adapter.messages;
     }
 }
