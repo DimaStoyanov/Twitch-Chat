@@ -27,4 +27,7 @@
     <string name="use_ssl">Use SSL</string>
     <string name="server_status">Server status</string>
     <string name="username_status">Username status</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

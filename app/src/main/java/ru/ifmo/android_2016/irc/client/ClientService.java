@@ -2,6 +2,8 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -12,6 +14,7 @@ import android.util.Log;
 import java.util.HashMap;
 import java.util.Map;
 
+import ru.ifmo.android_2016.irc.ChatActivity;
 import ru.ifmo.android_2016.irc.R;
 
 public class ClientService extends Service {
@@ -27,10 +30,11 @@ public class ClientService extends Service {
     public static final String STOP_CLIENT = "stop-client";
     private String SERVER_LIST_FILE = "/data.obj";    //TODO:
     LocalBroadcastManager lbm;
-    public ServerList serverList;
+    ServerList serverList;
 
     @SuppressLint("UseSparseArrays")
     private Map<Long, Client> clients = new HashMap<>();
+    private boolean isRunning = false;
 
     @Override
     public void onCreate() {
@@ -45,12 +49,10 @@ public class ClientService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getAction()) {
             case START_SERVICE:
-                //noinspection deprecation
-                startForeground(1, new Notification.Builder(this)
-                        .setSmallIcon(R.mipmap.ic_launcher)
-                        .setContentTitle("IRC client")
-                        .setContentText("Service is running")
-                        .getNotification());
+                if (!isRunning) {
+                    startForeground(1, getNotification("Service is running", 0));
+                    isRunning = true;
+                }
                 break;
 
             case FORCE_STOP_SERVICE:
@@ -80,6 +82,23 @@ public class ClientService extends Service {
             default:
         }
         return START_STICKY;
+    }
+
+    @SuppressWarnings("deprecation")
+    private Notification getNotification(String text, long id) {
+        return new Notification.Builder(this)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle("IRC client")
+                .setContentText(text)
+                .setContentIntent(PendingIntent.getActivity(this, 0,
+                        new Intent(this, ChatActivity.class)
+                                .putExtra(ChatActivity.MESSAGE_STORAGE_ID, id), 0))
+                .getNotification();
+    }
+
+    void updateNotification(String text, long id) {
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        nm.notify(1, getNotification(text, id));
     }
 
     private class LoadServerListTask extends AsyncTask<String, Void, ServerList> {
@@ -112,10 +131,12 @@ public class ClientService extends Service {
         }
     }
 
-    private class StartClientTask extends AsyncTask<Long, Void, Void> {
+    private class StartClientTask extends AsyncTask<Long, Void, String> {
+        private long id;
+
         @Override
-        protected Void doInBackground(Long... longs) {
-            long id = longs[0];
+        protected String doInBackground(Long... longs) {
+            id = longs[0];
             if (!clients.containsKey(id)) {
                 ClientSettings clientSettings;
                 if ((clientSettings = serverList.find(id)) != null) {
@@ -126,10 +147,16 @@ public class ClientService extends Service {
                     clients.put(id, client);
                     client.connect(clientSettings);
                 }
+                return clientSettings + " is running";
             } else {
                 Log.i(TAG, "Client " + id + " is already running");
             }
             return null;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            updateNotification(result, id);
         }
     }
 

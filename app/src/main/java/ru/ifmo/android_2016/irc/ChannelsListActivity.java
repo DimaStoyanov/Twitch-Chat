@@ -2,17 +2,14 @@ package ru.ifmo.android_2016.irc;
 
 
 import android.annotation.SuppressLint;
-import android.app.Dialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 import android.support.v4.app.LoaderManager;
@@ -31,8 +28,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -55,11 +50,7 @@ import ru.ifmo.android_2016.irc.utils.IOUtils;
 import static ru.ifmo.android_2016.irc.client.ClientService.GET_SERVER_LIST;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
-import static ru.ifmo.android_2016.irc.client.ClientService.START_TWITCH_CLIENT;
 import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
-import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.OAUTH_URL;
-import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.REDIRECT_URL;
-import static ru.ifmo.android_2016.irc.utils.WebUtils.getAccessToken;
 
 public class ChannelsListActivity extends AppCompatActivity {
 

@@ -30,6 +30,7 @@ import javax.net.ssl.SSLSocketFactory;
  * Created by ghost on 10/24/2016.
  */
 
+@SuppressWarnings("WeakerAccess")
 public class Client implements Runnable {
     private static final String TAG = Client.class.getSimpleName();
     protected final ExecutorService executor = Executors.newCachedThreadPool();
