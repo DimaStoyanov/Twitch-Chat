@@ -7,6 +7,7 @@ import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -27,7 +28,7 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 
-public class ChatFragment extends Fragment {
+public class ChatFragment extends Fragment implements Client.ChannelCallback {
     private static final String CHANNEL_NAME = "param1";
     private static final String TAG = ChatFragment.class.getSimpleName();
 
@@ -35,7 +36,6 @@ public class ChatFragment extends Fragment {
     private Client.Channel channel;
     private RecyclerView recyclerView;
     private MessageAdapter adapter;
-    private LocalBroadcastManager lbm;
     private long serverId;
 
     public ChatFragment() {
@@ -59,6 +59,7 @@ public class ChatFragment extends Fragment {
             channelName = getArguments().getString(CHANNEL_NAME);
         }
         channel = ClientService.getClient(serverId).getChannels().get(channelName);
+        channel.attachUi(this);
     }
 
     @Override
@@ -69,13 +70,11 @@ public class ChatFragment extends Fragment {
 
     @Override
     public void onAttach(Context context) {
-        lbm = LocalBroadcastManager.getInstance(context);
         super.onAttach(context);
     }
 
     @Override
     public void onDetach() {
-        lbm.unregisterReceiver(messageReceiver);
         channel.detachUi();
         super.onDetach();
     }
@@ -89,8 +88,6 @@ public class ChatFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-
-        lbm.registerReceiver(messageReceiver, new IntentFilter("new-message"));
 
         View view = getView();
         recyclerView = (RecyclerView) view.findViewById(R.id.messages);
@@ -118,25 +115,18 @@ public class ChatFragment extends Fragment {
 //        });
     }
 
-    BroadcastReceiver messageReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, final Intent intent) {
-            new AsyncTask<Message, Void, SpannableStringBuilder>() {
-                @Override
-                protected SpannableStringBuilder doInBackground(Message... params) {
-                    adapter.messages.add(TextUtils.buildTextDraweeView((TwitchMessage)
-                                    intent.getParcelableExtra(Message.class.getCanonicalName())));
-                    return null;
-                }
+    @Override
+    public void runOnUiThread(Runnable run) {
+        getActivity().runOnUiThread(run);
+    }
 
-                @Override
-                protected void onPostExecute(SpannableStringBuilder spannableStringBuilder) {
-                    adapter.notifyItemInserted(adapter.getItemCount());
-                    super.onPostExecute(spannableStringBuilder);
-                }
-            }.execute();
+    @Override
+    @UiThread
+    public void onMessageReceived() {
+        if (adapter != null) {
+            adapter.notifyItemChanged(adapter.messages.size());
         }
-    };
+    }
 
 
     class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHolder> {

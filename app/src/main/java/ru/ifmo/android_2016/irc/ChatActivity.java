@@ -2,6 +2,8 @@ package ru.ifmo.android_2016.irc;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.annotation.UiThread;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -27,16 +29,16 @@ import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
-import static ru.ifmo.android_2016.irc.client.ClientService.START_TWITCH_CLIENT;
 
-public class ChatActivity extends AppCompatActivity {
+public class ChatActivity extends AppCompatActivity
+        implements ClientService.OnConnectedListener, Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
-    public static final String MESSAGE_STORAGE_ID = MessageStorage.class.getCanonicalName();
 
     private EditText typeMessage;
     private long id = 0;
     private ClientSettings clientSettings;
-    private Client client;
+    @Nullable private Client client;
+    private ViewPagerAdapter viewPagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +69,7 @@ public class ChatActivity extends AppCompatActivity {
         });
 
         ViewPager viewPager = (ViewPager) findViewById(R.id.viewPager);
-        viewPager.setAdapter(new ViewPagerAdapter(getSupportFragmentManager()));
+        viewPager.setAdapter(viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager()));
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
         tabLayout.setupWithViewPager(viewPager);
@@ -87,6 +89,11 @@ public class ChatActivity extends AppCompatActivity {
 
         actionBar.setDisplayHomeAsUpEnabled(true);
         actionBar.setDisplayShowHomeEnabled(true);
+
+        if (client != null) {
+            client.attachUi(this);
+            onChannelChange();
+        }
     }
 
 
@@ -98,11 +105,8 @@ public class ChatActivity extends AppCompatActivity {
     private void load() {
         id = getIntent().getLongExtra(SERVER_ID, 0);
         clientSettings = ServerList.getInstance().get(id);
-        client = ClientService.getClient(id);
 
-        startService(new Intent(ChatActivity.this, ClientService.class)
-                .setAction(START_TWITCH_CLIENT)
-                .putExtra(SERVER_ID, id));
+        ClientService.startClient(this, id);
     }
 
 
@@ -114,15 +118,32 @@ public class ChatActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        startService(new Intent(this, ClientService.class)
-                .setAction(ClientService.STOP_CLIENT)
-                .putExtra(SERVER_ID, id));
+        ClientService.stopClient(clientSettings.getId());
         super.onBackPressed();
     }
 
     @Override
     protected void onDestroy() {
+        client.detachUi();
         super.onDestroy();
+    }
+
+    @Override
+    @UiThread
+    public void onConnected(final Client client) {
+        ChatActivity.this.client = client;
+        client.attachUi(this);
+        onChannelChange();
+        Log.d(TAG, String.valueOf(viewPagerAdapter.channels.size()));
+    }
+
+    @Override
+    @UiThread
+    public void onChannelChange() {
+        Log.d(TAG, "onChannelChange");
+        viewPagerAdapter.channels.clear();
+        viewPagerAdapter.channels.addAll(client.getChannels().keySet());
+        viewPagerAdapter.notifyDataSetChanged();
     }
 
     private class ViewPagerAdapter extends FragmentPagerAdapter {
@@ -130,11 +151,6 @@ public class ChatActivity extends AppCompatActivity {
 
         public ViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
-            if (client != null) {
-                for (String channel : client.getChannels().keySet()) {
-                    channels.add(channel);
-                }
-            }
         }
 
         @Override

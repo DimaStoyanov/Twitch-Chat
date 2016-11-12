@@ -26,10 +26,9 @@ public class ClientSettings implements Parcelable, Serializable {
     public ClientSettings() {
     }
 
-    @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
     @Deprecated
     public ClientSettings setChannel(String channel) {
-        this.channels = Arrays.asList(channel);
+        this.channels = Arrays.asList(channel.split(","));
         return this;
     }
 

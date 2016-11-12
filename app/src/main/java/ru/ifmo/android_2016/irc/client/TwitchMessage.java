@@ -431,7 +431,7 @@ public final class TwitchMessage extends Message {
                 if (c != ' ') {
                     sb.append(c);
                 } else {
-                    Log.d(TAG, sb.toString() + " " + b + " " + (i - 1));
+                    //Log.d(TAG, sb.toString() + " " + b + " " + (i - 1));
                     result.words.add(sb.toString());
                     result.begin.add(b);
                     result.end.add(i - 1);
@@ -442,7 +442,7 @@ public final class TwitchMessage extends Message {
             result.words.add(sb.toString());
             result.begin.add(b);
             result.end.add(trailing.length() - 1);
-            Log.d(TAG, sb.toString() + " " + b + " " + (trailing.length() - 1));
+            //Log.d(TAG, sb.toString() + " " + b + " " + (trailing.length() - 1));
             return result;
         }
     }

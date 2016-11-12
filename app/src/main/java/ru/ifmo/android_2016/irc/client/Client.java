@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -49,6 +48,9 @@ public class Client implements Runnable {
     private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
     private Map<String, Channel> channels = new HashMap<>();
     protected Function<Message, CharSequence> defaultPostExecute;
+    @Nullable
+    private Callback ui;
+    private Channel statusChannel = new Channel("status");
 
     Client(ClientService clientService) {
         this.clientService = clientService;
@@ -58,7 +60,9 @@ public class Client implements Runnable {
         this.clientSettings = clientSettings;
         executor.execute(this);
         clientService.lbm.registerReceiver(sendMessage, new IntentFilter("send-message"));
+        channels.put("Status", statusChannel);
         Log.i(TAG, "Client started");
+        statusChannel.add("Client started");
         return true;
     }
 
@@ -66,6 +70,14 @@ public class Client implements Runnable {
         for (String channel : channels) {
             print("JOIN " + channel);
             this.channels.put(channel, new Channel(channel));
+        }
+        if (ui != null) {
+            ui.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ui.onChannelChange();
+                }
+            });
         }
     }
 
@@ -108,6 +120,8 @@ public class Client implements Runnable {
                 SSLSocket sslSocket = (SSLSocket) (socket = sslFactory.createSocket(clientSettings.getAddress(), clientSettings.getPort()));
                 sslSocket.startHandshake();
             }
+
+            statusChannel.add("Connected");
 
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
@@ -212,6 +226,33 @@ public class Client implements Runnable {
         }
     }
 
+    public void detachUi() {
+        this.ui = null;
+    }
+
+    public void attachUi(Callback activity) {
+        if (ui == null) {
+            ui = activity;
+        } else {
+            throw null; //TODO: Already attached
+        }
+    }
+
+    public interface Callback {
+        void runOnUiThread(Runnable run);
+
+        @UiThread
+        void onChannelChange();
+
+    }
+
+    public interface ChannelCallback {
+        void runOnUiThread(Runnable run);
+
+        @UiThread
+        void onMessageReceived();
+    }
+
     private final class ThreadStarter implements Runnable {
         private final String TAG = ThreadStarter.class.getSimpleName();
         private final String method;
@@ -235,9 +276,8 @@ public class Client implements Runnable {
     }
 
     private class SendMessageTask implements Runnable {
-        private final
         @Nullable
-        Message msg;
+        private final Message msg;
 
         public SendMessageTask(Intent intent) {
             this.msg = intent.getParcelableExtra(Message.class.getCanonicalName());
@@ -257,6 +297,7 @@ public class Client implements Runnable {
     }
 
     public Map<String, Channel> getChannels() {
+        Log.d(TAG, String.valueOf(channels.size()));
         return channels;
     }
 
@@ -267,6 +308,7 @@ public class Client implements Runnable {
         private final String channel;
         private final List<CharSequence> messages;
         private Function<Message, CharSequence> postExecute = defaultPostExecute;
+        @Nullable
         private ChatFragment ui;
 
         public Channel(String channel) {
@@ -278,6 +320,23 @@ public class Client implements Runnable {
             if (postExecute != null) {
                 messages.add(postExecute.apply(msg));
             }
+            notifyUi();
+        }
+
+        private void notifyUi() {
+            if (ui != null) {
+                ui.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ui.onMessageReceived();
+                    }
+                });
+            }
+        }
+
+        public void add(String msg) {
+            messages.add(msg);
+            notifyUi();
         }
 
         public String getChannel() {

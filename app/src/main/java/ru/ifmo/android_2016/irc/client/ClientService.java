@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
+import android.support.annotation.UiThread;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
@@ -24,11 +25,8 @@ public class ClientService extends Service {
     public static final String SERVER_ID = "ru.ifmo.android_2016.irc.id";
 
     public static final String START_SERVICE = "start-service";
-    public static final String FORCE_STOP_SERVICE = "force-stop-service";
     public static final String STOP_SERVICE = "stop-service";
-    public static final String START_TWITCH_CLIENT = "start-twitch-client";
     public static final String GET_SERVER_LIST = "server-list";
-    public static final String STOP_CLIENT = "stop-client";
     private String SERVER_LIST_FILE = "/data.obj";    //TODO:
     LocalBroadcastManager lbm;
     ServerList serverList;
@@ -63,18 +61,8 @@ public class ClientService extends Service {
                 }
                 break;
 
-            case FORCE_STOP_SERVICE:
-                new ForceServiceStopTask().execute();
-                break;
-
             case STOP_SERVICE:
-                if (clients.isEmpty()) {
-                    stopSelf();
-                }
-                break;
-
-            case START_TWITCH_CLIENT:
-                new StartClientTask().execute(intent.getLongExtra(SERVER_ID, 0));
+                stop();
                 break;
 
             case GET_SERVER_LIST:
@@ -83,13 +71,28 @@ public class ClientService extends Service {
                 }
                 break;
 
-            case STOP_CLIENT:
-                new CloseClientTask().execute(intent.getLongExtra(SERVER_ID, 0));
-                break;
-
             default:
         }
         return START_STICKY;
+    }
+
+    public static void stopClient(long serverId) {
+        instance.new CloseClientTask().execute(serverId);
+    }
+
+    public static void startClient(OnConnectedListener activity, long serverId) {
+        instance.new StartClientTask().execute(serverId, activity);
+    }
+
+    public static void stop() {
+        if (instance.clients.isEmpty()) {
+            instance.stopSelf();
+            instance = null;
+        }
+    }
+
+    private static void forceStop() {
+        instance.new ForceServiceStopTask().execute();
     }
 
     @SuppressWarnings("deprecation")
@@ -98,9 +101,6 @@ public class ClientService extends Service {
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("IRC client")
                 .setContentText(text)
-                .setContentIntent(PendingIntent.getActivity(this, 0,
-                        new Intent(this, ChatActivity.class)
-                                .putExtra(ChatActivity.MESSAGE_STORAGE_ID, id), 0))
                 .getNotification();
     }
 
@@ -111,6 +111,11 @@ public class ClientService extends Service {
 
     public static Client getClient(long id) {
         return instance.clients.get(id);
+    }
+
+    public interface OnConnectedListener {
+        @UiThread
+        void onConnected(Client client);
     }
 
     private class LoadServerListTask extends AsyncTask<String, Void, ServerList> {
@@ -143,12 +148,14 @@ public class ClientService extends Service {
         }
     }
 
-    private class StartClientTask extends AsyncTask<Long, Void, String> {
+    private class StartClientTask extends AsyncTask<Object, Void, String> {
         private long id;
+        private OnConnectedListener listener;
 
         @Override
-        protected String doInBackground(Long... longs) {
-            id = longs[0];
+        protected String doInBackground(Object... args) {
+            id = (long) args[0];
+            listener = (OnConnectedListener) args[1];
             if (!clients.containsKey(id)) {
                 ClientSettings clientSettings;
                 if ((clientSettings = serverList.find(id)) != null) {
@@ -169,6 +176,7 @@ public class ClientService extends Service {
         @Override
         protected void onPostExecute(String result) {
             updateNotification(result, id);
+            listener.onConnected(getClient(id));
         }
     }
 
