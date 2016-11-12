@@ -16,6 +16,7 @@ import java.util.Map;
 
 import ru.ifmo.android_2016.irc.ChatActivity;
 import ru.ifmo.android_2016.irc.R;
+import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
 
 public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
@@ -35,6 +36,12 @@ public class ClientService extends Service {
     @SuppressLint("UseSparseArrays")
     private Map<Long, Client> clients = new HashMap<>();
     private boolean isRunning = false;
+    private static ClientService instance;
+
+    public ClientService() {
+        super();
+        instance = this;
+    }
 
     @Override
     public void onCreate() {
@@ -51,6 +58,7 @@ public class ClientService extends Service {
             case START_SERVICE:
                 if (!isRunning) {
                     startForeground(1, getNotification("Service is running", 0));
+                    new BetterTwitchTvApi.BttvEmotesLoaderTask().execute();
                     isRunning = true;
                 }
                 break;
@@ -99,6 +107,10 @@ public class ClientService extends Service {
     void updateNotification(String text, long id) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         nm.notify(1, getNotification(text, id));
+    }
+
+    public static Client getClient(long id) {
+        return instance.clients.get(id);
     }
 
     private class LoadServerListTask extends AsyncTask<String, Void, ServerList> {

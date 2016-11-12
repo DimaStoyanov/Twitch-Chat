@@ -67,7 +67,7 @@ public final class FileUtils {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T readObject(String filename) {
+    public static <T> T readObjectFromFile(String filename) {
         ObjectInputStream is = null;
         try {
             is = new ObjectInputStream(new FileInputStream(filename));
@@ -86,7 +86,7 @@ public final class FileUtils {
         return null;
     }
 
-    public static <T> void writeObject(String filename, T object) {
+    public static <T> void writeObjectToFile(String filename, T object) {
         ObjectOutputStream os = null;
         try {
             os = new ObjectOutputStream(new FileOutputStream(filename));

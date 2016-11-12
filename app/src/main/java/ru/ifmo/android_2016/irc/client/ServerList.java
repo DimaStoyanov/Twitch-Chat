@@ -4,11 +4,8 @@ import android.os.AsyncTask;
 import android.support.annotation.WorkerThread;
 import android.util.Log;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import ru.ifmo.android_2016.irc.utils.FileUtils;
 
@@ -19,7 +16,7 @@ import ru.ifmo.android_2016.irc.utils.FileUtils;
 public final class ServerList extends HashMap<Long, ClientSettings> {
     private static final String TAG = ServerList.class.getSimpleName();
     private static ServerList instance = null;
-    private long lastId = 1;
+    private AtomicLong lastId = new AtomicLong(1);
 
     ClientSettings find(long id) {
         if (id != 0) {
@@ -43,7 +40,7 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
     static ServerList loadFromFile(String filename) {
         if (instance == null) {
             Log.i(TAG, "Loading " + filename);
-            instance = FileUtils.readObject(filename);
+            instance = FileUtils.readObjectFromFile(filename);
             instance = instance == null ? new ServerList() : instance;
         }
         return instance;
@@ -54,7 +51,7 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
         protected Void doInBackground(String... strings) {
             if (instance != null) {
                 Log.i(TAG, "Saving to " + strings[0]);
-                FileUtils.writeObject(strings[0], instance);
+                FileUtils.writeObjectToFile(strings[0], instance);
             }
             return null;
         }
@@ -62,8 +59,8 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
 
     public long add(ClientSettings clientSettings) {
         if (clientSettings.id == 0) {
-            put(lastId, clientSettings.setId(lastId));
-            return lastId++;
+            put(lastId.get(), clientSettings.setId(lastId.get()));
+            return lastId.getAndIncrement();
         } else {
             put(clientSettings.id, clientSettings);
             return clientSettings.id;
@@ -72,7 +69,7 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
 
     @Override
     public void clear() {
-        lastId = 1;
+        lastId.set(1);
         super.clear();
     }
 }

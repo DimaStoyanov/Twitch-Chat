@@ -4,13 +4,19 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by ghost on 10/23/2016.
  */
 
 public class ClientSettings implements Parcelable, Serializable {
-    String address, username, password, channels;
+    String address;
+    String username;
+    String password;
+    List<String> channels;
     String[] nicks;
     int port = 6667;
     boolean ssl, twitch;
@@ -20,8 +26,25 @@ public class ClientSettings implements Parcelable, Serializable {
     public ClientSettings() {
     }
 
-    public ClientSettings setChannels(String channels) {
-        this.channels = channels;
+    @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
+    @Deprecated
+    public ClientSettings setChannel(String channel) {
+        this.channels = Arrays.asList(channel);
+        return this;
+    }
+
+    public ClientSettings setChannels(String... channels) {
+        this.channels = Arrays.asList(channels);
+        return this;
+    }
+
+    @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
+    public ClientSettings addChannel(String channel) {
+        if (channels == null) {
+            channels = Arrays.asList(channel);
+        } else {
+            channels.add(channel);
+        }
         return this;
     }
 
@@ -60,46 +83,6 @@ public class ClientSettings implements Parcelable, Serializable {
         return this;
     }
 
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.address);
-        dest.writeString(this.username);
-        dest.writeString(this.password);
-        dest.writeString(this.channels);
-        dest.writeStringArray(this.nicks);
-        dest.writeInt(this.port);
-        dest.writeByte(this.ssl ? (byte) 1 : (byte) 0);
-        dest.writeByte(this.twitch ? (byte) 1 : (byte) 0);
-    }
-
-    protected ClientSettings(Parcel in) {
-        this.address = in.readString();
-        this.username = in.readString();
-        this.password = in.readString();
-        this.channels = in.readString();
-        this.nicks = in.createStringArray();
-        this.port = in.readInt();
-        this.ssl = in.readByte() != 0;
-        this.twitch = in.readByte() != 0;
-    }
-
-    public static final Creator<ClientSettings> CREATOR = new Creator<ClientSettings>() {
-        @Override
-        public ClientSettings createFromParcel(Parcel source) {
-            return new ClientSettings(source);
-        }
-
-        @Override
-        public ClientSettings[] newArray(int size) {
-            return new ClientSettings[size];
-        }
-    };
-
     public String getAddress() {
         return address;
     }
@@ -112,8 +95,13 @@ public class ClientSettings implements Parcelable, Serializable {
         return password;
     }
 
-    public String getChannels() {
-        return channels;
+    @Deprecated
+    public String getChannel() {
+        return channels.get(0);
+    }
+
+    public String getChannel(int index) {
+        return channels.get(index);
     }
 
     public String[] getNicks() {
@@ -158,4 +146,48 @@ public class ClientSettings implements Parcelable, Serializable {
     public String getName() {
         return name;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.address);
+        dest.writeString(this.username);
+        dest.writeString(this.password);
+        dest.writeStringList(this.channels);
+        dest.writeStringArray(this.nicks);
+        dest.writeInt(this.port);
+        dest.writeByte(this.ssl ? (byte) 1 : (byte) 0);
+        dest.writeByte(this.twitch ? (byte) 1 : (byte) 0);
+        dest.writeLong(this.id);
+        dest.writeString(this.name);
+    }
+
+    protected ClientSettings(Parcel in) {
+        this.address = in.readString();
+        this.username = in.readString();
+        this.password = in.readString();
+        this.channels = in.createStringArrayList();
+        this.nicks = in.createStringArray();
+        this.port = in.readInt();
+        this.ssl = in.readByte() != 0;
+        this.twitch = in.readByte() != 0;
+        this.id = in.readLong();
+        this.name = in.readString();
+    }
+
+    public static final Creator<ClientSettings> CREATOR = new Creator<ClientSettings>() {
+        @Override
+        public ClientSettings createFromParcel(Parcel source) {
+            return new ClientSettings(source);
+        }
+
+        @Override
+        public ClientSettings[] newArray(int size) {
+            return new ClientSettings[size];
+        }
+    };
 }

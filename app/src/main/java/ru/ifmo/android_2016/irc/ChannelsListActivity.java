@@ -238,7 +238,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                     port.setText(Integer.toString(data.getPort()));
                     username.setText(data.getUsername());
                     password.setText(data.getPassword());
-                    channel.setText(data.getChannels());
+                    channel.setText(data.getChannel());
                     ssl.setChecked(data.isSsl());
                     dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -336,7 +336,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                                     .setPort(Integer.parseInt(port.getText().toString()))
                                     .setUsername(username.getText().toString())
                                     .setPassword(password.getText().toString())
-                                    .setChannels(channel.getText().toString())
+                                    .setChannel(channel.getText().toString())
                                     .setSsl(ssl != null && ssl.isChecked()));
 
                             dialog.cancel();
@@ -453,7 +453,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                 .setPort(Integer.parseInt(args[2]))
                 .setUsername(args[3])
                 .setPassword(args[4])
-                .setChannels(args[5])
+                .setChannel(args[5])
                 .setSsl(Boolean.parseBoolean(args[6]));
     }
 
@@ -615,7 +615,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                                                             channel.getText().toString() :
                                                             name.getText().toString())
                                                     .setNicks(result.data)
-                                                    .setChannels(channel.getText().toString()));
+                                                    .setChannel(channel.getText().toString()));
 
                                     alert.dismiss();
 

@@ -9,9 +9,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UnknownFormatConversionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
+import ru.ifmo.android_2016.irc.api.TwitchApi;
 
 /**
  * Created by ghost on 10/29/2016.
@@ -84,7 +88,13 @@ public final class TwitchMessage extends Message {
         badges = parseBadges(map.get("badges"));
         color = parseColor(map.get("color"));
         displayName = map.get("display-name") == null ? nickName : map.get("display-name");
+
         emotes = parseEmotes(map.get("emotes"));
+        checkForBttvEmotes();
+        if (emotes != null) {
+            Collections.sort(emotes);
+        }
+
         id = map.get("id");
         mod = parseBool(map.get("mod"));
         subscriber = parseBool(map.get("subscriber"));
@@ -148,18 +158,41 @@ public final class TwitchMessage extends Message {
                 for (String range : p[1].split(",")) {
                     Matcher matcher1 = Emote.range.matcher(range);
                     if (matcher1.matches()) {
-                        result.add(new Emote(
+                        result.add(Emote.getTwitchEmote(
                                 eId,
                                 Integer.parseInt(matcher1.group(1)),
                                 Integer.parseInt(matcher1.group(2))));
                     }
                 }
-                Collections.sort(result);
             } else {
                 throw null;
             }
         }
         return result;
+    }
+
+    private void checkForBttvEmotes() {
+        List<Emote> newEmotes = new ArrayList<>(10);
+        Map<String, String> bttvEmotes = BetterTwitchTvApi.globalEmotes;
+        if (trailing != null && bttvEmotes != null) {
+            SplitResult result = SplitResult.specialSplit(trailing);
+            for (int i = 0; i < result.words.size(); i++) {
+                if (bttvEmotes.containsKey(result.words.get(i))) {
+                    newEmotes.add(Emote.getBttvEmote(
+                            bttvEmotes.get(result.words.get(i)),
+                            result.begin.get(i),
+                            result.end.get(i)));
+                }
+            }
+        }
+
+        if (emotes != null) {
+            emotes.addAll(newEmotes);
+        } else {
+            if (newEmotes.size() > 0) {
+                emotes = newEmotes;
+            }
+        }
     }
 
     private static List<Badge> parseBadges(String badges) {
@@ -243,12 +276,20 @@ public final class TwitchMessage extends Message {
             this.end = end;
         }
 
+        static Emote getTwitchEmote(String emoteName, int begin, int end) {
+            return new Emote(TwitchApi.getEmoticonUrl(emoteName), begin, end);
+        }
+
+        static Emote getBttvEmote(String emoteName, int begin, int end) {
+            return new Emote(BetterTwitchTvApi.getEmoticonUrl(emoteName), begin, end);
+        }
+
         @Override
         public int compareTo(@NonNull Emote o) {
             return this.begin - o.begin;
         }
 
-        public String getEmoteName() {
+        public String getEmoteUrl() {
             return emoteName;
         }
 
@@ -266,7 +307,7 @@ public final class TwitchMessage extends Message {
 
         @Override
         public String toString() {
-            return "[" + getBegin() + "-" + getEnd() + "]:" + getEmoteName();
+            return "[" + getBegin() + "-" + getEnd() + "]:" + getEmoteUrl();
         }
     }
 
@@ -374,6 +415,36 @@ public final class TwitchMessage extends Message {
                 .setCommand("PRIVMSG")
                 .setParams(channels)
                 .setTrailing(message);
+    }
+
+    private static class SplitResult {
+        public List<String> words = new ArrayList<>();
+        public List<Integer> begin = new ArrayList<>();
+        public List<Integer> end = new ArrayList<>();
+
+        public static SplitResult specialSplit(String trailing) {
+            StringBuilder sb = new StringBuilder();
+            SplitResult result = new SplitResult();
+            int b = 0;
+            for (int i = 0; i < trailing.length(); i++) {
+                char c = trailing.charAt(i);
+                if (c != ' ') {
+                    sb.append(c);
+                } else {
+                    Log.d(TAG, sb.toString() + " " + b + " " + (i - 1));
+                    result.words.add(sb.toString());
+                    result.begin.add(b);
+                    result.end.add(i - 1);
+                    b = i + 1;
+                    sb = new StringBuilder();
+                }
+            }
+            result.words.add(sb.toString());
+            result.begin.add(b);
+            result.end.add(trailing.length() - 1);
+            Log.d(TAG, sb.toString() + " " + b + " " + (trailing.length() - 1));
+            return result;
+        }
     }
 }
 

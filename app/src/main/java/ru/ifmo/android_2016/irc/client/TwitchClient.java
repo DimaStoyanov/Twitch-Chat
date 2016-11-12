@@ -2,6 +2,9 @@ package ru.ifmo.android_2016.irc.client;
 
 import java.io.IOException;
 
+import ru.ifmo.android_2016.irc.utils.Function;
+import ru.ifmo.android_2016.irc.utils.TextUtils;
+
 /**
  * Created by ghost on 10/28/2016.
  */
@@ -12,6 +15,12 @@ public final class TwitchClient extends Client {
 
     TwitchClient(ClientService clientService) {
         super(clientService);
+        defaultPostExecute = new Function<Message, CharSequence>() {
+            @Override
+            public CharSequence apply(Message param) {
+                return TextUtils.buildTextDraweeView((TwitchMessage) param);
+            }
+        };
     }
 
     @Override

@@ -6,25 +6,29 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
+
+import ru.ifmo.android_2016.irc.ChatFragment;
+import ru.ifmo.android_2016.irc.utils.Function;
 
 /**
  * Created by ghost on 10/24/2016.
@@ -43,6 +47,8 @@ public class Client implements Runnable {
     private BufferedReader in;
     private PrintWriter out;
     private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
+    private Map<String, Channel> channels = new HashMap<>();
+    protected Function<Message, CharSequence> defaultPostExecute;
 
     Client(ClientService clientService) {
         this.clientService = clientService;
@@ -56,8 +62,11 @@ public class Client implements Runnable {
         return true;
     }
 
-    protected void joinChannels(String channel) {
-        print("JOIN " + channel);
+    protected void joinChannels(List<String> channels) {
+        for (String channel : channels) {
+            print("JOIN " + channel);
+            this.channels.put(channel, new Channel(channel));
+        }
     }
 
     protected BroadcastReceiver sendMessage = new BroadcastReceiver() {
@@ -148,8 +157,14 @@ public class Client implements Runnable {
                 break;
 
             case "PRIVMSG":
-                sendToActivity(msg);
+                sendToChannel(msg);
                 break;
+        }
+    }
+
+    private void sendToChannel(Message msg) {
+        if (channels.containsKey(msg.params)) {
+            channels.get(msg.params).add(msg);
         }
     }
 
@@ -239,5 +254,50 @@ public class Client implements Runnable {
     protected void sendPrivmsg(Message msg) {
         print(msg.toString());
         sendToActivity(msg.setNickName(nickname));
+    }
+
+    public Map<String, Channel> getChannels() {
+        return channels;
+    }
+
+    /**
+     * Инферфейс между Ui и сетевой частью
+     */
+    public class Channel {
+        private final String channel;
+        private final List<CharSequence> messages;
+        private Function<Message, CharSequence> postExecute = defaultPostExecute;
+        private ChatFragment ui;
+
+        public Channel(String channel) {
+            this.channel = channel;
+            this.messages = new ArrayList<>(16);
+        }
+
+        public void add(Message msg) {
+            if (postExecute != null) {
+                messages.add(postExecute.apply(msg));
+            }
+        }
+
+        public String getChannel() {
+            return channel;
+        }
+
+        public void attachUi(ChatFragment fragment) {
+            if (ui == null) {
+                ui = fragment;
+            } else {
+                throw null; //Already attached
+            }
+        }
+
+        public void detachUi() {
+            ui = null;
+        }
+
+        public List<CharSequence> getMessages() {
+            return messages;
+        }
     }
 }
