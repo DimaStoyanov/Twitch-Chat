@@ -9,6 +9,7 @@ import android.text.style.StyleSpan;
 
 import java.util.List;
 
+import ru.ifmo.android_2016.irc.client.Emote;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 
@@ -30,17 +31,19 @@ public final class TextUtils {
         builder.setSpan(new StyleSpan(Typeface.BOLD), 0, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         if (msg.getColor() != 0)
             builder.setSpan(new ForegroundColorSpan(msg.getColor()), 0, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        List<TwitchMessage.Emote> emotes = msg.getEmotes();
+        List<Emote> emotes = msg.getEmotes();
         if (emotes == null) {
             return builder.append(msg.getTrailing());
         }
         SpannableStringBuilder builder1 = new SpannableStringBuilder();
         builder1.append(msg.getTrailing());
-        TwitchMessage.Emote cur_emote;
+        Emote cur_emote;
         for (int i = 0; i < emotes.size(); i++) {
             cur_emote = emotes.get(i);
             builder1.setSpan(new DraweeSpan.Builder(cur_emote.getEmoteUrl())
-                            .setLayout(50, 50).setShowAnimaImmediately(true).build(),
+                            .setLayout(50, 50)
+                            //.setShowAnimaImmediately(true)
+                            .build(),
                     cur_emote.getBegin(), cur_emote.getEnd() + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         builder.append(builder1);

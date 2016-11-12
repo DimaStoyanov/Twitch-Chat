@@ -1,42 +1,35 @@
 package ru.ifmo.android_2016.irc;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.SpannableStringBuilder;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import java.util.List;
 
-import ru.ifmo.android_2016.irc.client.Client;
+import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.ClientService;
-import ru.ifmo.android_2016.irc.client.Message;
-import ru.ifmo.android_2016.irc.client.TwitchMessage;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
-import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 
-public class ChatFragment extends Fragment implements Client.ChannelCallback {
+public class ChatFragment extends Fragment implements Channel.Callback {
     private static final String CHANNEL_NAME = "param1";
     private static final String TAG = ChatFragment.class.getSimpleName();
 
     private String channelName;
-    private Client.Channel channel;
+    private Channel channel;
     private RecyclerView recyclerView;
     private MessageAdapter adapter;
     private long serverId;
+    private boolean autoScroll = false;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -96,23 +89,23 @@ public class ChatFragment extends Fragment implements Client.ChannelCallback {
         recyclerView.setAdapter(adapter = new MessageAdapter(channel.getMessages()));
 
         //TODO: autoScroll
-//        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-//            int lastState;
-//            int lastDirection;
-//
-//            @Override
-//            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-//                //Log.d(TAG, dx + ", " + dy);
-//                lastDirection = dy;
-//            }
-//
-//            @Override
-//            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-//                //Log.d(TAG, String.valueOf(newState));
-//                autoScroll = lastState == 2 && newState == 0 && (lastDirection >= 0);
-//                lastState = newState;
-//            }
-//        });
+        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            int lastState;
+            int lastDirection;
+
+            @Override
+            public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+                //Log.d(TAG, dx + ", " + dy);
+                lastDirection = dy;
+            }
+
+            @Override
+            public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+                //Log.d(TAG, String.valueOf(newState));
+                autoScroll = lastState == 2 && newState == 0 && (lastDirection >= 0);
+                lastState = newState;
+            }
+        });
     }
 
     @Override
@@ -125,6 +118,14 @@ public class ChatFragment extends Fragment implements Client.ChannelCallback {
     public void onMessageReceived() {
         if (adapter != null) {
             adapter.notifyItemChanged(adapter.messages.size());
+        }
+        if (autoScroll) {
+            recyclerView.post(new Runnable() {
+                @Override
+                public void run() {
+                    recyclerView.smoothScrollToPosition(adapter.getItemCount());
+                }
+            });
         }
     }
 

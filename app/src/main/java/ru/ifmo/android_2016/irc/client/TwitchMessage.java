@@ -84,16 +84,11 @@ public final class TwitchMessage extends Message {
     }
 
     private void addToMessage(HashMap<String, String> map) {
-        Log.i(TAG, map.values().toString());
-        badges = parseBadges(map.get("badges"));
+        badges = Badge.parseBadges(map.get("badges"));
         color = parseColor(map.get("color"));
         displayName = map.get("display-name") == null ? nickName : map.get("display-name");
 
-        emotes = parseEmotes(map.get("emotes"));
-        checkForBttvEmotes();
-        if (emotes != null) {
-            Collections.sort(emotes);
-        }
+        emotes = Emote.parseEmotes(map.get("emotes"), trailing, params);
 
         id = map.get("id");
         mod = parseBool(map.get("mod"));
@@ -129,7 +124,7 @@ public final class TwitchMessage extends Message {
         return Color.parseColor(color);
     }
 
-    private static int parseNumber(String number) {
+    public static int parseNumber(String number) {
         if (number == null) {
             return 0;
         }
@@ -141,75 +136,9 @@ public final class TwitchMessage extends Message {
         return type;
     }
 
-    private static List<Emote> parseEmotes(String emotes) {
-        if (emotes == null) {
-            return null;
-        }
-        String[] emote = emotes.split("/");
-        List<Emote> result = new ArrayList<>(4);
-
-        Log.i(TAG, emotes);
-
-        for (String e : emote) {
-            Matcher matcher = Emote.pattern.matcher(e);
-            if (matcher.matches()) {
-                String[] p = e.split(":");
-                String eId = p[0];
-                for (String range : p[1].split(",")) {
-                    Matcher matcher1 = Emote.range.matcher(range);
-                    if (matcher1.matches()) {
-                        result.add(Emote.getTwitchEmote(
-                                eId,
-                                Integer.parseInt(matcher1.group(1)),
-                                Integer.parseInt(matcher1.group(2))));
-                    }
-                }
-            } else {
-                throw null;
-            }
-        }
-        return result;
-    }
-
-    private void checkForBttvEmotes() {
-        List<Emote> newEmotes = new ArrayList<>(10);
-        Map<String, String> bttvEmotes = BetterTwitchTvApi.globalEmotes;
-        if (trailing != null && bttvEmotes != null) {
-            SplitResult result = SplitResult.specialSplit(trailing);
-            for (int i = 0; i < result.words.size(); i++) {
-                if (bttvEmotes.containsKey(result.words.get(i))) {
-                    newEmotes.add(Emote.getBttvEmote(
-                            bttvEmotes.get(result.words.get(i)),
-                            result.begin.get(i),
-                            result.end.get(i)));
-                }
-            }
-        }
-
-        if (emotes != null) {
-            emotes.addAll(newEmotes);
-        } else {
-            if (newEmotes.size() > 0) {
-                emotes = newEmotes;
-            }
-        }
-    }
-
-    private static List<Badge> parseBadges(String badges) {
-        if (badges == null) {
-            return null;
-        }
-        String[] badge = badges.split(",");
-        List<Badge> result = new ArrayList<>(badge.length);
-        for (int i = 0; i < badge.length; i++) {
-            result.add(i, new Badge(badge[i]));
-        }
-        return result;
-    }
-
     private static String parseMsgId(String msgId) {
         //TODO:
-        return null;
+        return msgId;
     }
 
     private static String parseMessage(String message) {
@@ -238,79 +167,6 @@ public final class TwitchMessage extends Message {
     public String getDisplayName() {
         return displayName;
     }
-
-    private static class Badge {
-        private final int value;
-        private final String name;
-
-        public Badge(String badge) {
-            String[] p = badge.split("/");
-            if (p.length >= 2) {
-                name = p[0];
-                value = parseNumber(p[1]);
-            } else {
-                name = null;
-                value = 0;
-            }
-        }
-
-        public int getValue() {
-            return value;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
-
-    public static class Emote implements Comparable<Emote> {
-        private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:\\d+-\\d+)(?:,\\d+-\\d+)*");
-        private static Pattern range = Pattern.compile("(\\d+)-(\\d+)");
-        private final String emoteName;
-        private final int begin;
-        private final int end;
-
-        public Emote(String emoteName, int begin, int end) {
-            this.emoteName = emoteName;
-            this.begin = begin;
-            this.end = end;
-        }
-
-        static Emote getTwitchEmote(String emoteName, int begin, int end) {
-            return new Emote(TwitchApi.getEmoticonUrl(emoteName), begin, end);
-        }
-
-        static Emote getBttvEmote(String emoteName, int begin, int end) {
-            return new Emote(BetterTwitchTvApi.getEmoticonUrl(emoteName), begin, end);
-        }
-
-        @Override
-        public int compareTo(@NonNull Emote o) {
-            return this.begin - o.begin;
-        }
-
-        public String getEmoteUrl() {
-            return emoteName;
-        }
-
-        public int getBegin() {
-            return begin;
-        }
-
-        public int getEnd() {
-            return end;
-        }
-
-        public int getLength() {
-            return end - begin + 1;
-        }
-
-        @Override
-        public String toString() {
-            return "[" + getBegin() + "-" + getEnd() + "]:" + getEmoteUrl();
-        }
-    }
-
 
     public String getNickname() {
         return nickName;
@@ -407,44 +263,6 @@ public final class TwitchMessage extends Message {
     public TwitchMessage setColor(int color) {
         this.color = color;
         return this;
-    }
-
-    @Override
-    public Message genPrivmsg(String channels, String message) {
-        return this
-                .setCommand("PRIVMSG")
-                .setParams(channels)
-                .setTrailing(message);
-    }
-
-    private static class SplitResult {
-        public List<String> words = new ArrayList<>();
-        public List<Integer> begin = new ArrayList<>();
-        public List<Integer> end = new ArrayList<>();
-
-        public static SplitResult specialSplit(String trailing) {
-            StringBuilder sb = new StringBuilder();
-            SplitResult result = new SplitResult();
-            int b = 0;
-            for (int i = 0; i < trailing.length(); i++) {
-                char c = trailing.charAt(i);
-                if (c != ' ') {
-                    sb.append(c);
-                } else {
-                    //Log.d(TAG, sb.toString() + " " + b + " " + (i - 1));
-                    result.words.add(sb.toString());
-                    result.begin.add(b);
-                    result.end.add(i - 1);
-                    b = i + 1;
-                    sb = new StringBuilder();
-                }
-            }
-            result.words.add(sb.toString());
-            result.begin.add(b);
-            result.end.add(trailing.length() - 1);
-            //Log.d(TAG, sb.toString() + " " + b + " " + (trailing.length() - 1));
-            return result;
-        }
     }
 }
 

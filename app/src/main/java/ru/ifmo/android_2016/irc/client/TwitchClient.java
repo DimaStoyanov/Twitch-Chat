@@ -2,9 +2,6 @@ package ru.ifmo.android_2016.irc.client;
 
 import java.io.IOException;
 
-import ru.ifmo.android_2016.irc.utils.Function;
-import ru.ifmo.android_2016.irc.utils.TextUtils;
-
 /**
  * Created by ghost on 10/28/2016.
  */
@@ -15,17 +12,11 @@ public final class TwitchClient extends Client {
 
     TwitchClient(ClientService clientService) {
         super(clientService);
-        defaultPostExecute = new Function<Message, CharSequence>() {
-            @Override
-            public CharSequence apply(Message param) {
-                return TextUtils.buildTextDraweeView((TwitchMessage) param);
-            }
-        };
     }
 
     @Override
     protected void actions() throws IOException, InterruptedException {
-        enterPassword(clientSettings.password);
+        pass(clientSettings.password);
         enterNick(clientSettings.nicks);
         capReq("twitch.tv/membership");
         capReq("twitch.tv/commands");
@@ -46,7 +37,7 @@ public final class TwitchClient extends Client {
     protected void doCommand(Message msg) {
         switch (msg.command) {
             case "WHISPER":
-                sendPrivmsg(msg);
+                sendToChannel(msg);
                 break;
 
             case "USERSTATE":
@@ -57,11 +48,5 @@ public final class TwitchClient extends Client {
             default:
                 super.doCommand(msg);
         }
-    }
-
-    protected void sendPrivmsg(Message msg) {
-        ((TwitchMessage) msg)
-                .setColor(userState.getColor());
-        super.sendPrivmsg(msg);
     }
 }

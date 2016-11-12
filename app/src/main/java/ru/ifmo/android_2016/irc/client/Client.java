@@ -1,9 +1,5 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.util.Log;
@@ -13,11 +9,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,9 +19,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-import ru.ifmo.android_2016.irc.ChatFragment;
-import ru.ifmo.android_2016.irc.utils.Function;
 
 /**
  * Created by ghost on 10/24/2016.
@@ -46,11 +37,10 @@ public class Client implements Runnable {
     private BufferedReader in;
     private PrintWriter out;
     private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    private Map<String, Channel> channels = new HashMap<>();
-    protected Function<Message, CharSequence> defaultPostExecute;
+    private Map<String, Channel> channels = new TreeMap<>();
     @Nullable
     private Callback ui;
-    private Channel statusChannel = new Channel("status");
+    protected Channel statusChannel = new Channel("status");
 
     Client(ClientService clientService) {
         this.clientService = clientService;
@@ -59,8 +49,7 @@ public class Client implements Runnable {
     boolean connect(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
         executor.execute(this);
-        clientService.lbm.registerReceiver(sendMessage, new IntentFilter("send-message"));
-        channels.put("Status", statusChannel);
+        //channels.put("Status", statusChannel);
         Log.i(TAG, "Client started");
         statusChannel.add("Client started");
         return true;
@@ -68,7 +57,7 @@ public class Client implements Runnable {
 
     protected void joinChannels(List<String> channels) {
         for (String channel : channels) {
-            print("JOIN " + channel);
+            join(channel);
             this.channels.put(channel, new Channel(channel));
         }
         if (ui != null) {
@@ -81,16 +70,11 @@ public class Client implements Runnable {
         }
     }
 
-    protected BroadcastReceiver sendMessage = new BroadcastReceiver() {
-        @UiThread
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            executor.execute(new SendMessageTask(intent));
-        }
-    };
+    protected final void join(String channel) {
+        print("JOIN " + channel);
+    }
 
     protected void close() {
-        clientService.lbm.unregisterReceiver(sendMessage);
         quit();
         try {
             if (socket != null) {
@@ -117,7 +101,9 @@ public class Client implements Runnable {
                 socket = new Socket(clientSettings.address, clientSettings.port);
             } else {
                 SSLSocketFactory sslFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
-                SSLSocket sslSocket = (SSLSocket) (socket = sslFactory.createSocket(clientSettings.getAddress(), clientSettings.getPort()));
+                SSLSocket sslSocket = (SSLSocket) (socket = sslFactory.createSocket(
+                        clientSettings.getAddress(),
+                        clientSettings.getPort()));
                 sslSocket.startHandshake();
             }
 
@@ -126,22 +112,41 @@ public class Client implements Runnable {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            executor.execute(new ThreadStarter("loop"));
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        loop();
+                    } catch (IOException | InterruptedException | RuntimeException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
 
             actions();
 
-            executor.execute(new ThreadStarter("doCommand"));
+            executor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        while (true) {
+                            doCommand(messageQueue.take());
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
 
         } catch (IOException | RuntimeException e) {
             Log.e(TAG, e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        //Log.i(TAG, "closed");
     }
 
     protected void actions() throws IOException, InterruptedException {
-        enterPassword(clientSettings.password);
+        pass(clientSettings.password);
         enterNick(clientSettings.nicks);
         joinChannels(clientSettings.channels);
     }
@@ -155,7 +160,8 @@ public class Client implements Runnable {
         }
     }
 
-    private String read() throws IOException {
+    @Nullable
+    protected String read() throws IOException {
         return in.readLine();
     }
 
@@ -176,7 +182,7 @@ public class Client implements Runnable {
         }
     }
 
-    private void sendToChannel(Message msg) {
+    protected void sendToChannel(Message msg) {
         if (channels.containsKey(msg.params)) {
             channels.get(msg.params).add(msg);
         }
@@ -190,7 +196,7 @@ public class Client implements Runnable {
         return Message.fromString(s);
     }
 
-    protected void enterPassword(String password) {
+    protected void pass(String password) {
         print("PASS " + password);
     }
 
@@ -204,25 +210,6 @@ public class Client implements Runnable {
         if (out != null) {
             Log.i(TAG, s);
             out.println(s);
-        }
-    }
-
-    protected void sendToActivity(Message msg) {
-        if (msg != null) {
-            clientService.lbm.sendBroadcast(new Intent("new-message")
-                    .putExtra(Message.class.getCanonicalName(), msg));
-        }
-    }
-
-    protected void threadStarter(String thread) throws Exception {
-        switch (thread) {
-            case "loop":
-                loop();
-                break;
-            case "doCommand":
-                while (true) {
-                    doCommand(messageQueue.take());
-                }
         }
     }
 
@@ -243,120 +230,13 @@ public class Client implements Runnable {
 
         @UiThread
         void onChannelChange();
-
-    }
-
-    public interface ChannelCallback {
-        void runOnUiThread(Runnable run);
-
-        @UiThread
-        void onMessageReceived();
-    }
-
-    private final class ThreadStarter implements Runnable {
-        private final String TAG = ThreadStarter.class.getSimpleName();
-        private final String method;
-
-        public ThreadStarter(String method) {
-            this.method = method;
-        }
-
-        @Override
-        public final void run() {
-            try {
-                Log.i(TAG, method + " at " + Thread.currentThread().getName());
-                threadStarter(method);
-            } catch (InterruptedException | SocketException x) {
-                Log.i(TAG, Thread.currentThread().getName() + " stopped");
-            } catch (Exception e) {
-                Log.e(TAG, Thread.currentThread().getName());
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private class SendMessageTask implements Runnable {
-        @Nullable
-        private final Message msg;
-
-        public SendMessageTask(Intent intent) {
-            this.msg = intent.getParcelableExtra(Message.class.getCanonicalName());
-        }
-
-        @Override
-        public void run() {
-            if (msg != null) {
-                sendPrivmsg(msg);
-            }
-        }
-    }
-
-    protected void sendPrivmsg(Message msg) {
-        print(msg.toString());
-        sendToActivity(msg.setNickName(nickname));
     }
 
     public Map<String, Channel> getChannels() {
-        Log.d(TAG, String.valueOf(channels.size()));
         return channels;
     }
 
-    /**
-     * Инферфейс между Ui и сетевой частью
-     */
-    public class Channel {
-        private final String channel;
-        private final List<CharSequence> messages;
-        private Function<Message, CharSequence> postExecute = defaultPostExecute;
-        @Nullable
-        private ChatFragment ui;
-
-        public Channel(String channel) {
-            this.channel = channel;
-            this.messages = new ArrayList<>(16);
-        }
-
-        public void add(Message msg) {
-            if (postExecute != null) {
-                messages.add(postExecute.apply(msg));
-            }
-            notifyUi();
-        }
-
-        private void notifyUi() {
-            if (ui != null) {
-                ui.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ui.onMessageReceived();
-                    }
-                });
-            }
-        }
-
-        public void add(String msg) {
-            messages.add(msg);
-            notifyUi();
-        }
-
-        public String getChannel() {
-            return channel;
-        }
-
-        public void attachUi(ChatFragment fragment) {
-            if (ui == null) {
-                ui = fragment;
-            } else {
-                throw null; //Already attached
-            }
-        }
-
-        public void detachUi() {
-            ui = null;
-        }
-
-        public List<CharSequence> getMessages() {
-            return messages;
-        }
+    public Channel getStatusChannel() {
+        return statusChannel;
     }
 }

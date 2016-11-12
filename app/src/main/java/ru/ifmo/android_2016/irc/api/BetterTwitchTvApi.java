@@ -23,6 +23,9 @@ public class BetterTwitchTvApi {
     @Nullable private static String EMOTICON_URI = null;
     @Nullable public static Map<String, String> globalEmotes = null;    //code -> id
 
+    //channel -> (code -> id)
+    private final static Map<String, Map<String, String>> channelEmotes = new HashMap<>();
+
     /**
      * Возвращает URL ссылку на изобренрие emoticon с заданным id заданного размера.
      *
@@ -50,9 +53,24 @@ public class BetterTwitchTvApi {
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }
 
-    public static class BttvEmotesLoaderTask extends AsyncTask<Void, Void, Void> {
+    public static HttpURLConnection getBttvChannelEmoticons(String channel) throws IOException {
+        Uri uri = API_URI.buildUpon()
+                .appendPath("channels")
+                .appendPath(channel.replace("#", ""))
+                .build();
+        return (HttpURLConnection) new URL(uri.toString()).openConnection();
+    }
+
+    @Nullable
+    public static Map<String, String> getChannelEmotes(String channel) {
+        return channelEmotes.get(channel);
+    }
+
+    public static class BttvEmotesLoaderTask extends AsyncTask<String, Void, Void> {
+        private static final String TAG = BttvEmotesLoaderTask.class.getSimpleName();
+
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Void doInBackground(String... params) {
             if (globalEmotes == null) {
                 HttpURLConnection httpURLConnection = null;
                 try {
@@ -72,6 +90,36 @@ public class BetterTwitchTvApi {
                 } finally {
                     if (httpURLConnection != null) {
                         httpURLConnection.disconnect();
+                    }
+                }
+            }
+            for (String channel : params) {
+                if (!channelEmotes.containsKey(channel)) {
+                    Log.d(TAG, "gachiGASM");
+                    Map<String, String> emotes = null;
+                    HttpURLConnection httpURLConnection = null;
+                    try {
+                        httpURLConnection = getBttvChannelEmoticons(channel);
+                        httpURLConnection.connect();
+                        if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                            emotes = readJson(httpURLConnection.getInputStream());
+
+                            for (Map.Entry<String, String> entry : emotes.entrySet()) {
+                                Log.d("bttv", entry.getKey() + "/" + entry.getValue());
+                            }
+                        } else {
+                            Log.d(TAG, "bad happened " + httpURLConnection.getResponseCode() + " " + channel);
+                            emotes = null;
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } finally {
+                        if (httpURLConnection != null) {
+                            httpURLConnection.disconnect();
+                        }
+                    }
+                    if (emotes != null) {
+                        channelEmotes.put(channel, emotes);
                     }
                 }
             }

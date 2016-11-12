@@ -24,7 +24,6 @@ import ru.ifmo.android_2016.irc.client.Client;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.Message;
-import ru.ifmo.android_2016.irc.client.MessageStorage;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 
@@ -37,8 +36,10 @@ public class ChatActivity extends AppCompatActivity
     private EditText typeMessage;
     private long id = 0;
     private ClientSettings clientSettings;
-    @Nullable private Client client;
+    @Nullable
+    private Client client;
     private ViewPagerAdapter viewPagerAdapter;
+    private ViewPager viewPager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,17 +59,11 @@ public class ChatActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 Log.d(TAG, clientSettings.getNicks()[0] + " " + clientSettings.getChannel() + " " + typeMessage.getText().toString());
-                LocalBroadcastManager
-                        .getInstance(ChatActivity.this)
-                        .sendBroadcast(new Intent("send-message")
-                                .putExtra(Message.class.getCanonicalName(),
-                                        new TwitchMessage().genPrivmsg(
-                                                clientSettings.getChannel(),
-                                                typeMessage.getText().toString())));
+                viewPager.getCurrentItem();
             }
         });
 
-        ViewPager viewPager = (ViewPager) findViewById(R.id.viewPager);
+        viewPager = (ViewPager) findViewById(R.id.viewPager);
         viewPager.setAdapter(viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager()));
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
