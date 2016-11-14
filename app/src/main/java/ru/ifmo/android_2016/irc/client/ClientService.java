@@ -3,7 +3,6 @@ package ru.ifmo.android_2016.irc.client;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.AsyncTask;
@@ -12,10 +11,11 @@ import android.support.annotation.UiThread;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import com.annimon.stream.Stream;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import ru.ifmo.android_2016.irc.ChatActivity;
 import ru.ifmo.android_2016.irc.R;
 import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
 
@@ -55,7 +55,7 @@ public class ClientService extends Service {
         switch (intent.getAction()) {
             case START_SERVICE:
                 if (!isRunning) {
-                    startForeground(1, getNotification("Service is running", 0));
+                    startForeground(1, getNotification("Service is running"));
                     new BetterTwitchTvApi.BttvEmotesLoaderTask().execute();
                     isRunning = true;
                 }
@@ -91,12 +91,13 @@ public class ClientService extends Service {
         }
     }
 
+    @SuppressWarnings("unused")
     private static void forceStop() {
         instance.new ForceServiceStopTask().execute();
     }
 
     @SuppressWarnings("deprecation")
-    private Notification getNotification(String text, long id) {
+    private Notification getNotification(String text) {
         return new Notification.Builder(this)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle("IRC client")
@@ -104,9 +105,9 @@ public class ClientService extends Service {
                 .getNotification();
     }
 
-    void updateNotification(String text, long id) {
+    void updateNotification(String text) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.notify(1, getNotification(text, id));
+        nm.notify(1, getNotification(text));
     }
 
     public static Client getClient(long id) {
@@ -135,9 +136,7 @@ public class ClientService extends Service {
     private class ForceServiceStopTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
-            for (Client client : clients.values()) {
-                client.close();
-            }
+            Stream.of(clients.values()).forEach(Client::close);
             return null;
         }
 
@@ -175,7 +174,7 @@ public class ClientService extends Service {
 
         @Override
         protected void onPostExecute(String result) {
-            updateNotification(result, id);
+            updateNotification(result);
             listener.onConnected(getClient(id));
         }
     }

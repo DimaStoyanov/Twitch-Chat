@@ -2,20 +2,15 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.graphics.Color;
 import android.os.Parcel;
-import android.support.annotation.NonNull;
-import android.util.Log;
+
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UnknownFormatConversionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
-import ru.ifmo.android_2016.irc.api.TwitchApi;
 
 /**
  * Created by ghost on 10/29/2016.
@@ -28,7 +23,9 @@ public final class TwitchMessage extends Message {
     private int color;
     private String displayName;
     private String id;
+    private List<Badge> bagdes;
 
+    @SuppressWarnings({"unused", "deprecation"})
     @Deprecated
     public TwitchMessage(String from, String to, String text) {
         super(from, to, text);
@@ -54,7 +51,7 @@ public final class TwitchMessage extends Message {
     private String broadcasterLang;
     private String emoteSets;
 
-    public TwitchMessage() {
+    private TwitchMessage() {
     }
 
     public static TwitchMessage fromString(String rawMessage) {
@@ -64,29 +61,20 @@ public final class TwitchMessage extends Message {
     @Override
     protected TwitchMessage parse(String rawMessage) {
         super.parse(rawMessage);
-        HashMap<String, String> map = new HashMap<>();
         if (optPrefix != null) {
-            String[] params = optPrefix.split(";");
-            for (String param : params) {
-                String[] p = param.split("=");
-                String key = null, value = null;
-                if (p.length > 0) {
-                    key = p[0];
-                }
-                if (p.length > 1) {
-                    value = p[1];
-                }
-                map.put(key, value);
-            }
-            addToMessage(map);
+            addToMessage(Stream.of(optPrefix)
+                    .flatMap(s -> Stream.of(s.split(";")))
+                    .map(s -> s.split("="))
+                    .filter(l -> l.length > 1)
+                    .collect(Collectors.toMap(l -> l[0], l -> l[1])));
         }
         return this;
     }
 
-    private void addToMessage(HashMap<String, String> map) {
+    private void addToMessage(Map<String, String> map) {
         badges = Badge.parseBadges(map.get("badges"));
         color = parseColor(map.get("color"));
-        displayName = map.get("display-name") == null ? nickName : map.get("display-name");
+        displayName = map.get("display-name");
 
         emotes = Emote.parseEmotes(map.get("emotes"), trailing, params);
 
@@ -113,8 +101,6 @@ public final class TwitchMessage extends Message {
 
         banDuration = parseNumber(map.get("ban-duration"));
         banReason = parseMessage(map.get("ban-reason"));
-
-        nickName = (displayName == null ? nickName : displayName);
     }
 
     private static int parseColor(String color) {
@@ -169,7 +155,7 @@ public final class TwitchMessage extends Message {
     }
 
     public String getNickname() {
-        return nickName;
+        return getDisplayName() == null ? super.getNickName() : getDisplayName();
     }
 
     public List<Emote> getEmotes() {
@@ -215,7 +201,7 @@ public final class TwitchMessage extends Message {
 
     protected TwitchMessage(Parcel in) {
         super(in);
-        this.badges = new ArrayList<Badge>();
+        this.badges = new ArrayList<>();
         in.readList(this.badges, Badge.class.getClassLoader());
         this.color = in.readInt();
         this.displayName = in.readString();
@@ -234,7 +220,7 @@ public final class TwitchMessage extends Message {
         this.login = in.readString();
         this.banDuration = in.readInt();
         this.banReason = in.readString();
-        this.emotes = new ArrayList<Emote>();
+        this.emotes = new ArrayList<>();
         in.readList(this.emotes, Emote.class.getClassLoader());
         this.userType = in.readString();
         this.bits = in.readInt();
@@ -263,6 +249,10 @@ public final class TwitchMessage extends Message {
     public TwitchMessage setColor(int color) {
         this.color = color;
         return this;
+    }
+
+    public List<Badge> getBagdes() {
+        return bagdes;
     }
 }
 

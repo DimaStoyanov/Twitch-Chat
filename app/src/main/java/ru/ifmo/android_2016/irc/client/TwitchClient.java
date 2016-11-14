@@ -2,6 +2,8 @@ package ru.ifmo.android_2016.irc.client;
 
 import java.io.IOException;
 
+import ru.ifmo.android_2016.irc.utils.TextUtils;
+
 /**
  * Created by ghost on 10/28/2016.
  */
@@ -47,6 +49,13 @@ public final class TwitchClient extends Client {
 
             default:
                 super.doCommand(msg);
+        }
+    }
+
+    @Override
+    protected void sendToChannel(Message msg) {
+        if (channels.containsKey(msg.params)) {
+            channels.get(msg.params).add(msg, (m) -> TextUtils.buildTextDraweeView((TwitchMessage) m));
         }
     }
 }

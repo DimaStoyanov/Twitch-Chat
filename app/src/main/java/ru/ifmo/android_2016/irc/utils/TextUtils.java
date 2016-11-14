@@ -7,9 +7,8 @@ import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.StyleSpan;
 
-import java.util.List;
-
 import ru.ifmo.android_2016.irc.client.Emote;
+import ru.ifmo.android_2016.irc.client.Message;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 
@@ -25,30 +24,43 @@ public final class TextUtils {
 
     @WorkerThread
     public static SpannableStringBuilder buildTextDraweeView(TwitchMessage msg) {
-        SpannableStringBuilder builder = new SpannableStringBuilder();
-        builder.append(msg.getNickname());
-        builder.append(msg.getAction() ? " " : ": ");
-        builder.setSpan(new StyleSpan(Typeface.BOLD), 0, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (msg.getColor() != 0)
-            builder.setSpan(new ForegroundColorSpan(msg.getColor()), 0, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        List<Emote> emotes = msg.getEmotes();
-        if (emotes == null) {
-            return builder.append(msg.getTrailing());
+        SpannableStringBuilder nickNBadges = new SpannableStringBuilder();
+
+        nickNBadges.append(msg.getNickname());
+        nickNBadges.append(msg.getAction() ? " " : ": ");
+
+        nickNBadges.setSpan(new StyleSpan(Typeface.BOLD), 0, nickNBadges.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        if (msg.getColor() != 0) {
+            nickNBadges.setSpan(new ForegroundColorSpan(msg.getColor()), 0, nickNBadges.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        SpannableStringBuilder builder1 = new SpannableStringBuilder();
-        builder1.append(msg.getTrailing());
-        Emote cur_emote;
-        for (int i = 0; i < emotes.size(); i++) {
-            cur_emote = emotes.get(i);
-            builder1.setSpan(new DraweeSpan.Builder(cur_emote.getEmoteUrl())
-                            .setLayout(50, 50)
-                            //.setShowAnimaImmediately(true)
-                            .build(),
-                    cur_emote.getBegin(), cur_emote.getEnd() + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        SpannableStringBuilder messageText = new SpannableStringBuilder();
+        messageText.append(msg.getTrailing());
+        if (msg.getAction() && msg.getColor() != 0) {
+            messageText.setSpan(new ForegroundColorSpan(msg.getColor()), 0, messageText.length(),
+                    Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        builder.append(builder1);
-        if (msg.getAction() && msg.getColor() != 0)
-            builder.setSpan(new ForegroundColorSpan(msg.getColor()), 0, builder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        return builder;
+        if (msg.getEmotes() != null) {
+            for (Emote emote : msg.getEmotes()) {
+                messageText.setSpan(
+                        new DraweeSpan.Builder(emote.getEmoteUrl()).setLayout(50, 50)
+                                //.setShowAnimaImmediately(true)    //LAAAAAGGGGSSSS!!! NotLikeThis
+                                .build(),
+                        emote.getBegin(),
+                        emote.getEnd() + 1,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            }
+        }
+
+        nickNBadges.append(messageText);
+
+        return nickNBadges;
+    }
+
+    @WorkerThread
+    public static SpannableStringBuilder buildDefaultText(Message msg) {
+        return new SpannableStringBuilder().append("<").append(msg.getNickName()).append("> ")
+                .append(msg.getTrailing());
     }
 }

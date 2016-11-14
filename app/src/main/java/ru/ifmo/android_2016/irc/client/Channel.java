@@ -4,12 +4,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 
+import com.annimon.stream.function.Function;
+
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.ifmo.android_2016.irc.ChatFragment;
 import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
-import ru.ifmo.android_2016.irc.utils.Function;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -18,21 +18,25 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
  * Инферфейс между Ui и сетевой частью
  */
 public class Channel {
-    @NonNull private final String channel;
-    @NonNull private final List<CharSequence> messages;
-    @Nullable private final Function<Message, CharSequence> postExecute;
-    @Nullable private Callback ui;
+    @NonNull
+    private final String name;
+    @NonNull
+    private final List<CharSequence> messages;
+    @Nullable
+    private final Function<Message, CharSequence> postExecute;
+    @Nullable
+    private Callback ui;
 
-    Channel(@NonNull String channel) {
-        this(channel, new TwitchPostExecute());
+    Channel(@NonNull String name) {
+        this(name, TextUtils::buildDefaultText);
     }
 
     @SuppressWarnings("WeakerAccess")
-    Channel(@NonNull String channel, @Nullable Function<Message, CharSequence> postExecute) {
-        this.channel = channel;
+    Channel(@NonNull String name, @Nullable Function<Message, CharSequence> postExecute) {
+        this.name = name;
         this.messages = new ArrayList<>(16);
         this.postExecute = postExecute;
-        new BetterTwitchTvApi.BttvEmotesLoaderTask().execute(channel);
+        new BetterTwitchTvApi.BttvEmotesLoaderTask().execute(name);
     }
 
     void add(Message msg) {
@@ -40,21 +44,12 @@ public class Channel {
     }
 
     void add(Message msg, Function<Message, CharSequence> func) {
-        if (func != null) {
-            messages.add(postExecute.apply(msg));
-        }
+        if (func != null) messages.add(func.apply(msg));
         notifyUi();
     }
 
     private void notifyUi() {
-        if (ui != null) {
-            ui.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ui.onMessageReceived();
-                }
-            });
-        }
+        if (ui != null) ui.runOnUiThread(ui::onMessageReceived);
     }
 
     void add(String msg) {
@@ -63,11 +58,11 @@ public class Channel {
     }
 
     @NonNull
-    public String getChannel() {
-        return channel;
+    public String getName() {
+        return name;
     }
 
-    public void attachUi(ChatFragment fragment) {
+    public void attachUi(Callback fragment) {
         if (ui == null) {
             ui = fragment;
         } else {
@@ -80,7 +75,7 @@ public class Channel {
     }
 
     @NonNull
-    public List<CharSequence> getMessages() {
+    public final List<CharSequence> getMessages() {
         return messages;
     }
 

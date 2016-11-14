@@ -20,12 +20,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import ru.ifmo.android_2016.irc.utils.FunctionUtils;
+
 /**
  * Created by ghost on 10/24/2016.
  */
 
 @SuppressWarnings("WeakerAccess")
-public class Client implements Runnable {
+public class Client {
     private static final String TAG = Client.class.getSimpleName();
     protected final ExecutorService executor = Executors.newCachedThreadPool();
 
@@ -33,14 +35,14 @@ public class Client implements Runnable {
     protected ClientSettings clientSettings;
     protected String nickname;
 
-    private Socket socket;
-    private BufferedReader in;
-    private PrintWriter out;
-    private final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    private Map<String, Channel> channels = new TreeMap<>();
+    protected Socket socket;
+    protected BufferedReader in;
+    protected PrintWriter out;
+    protected final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
+    protected Map<String, Channel> channels = new TreeMap<>();
     @Nullable
-    private Callback ui;
-    protected Channel statusChannel = new Channel("status");
+    protected Callback ui;
+    protected Channel statusChannel = new Channel("Status");
 
     Client(ClientService clientService) {
         this.clientService = clientService;
@@ -48,9 +50,9 @@ public class Client implements Runnable {
 
     boolean connect(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
-        executor.execute(this);
-        //channels.put("Status", statusChannel);
-        Log.i(TAG, "Client started");
+        executor.execute(this::run);
+
+        channels.put("Status", statusChannel);
         statusChannel.add("Client started");
         return true;
     }
@@ -60,14 +62,7 @@ public class Client implements Runnable {
             join(channel);
             this.channels.put(channel, new Channel(channel));
         }
-        if (ui != null) {
-            ui.runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ui.onChannelChange();
-                }
-            });
-        }
+        if (ui != null) ui.runOnUiThread(ui::onChannelChange);
     }
 
     protected final void join(String channel) {
@@ -90,12 +85,12 @@ public class Client implements Runnable {
         print("QUIT");
     }
 
+    @SuppressWarnings("unused")
     protected void quit(String message) {
         print("QUIT :" + message);
     }
 
-    @Override
-    public final void run() {
+    protected final void run() {
         try {
             if (!clientSettings.isSsl()) {
                 socket = new Socket(clientSettings.address, clientSettings.port);
@@ -112,31 +107,14 @@ public class Client implements Runnable {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        loop();
-                    } catch (IOException | InterruptedException | RuntimeException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            executor.execute(FunctionUtils.catchExceptions(this::inputReader));
 
             actions();
 
-            executor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        while (true) {
-                            doCommand(messageQueue.take());
-                        }
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
+            executor.execute(FunctionUtils.catchExceptions(() -> {
+                //noinspection InfiniteLoopStatement
+                while (true) doCommand(messageQueue.take());
+            }));
 
         } catch (IOException | RuntimeException e) {
             Log.e(TAG, e.toString());
@@ -151,12 +129,13 @@ public class Client implements Runnable {
         joinChannels(clientSettings.channels);
     }
 
-    protected void loop() throws IOException, InterruptedException {
-        int i = 0;
+    protected void inputReader() throws IOException, InterruptedException {
         while (socket.isConnected()) {
             String s = read();
-            Log.i(TAG, s);
-            messageQueue.put(parse(s));
+            if (s != null) {
+                //Log.i(TAG, s);
+                messageQueue.put(parse(s));
+            }
         }
     }
 
@@ -236,6 +215,7 @@ public class Client implements Runnable {
         return channels;
     }
 
+    @SuppressWarnings("unused")
     public Channel getStatusChannel() {
         return statusChannel;
     }

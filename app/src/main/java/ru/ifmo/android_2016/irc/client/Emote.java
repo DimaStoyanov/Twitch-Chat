@@ -4,6 +4,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
+import com.annimon.stream.Stream;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +23,8 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
 public class Emote implements Comparable<Emote> {
     private static final String TAG = Emote.class.getSimpleName();
 
-    static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:\\d+-\\d+)(?:,\\d+-\\d+)*");
-    static Pattern range = Pattern.compile("(\\d+)-(\\d+)");
+    private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:\\d+-\\d+)(?:,\\d+-\\d+)*");
+    private static Pattern range = Pattern.compile("(\\d+)-(\\d+)");
     private final String emoteName;
     private final int begin;
     private final int end;
@@ -88,43 +90,35 @@ public class Emote implements Comparable<Emote> {
                         }
                     }
                 } else {
-                    throw null;
+                    throw null; //TODO: Something bad happened
                 }
             }
         }
 
         /* BetterTTV */
         if (messageText != null) {
-            Map<String, String> bttvEmotes = BetterTwitchTvApi.globalEmotes;
-            if (bttvEmotes != null) {
-                Splitter splitResult = Splitter.splitWithSpace(messageText);
-                for (int i = 0; i < splitResult.words.size(); i++) {
-                    if (bttvEmotes.containsKey(splitResult.words.get(i))) {
-                        result.add(Emote.getBttvEmote(
-                                bttvEmotes.get(splitResult.words.get(i)),
-                                splitResult.begin.get(i),
-                                splitResult.end.get(i)));
-                    }
-                }
-            }
-            bttvEmotes = BetterTwitchTvApi.getChannelEmotes(channel);
-            if (bttvEmotes != null) {
-                Splitter splitResult = Splitter.splitWithSpace(messageText);
-                for (int i = 0; i < splitResult.words.size(); i++) {
-                    if (bttvEmotes.containsKey(splitResult.words.get(i))) {
-                        result.add(Emote.getBttvEmote(
-                                bttvEmotes.get(splitResult.words.get(i)),
-                                splitResult.begin.get(i),
-                                splitResult.end.get(i)));
-                    }
-                }
-            }
+            Splitter splitResult = Splitter.splitWithSpace(messageText);
+            parseBttvEmotes(result, splitResult, BetterTwitchTvApi.globalEmotes);
+            parseBttvEmotes(result, splitResult, BetterTwitchTvApi.getChannelEmotes(channel));
         }
 
         if (result.size() > 0) {
             return result;
         } else {
             return null;
+        }
+    }
+
+    private static void parseBttvEmotes(List<Emote> result, Splitter splitResult, Map<String, String> bttvEmotes) {
+        if (bttvEmotes != null) {
+            for (int i = 0; i < splitResult.words.size(); i++) {
+                if (bttvEmotes.containsKey(splitResult.words.get(i))) {
+                    result.add(Emote.getBttvEmote(
+                            bttvEmotes.get(splitResult.words.get(i)),
+                            splitResult.begin.get(i),
+                            splitResult.end.get(i)));
+                }
+            }
         }
     }
 }

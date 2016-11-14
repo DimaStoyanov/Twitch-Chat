@@ -26,7 +26,7 @@ public class TwitchApi {
      * @return Возвращает {@link HttpURLConnection} для выполнения запроса для получения общий эмоций.
      * @throws IOException
      */
-    public static HttpURLConnection getTwitchGlobalEmotiсons() throws IOException {
+    public static HttpURLConnection getTwitchGlobalEmotes() throws IOException {
         Uri uri = BASE_CHAT_URI.buildUpon().appendPath("emotes").appendPath("emoticons").appendQueryParameter("client_id", CLIENT_ID).build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
 
@@ -37,9 +37,9 @@ public class TwitchApi {
      * @return Возвращает {@link HttpURLConnection} для выполнения запроса для получения эмоций канала.
      * @throws IOException
      */
-    public static HttpURLConnection getTwitchChannelEmotiсons(@NonNull String channel) throws IOException {
+    public static HttpURLConnection getTwitchChannelEmotes(@NonNull String channel) throws IOException {
         if ("global".equals(channel))
-            return getTwitchGlobalEmotiсons();
+            return getTwitchGlobalEmotes();
         Uri uri = BASE_CHAT_URI.buildUpon().appendPath(channel).appendPath("emoticons").appendQueryParameter("client_id", CLIENT_ID).build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }

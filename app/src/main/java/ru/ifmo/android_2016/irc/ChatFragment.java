@@ -1,7 +1,9 @@
 package ru.ifmo.android_2016.irc;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.v4.app.Fragment;
@@ -95,13 +97,11 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                //Log.d(TAG, dx + ", " + dy);
                 lastDirection = dy;
             }
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                //Log.d(TAG, String.valueOf(newState));
                 autoScroll = lastState == 2 && newState == 0 && (lastDirection >= 0);
                 lastState = newState;
             }
@@ -120,12 +120,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             adapter.notifyItemChanged(adapter.messages.size());
         }
         if (autoScroll) {
-            recyclerView.post(new Runnable() {
-                @Override
-                public void run() {
-                    recyclerView.smoothScrollToPosition(adapter.getItemCount());
-                }
-            });
+            recyclerView.post(() -> recyclerView.smoothScrollToPosition(adapter.getItemCount()));
         }
     }
 
@@ -140,12 +135,17 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
         @Override
         public MessageAdapter.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            return new ViewHolder(new DraweeTextView(getActivity()));
+            DraweeTextView view = new DraweeTextView(getContext());
+            view.setLayoutParams(new RecyclerView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT));
+            return new ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(MessageAdapter.ViewHolder holder, int position) {
             holder.itemView.setText(messages.get(position));
+            //holder.itemView.setBackgroundColor(Color.argb(255, 180, 0, 0));
         }
 
         @Override
