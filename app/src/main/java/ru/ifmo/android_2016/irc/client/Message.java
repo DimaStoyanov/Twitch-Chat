@@ -14,14 +14,12 @@ import java.util.regex.Pattern;
  * Created by ghost on 10/23/2016.
  */
 
-public class Message implements Parcelable {
+public class Message {
     private static final String TAG = Message.class.getSimpleName();
 
-    @Deprecated
-    public String to, text;
     public Date date;
     @Nullable String optPrefix;
-    @NonNull String command;
+    @NonNull String command = "@NOT_SET";
     @Nullable String params;
     @Nullable String trailing;
     @Nullable String serverName;
@@ -47,7 +45,6 @@ public class Message implements Parcelable {
             params = MessagePattern.group(matcher, "params");
             trailing = MessagePattern.group(matcher, "trailing");
         }
-        to = params;
         trailing = parseTrailing(trailing);
         return this;
     }
@@ -66,20 +63,6 @@ public class Message implements Parcelable {
         } else {
             return null;
         }
-    }
-
-    @Deprecated
-    public Message(String from, String to, String text) {
-        this.nickName = from;
-        this.to = to;
-        this.text = text;
-    }
-
-    public Message genPrivmsg(String channels, String message) {
-        return this
-                .setCommand("PRIVMSG")
-                .setParams(channels)
-                .setTrailing(message);
     }
 
     public String getTrailing() {
@@ -133,55 +116,6 @@ public class Message implements Parcelable {
     public String getNickName() {
         return nickName;
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.to);
-        dest.writeString(this.text);
-        dest.writeLong(this.date != null ? this.date.getTime() : -1);
-        dest.writeString(this.optPrefix);
-        dest.writeString(this.command);
-        dest.writeString(this.params);
-        dest.writeString(this.trailing);
-        dest.writeString(this.serverName);
-        dest.writeString(this.nickName);
-        dest.writeString(this.userName);
-        dest.writeString(this.hostName);
-        dest.writeByte(this.action ? (byte) 1 : (byte) 0);
-    }
-
-    protected Message(Parcel in) {
-        this.to = in.readString();
-        this.text = in.readString();
-        long tmpDate = in.readLong();
-        this.date = tmpDate == -1 ? null : new Date(tmpDate);
-        this.optPrefix = in.readString();
-        this.command = in.readString();
-        this.params = in.readString();
-        this.trailing = in.readString();
-        this.serverName = in.readString();
-        this.nickName = in.readString();
-        this.userName = in.readString();
-        this.hostName = in.readString();
-        this.action = in.readByte() != 0;
-    }
-
-    public static final Creator<Message> CREATOR = new Creator<Message>() {
-        @Override
-        public Message createFromParcel(Parcel source) {
-            return new Message(source);
-        }
-
-        @Override
-        public Message[] newArray(int size) {
-            return new Message[size];
-        }
-    };
 
     public boolean getAction() {
         return action;

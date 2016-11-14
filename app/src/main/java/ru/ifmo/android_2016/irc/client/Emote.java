@@ -2,9 +2,6 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
-
-import com.annimon.stream.Stream;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,22 +22,22 @@ public class Emote implements Comparable<Emote> {
 
     private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:\\d+-\\d+)(?:,\\d+-\\d+)*");
     private static Pattern range = Pattern.compile("(\\d+)-(\\d+)");
-    private final String emoteName;
+    private final String emoteUrl;
     private final int begin;
     private final int end;
 
-    Emote(String emoteName, int begin, int end) {
-        this.emoteName = emoteName;
+    private Emote(String emoteId, int begin, int end) {
+        this.emoteUrl = emoteId;
         this.begin = begin;
         this.end = end;
     }
 
     static Emote getTwitchEmote(String emoteName, int begin, int end) {
-        return new Emote(TwitchApi.getEmoticonUrl(emoteName), begin, end);
+        return new Emote(TwitchApi.getEmoteUrl(emoteName), begin, end);
     }
 
     static Emote getBttvEmote(String emoteName, int begin, int end) {
-        return new Emote(BetterTwitchTvApi.getEmoticonUrl(emoteName), begin, end);
+        return new Emote(BetterTwitchTvApi.getEmoteUrl(emoteName), begin, end);
     }
 
     @Override
@@ -49,7 +46,7 @@ public class Emote implements Comparable<Emote> {
     }
 
     public String getEmoteUrl() {
-        return emoteName;
+        return emoteUrl;
     }
 
     public int getBegin() {
@@ -109,7 +106,8 @@ public class Emote implements Comparable<Emote> {
         }
     }
 
-    private static void parseBttvEmotes(List<Emote> result, Splitter splitResult, Map<String, String> bttvEmotes) {
+    private static void parseBttvEmotes(List<Emote> result, Splitter splitResult,
+                                        Map<String, String> bttvEmotes) {
         if (bttvEmotes != null) {
             for (int i = 0; i < splitResult.words.size(); i++) {
                 if (bttvEmotes.containsKey(splitResult.words.get(i))) {

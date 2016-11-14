@@ -14,8 +14,6 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
  * Created by ghost on 11/12/2016.
- * <p>
- * Инферфейс между Ui и сетевой частью
  */
 public class Channel {
     @NonNull

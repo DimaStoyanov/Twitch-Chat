@@ -1,7 +1,7 @@
 package ru.ifmo.android_2016.irc.exception;
 
 /**
- * Kind of bad, incorrect or unexpected response from API.
+ * Kind of bad, incorrect or unexpected response parse API.
  */
 public class BadResponseException extends Exception {
 

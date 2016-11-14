@@ -38,8 +38,8 @@ public class TwitchApi {
      * @throws IOException
      */
     public static HttpURLConnection getTwitchChannelEmotes(@NonNull String channel) throws IOException {
-        if ("global".equals(channel))
-            return getTwitchGlobalEmotes();
+        if ("global".equals(channel)) return getTwitchGlobalEmotes();
+
         Uri uri = BASE_CHAT_URI.buildUpon().appendPath(channel).appendPath("emoticons").appendQueryParameter("client_id", CLIENT_ID).build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }
@@ -72,12 +72,12 @@ public class TwitchApi {
      * @param size Размер картинки. Один из {1.0, 2.0, 3.0}
      * @return URL ссылка на картинку
      */
-    public static String getEmoticonUrl(String id, String size) {
+    public static String getEmoteUrl(String id, String size) {
         return EMOTICON_URI + id + "/" + size;
     }
 
-    public static String getEmoticonUrl(String id) {
-        return getEmoticonUrl(id, EMOTICON_MEDIUM);
+    public static String getEmoteUrl(String id) {
+        return getEmoteUrl(id, EMOTICON_MEDIUM);
     }
 
 }

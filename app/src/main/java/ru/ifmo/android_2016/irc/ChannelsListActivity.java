@@ -109,7 +109,7 @@ public class ChannelsListActivity extends AppCompatActivity {
     @UiThread
     @Deprecated
     private void readFromCache() {
-//        Log.d(TAG, "Read from cache");
+//        Log.d(TAG, "Read parse cache");
 //        pb.setVisibility(View.VISIBLE);
 //
 //        // мб сделать чтобы при повороте экрана не начиналась новая загрузка

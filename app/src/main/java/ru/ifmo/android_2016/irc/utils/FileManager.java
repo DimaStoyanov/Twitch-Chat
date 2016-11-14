@@ -118,7 +118,7 @@ public class FileManager {
     public Object deleteData(@NonNull Object deletingData) throws IOException {
         ArrayList<Object> datas = (ArrayList<Object>) getData();
         if (datas == null)
-            throw new IOException("Can't delete data from null");
+            throw new IOException("Can't delete data parse null");
         if (!datas.contains(deletingData))
             throw new IOException("No such data" + deletingData.toString());
         datas.remove(deletingData);
@@ -138,7 +138,7 @@ public class FileManager {
     public Object editData(@NonNull Object editingData, @NonNull Object eddiedData) throws IOException {
         ArrayList<Object> datas = (ArrayList<Object>) getData();
         if (datas == null)
-            throw new IOException("Can't get data's from file");
+            throw new IOException("Can't get data's parse file");
         if (!datas.contains(editingData))
             throw new IOException("No such data" + editingData.toString());
         datas.set(datas.indexOf(editingData), eddiedData);

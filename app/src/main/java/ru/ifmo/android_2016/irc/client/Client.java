@@ -66,7 +66,7 @@ public class Client {
     }
 
     protected final void join(String channel) {
-        print("JOIN " + channel);
+        send("JOIN " + channel);
     }
 
     protected void close() {
@@ -82,12 +82,12 @@ public class Client {
     }
 
     protected void quit() {
-        print("QUIT");
+        send("QUIT");
     }
 
     @SuppressWarnings("unused")
-    protected void quit(String message) {
-        print("QUIT :" + message);
+    protected void quit(String quitMessage) {
+        send("QUIT :" + quitMessage);
     }
 
     protected final void run() {
@@ -107,7 +107,7 @@ public class Client {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            executor.execute(FunctionUtils.catchExceptions(this::inputReader));
+            executor.execute(FunctionUtils.catchExceptions(this::responseFetcher));
 
             actions();
 
@@ -129,11 +129,11 @@ public class Client {
         joinChannels(clientSettings.channels);
     }
 
-    protected void inputReader() throws IOException, InterruptedException {
+    protected void responseFetcher() throws IOException, InterruptedException {
         while (socket.isConnected()) {
             String s = read();
             if (s != null) {
-                //Log.i(TAG, s);
+                Log.d(TAG, s);
                 messageQueue.put(parse(s));
             }
         }
@@ -151,7 +151,7 @@ public class Client {
     protected void doCommand(Message msg) {
         switch (msg.command) {
             case "PING":
-                Log.i(TAG, "PING caught");
+                //Log.i(TAG, "PING caught");
                 pong();
                 break;
 
@@ -168,7 +168,7 @@ public class Client {
     }
 
     protected void pong() {
-        print("PONG");
+        send("PONG");
     }
 
     protected Message getMessageFromString(String s) {
@@ -176,16 +176,16 @@ public class Client {
     }
 
     protected void pass(String password) {
-        print("PASS " + password);
+        send("PASS " + password);
     }
 
     protected void enterNick(String... nicks) {
         String nick = nicks[0];
-        print("NICK " + nick);
+        send("NICK " + nick);
         nickname = nick;
     }
 
-    protected final void print(String s) {
+    protected final void send(String s) {
         if (out != null) {
             Log.i(TAG, s);
             out.println(s);

@@ -1,5 +1,7 @@
 package ru.ifmo.android_2016.irc.client;
 
+import com.annimon.stream.function.Function;
+
 import java.io.IOException;
 
 import ru.ifmo.android_2016.irc.utils.TextUtils;
@@ -18,16 +20,16 @@ public final class TwitchClient extends Client {
 
     @Override
     protected void actions() throws IOException, InterruptedException {
-        pass(clientSettings.password);
-        enterNick(clientSettings.nicks);
         capReq("twitch.tv/membership");
         capReq("twitch.tv/commands");
         capReq("twitch.tv/tags");
+        pass(clientSettings.password);
+        enterNick(clientSettings.nicks);
         joinChannels(clientSettings.channels);
     }
 
     private void capReq(String s) {
-        print("CAP REQ :" + s);
+        send("CAP REQ :" + s);
     }
 
     @Override
@@ -43,8 +45,17 @@ public final class TwitchClient extends Client {
                 break;
 
             case "USERSTATE":
+            case "GLOBALUSERSTATE":
                 userState = (TwitchMessage) msg;
                 nickname = userState.getDisplayName();
+                break;
+
+            case "CLEARCHAT":
+                sendToChannel(msg, (m) -> TextUtils.buildBanText((TwitchMessage) m));
+                break;
+
+            case "NOTICE":
+                sendToChannel(msg, (m) -> TextUtils.buildNotice((TwitchMessage) m));
                 break;
 
             default:
@@ -56,6 +67,12 @@ public final class TwitchClient extends Client {
     protected void sendToChannel(Message msg) {
         if (channels.containsKey(msg.params)) {
             channels.get(msg.params).add(msg, (m) -> TextUtils.buildTextDraweeView((TwitchMessage) m));
+        }
+    }
+
+    protected void sendToChannel(Message msg, Function<Message, CharSequence> function) {
+        if (channels.containsKey(msg.params)) {
+            channels.get(msg.params).add(msg, function);
         }
     }
 }

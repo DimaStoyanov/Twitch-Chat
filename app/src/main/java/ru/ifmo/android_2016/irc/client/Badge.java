@@ -20,7 +20,7 @@ public class Badge {
             name = p[0];
             value = TwitchMessage.parseNumber(p[1]);
         } else {
-            throw null; //TODO: Something happened
+            throw null; //TODO: не должно такого быть
         }
     }
 

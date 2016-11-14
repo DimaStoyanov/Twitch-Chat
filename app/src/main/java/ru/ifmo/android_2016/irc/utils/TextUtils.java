@@ -63,4 +63,12 @@ public final class TextUtils {
         return new SpannableStringBuilder().append("<").append(msg.getNickName()).append("> ")
                 .append(msg.getTrailing());
     }
+
+    public static CharSequence buildBanText(TwitchMessage msg) {
+        return new SpannableStringBuilder().append(msg.getBan().toString(msg.getTrailing()));
+    }
+
+    public static CharSequence buildNotice(TwitchMessage msg) {
+        return new SpannableStringBuilder().append(msg.getTrailing());
+    }
 }

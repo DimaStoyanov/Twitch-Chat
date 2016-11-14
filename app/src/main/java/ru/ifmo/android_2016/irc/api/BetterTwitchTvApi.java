@@ -2,9 +2,12 @@ package ru.ifmo.android_2016.irc.api;
 
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.JsonReader;
 import android.util.Log;
+
+import com.annimon.stream.Stream;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,11 +22,15 @@ import java.util.Map;
  */
 
 public class BetterTwitchTvApi {
+    @NonNull
     private static final Uri API_URI = Uri.parse("https://api.betterttv.net/2");
-    @Nullable private static String EMOTICON_URI = null;
-    @Nullable public static Map<String, String> globalEmotes = null;    //code -> id
+    @Nullable
+    private static String EMOTICON_URL_TEMPLATE = null;
+    @Nullable
+    public static Map<String, String> globalEmotes = null;    //code -> id
 
     //channel -> (code -> id)
+    @NonNull
     private final static Map<String, Map<String, String>> channelEmotes = new HashMap<>();
 
     /**
@@ -33,17 +40,21 @@ public class BetterTwitchTvApi {
      * @param size Размер картинки. Один из {1.0, 2.0, 3.0}
      * @return URL ссылка на картинку
      */
-    public static String getEmoticonUrl(String id, String size) {
-        return "https:" + EMOTICON_URI.replace("{{id}}", id).replace("{{image}}", size);
-        //return EMOTICON_URI + id + "/" + size;
+    public static String getEmoteUrl(String id, String size) {
+        if (EMOTICON_URL_TEMPLATE != null) {
+            return "https:" + EMOTICON_URL_TEMPLATE
+                    .replace("{{id}}", id).replace("{{image}}", size);
+        }
+        throw null; //TODO: Я не знаю, нужно ли здесь кидать эксепшн или просто вернуть нулл
     }
 
-    public static String getEmoticonUrl(String id) {
-        return getEmoticonUrl(id, "2x");
+    public static String getEmoteUrl(String id) {
+        return getEmoteUrl(id, "2x");
     }
 
     /**
-     * @return Возвращает {@link HttpURLConnection} для выполнения запроса для получения общий эмоций.
+     * @return Возвращает {@link HttpURLConnection} для выполнения запроса для получения общий
+     * эмоций.
      * @throws IOException
      */
     public static HttpURLConnection getBttvGlobalEmoticons() throws IOException {
@@ -53,10 +64,10 @@ public class BetterTwitchTvApi {
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }
 
-    public static HttpURLConnection getBttvChannelEmoticons(String channel) throws IOException {
+    public static HttpURLConnection getBttvChannelEmoticons(String channelName) throws IOException {
         Uri uri = API_URI.buildUpon()
                 .appendPath("channels")
-                .appendPath(channel.replace("#", ""))
+                .appendPath(channelName.replace("#", ""))
                 .build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }
@@ -104,9 +115,8 @@ public class BetterTwitchTvApi {
                         if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                             emotes = readJson(httpURLConnection.getInputStream());
 
-                            for (Map.Entry<String, String> entry : emotes.entrySet()) {
-                                Log.d("bttv", entry.getKey() + "/" + entry.getValue());
-                            }
+                            Stream.of(emotes.entrySet()).forEach((entry) ->
+                                    Log.d("bttv", entry.getKey() + "/" + entry.getValue()));
                         } else {
                             Log.d(TAG, "bad happened " + httpURLConnection.getResponseCode() + " " + channel);
                             emotes = null;
@@ -126,7 +136,7 @@ public class BetterTwitchTvApi {
             return null;
         }
 
-        private Map<String, String> readJson(InputStream inputStream) throws IOException {
+        private static Map<String, String> readJson(InputStream inputStream) throws IOException {
             JsonReader reader = new JsonReader(new InputStreamReader(inputStream));
             Map<String, String> result = new HashMap<>();
 
@@ -138,7 +148,7 @@ public class BetterTwitchTvApi {
                         break;
 
                     case "urlTemplate":
-                        EMOTICON_URI = reader.nextString();
+                        EMOTICON_URL_TEMPLATE = reader.nextString();
                         break;
 
                     case "emotes":
@@ -154,7 +164,7 @@ public class BetterTwitchTvApi {
             return result;
         }
 
-        private void readEmotes(Map<String, String> result, JsonReader reader) throws IOException {
+        private static void readEmotes(Map<String, String> result, JsonReader reader) throws IOException {
             reader.beginArray();
             while (reader.hasNext()) {
                 String id = null, code = null;
