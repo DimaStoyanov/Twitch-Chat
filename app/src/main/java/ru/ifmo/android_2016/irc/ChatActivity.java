@@ -54,7 +54,9 @@ public class ChatActivity extends AppCompatActivity
         initView();
 
         findViewById(R.id.send).setOnClickListener(v -> {
-            viewPager.getCurrentItem();
+            Log.d(TAG, String.valueOf(viewPager.getCurrentItem()));
+            viewPagerAdapter.channels.get(viewPager.getCurrentItem())
+                    .send(typeMessage.getText().toString());
         });
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -119,16 +121,16 @@ public class ChatActivity extends AppCompatActivity
     public void onConnected(final Client client) {
         ChatActivity.this.client = client;
         client.attachUi(this);
-        //onChannelChange();
+        onChannelChange();
     }
 
     @Override
     @UiThread
     public void onChannelChange() {
         Log.d(TAG, "onChannelChange");
-        viewPagerAdapter.clearAndDetach();
-        viewPagerAdapter.channels.addAll(client.getChannels().values());
-        Stream.of(client.getChannels().values()).forEach(c -> Log.d(TAG, c.getName()));
+        viewPagerAdapter.channels.clear();
+        viewPagerAdapter.channels.addAll(client.getChannelList());
+        //Stream.of(client.getChannelList()).forEach(c -> Log.d(TAG, c.getName()));
         viewPagerAdapter.notifyDataSetChanged();
     }
 
@@ -152,12 +154,6 @@ public class ChatActivity extends AppCompatActivity
         @Override
         public CharSequence getPageTitle(int position) {
             return channels.get(position).getName();
-        }
-
-        public void clearAndDetach() {
-            Stream.of(channels).forEach(Channel::detachUi);
-            channels.clear();
-            notifyDataSetChanged();
         }
     }
 }

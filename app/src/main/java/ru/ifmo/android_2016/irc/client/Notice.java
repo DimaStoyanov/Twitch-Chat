@@ -1,12 +1,5 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.util.Pair;
-
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
-
-import java.util.Map;
-
 /**
  * Created by ghost3432 on 14.11.16.
  */
@@ -37,7 +30,14 @@ public enum Notice {
     UNBAN_SUCCESS,
     BAD_UNBAN_NO_BAD,
     ALREADY_BANNED,
-    UNRECOGNIZED_CMD;
+    UNRECOGNIZED_CMD,
+    RESUB,
+    MSG_DUPLICATE,
+    WHISPER_INVALID_SELF,
+
+    UNKNOWN;
+
+    public String unknown;
 
 //    static Map<String, Notice> map = Stream.of(Notice.values())
 //            .map(n -> Pair.create(n.name(), n))
@@ -45,6 +45,12 @@ public enum Notice {
 
     static Notice parse(String notice) {
         if (notice == null) return null;
-        return Enum.valueOf(Notice.class, notice.toUpperCase());
+        try {
+            return Enum.valueOf(Notice.class, notice.toUpperCase());
+        } catch (IllegalArgumentException x) {
+            Notice n = UNKNOWN;
+            n.unknown = notice;
+            return n;
+        }
     }
 }

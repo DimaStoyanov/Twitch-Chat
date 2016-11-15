@@ -1,9 +1,12 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.support.annotation.WorkerThread;
+
 import com.annimon.stream.function.Function;
 
 import java.io.IOException;
 
+import ru.ifmo.android_2016.irc.utils.Splitter;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -13,6 +16,7 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
 public final class TwitchClient extends Client {
     private static final String TAG = TwitchClient.class.getSimpleName();
     private TwitchMessage userState;
+    private TwitchMessage globalUserState;
 
     TwitchClient(ClientService clientService) {
         super(clientService);
@@ -41,11 +45,15 @@ public final class TwitchClient extends Client {
     protected void doCommand(Message msg) {
         switch (msg.command) {
             case "WHISPER":
-                sendToChannel(msg);
+                sendToChannel(msg, (m) -> TextUtils.buildWhisper((TwitchMessage) m));
+                break;
+
+            case "GLOBALUSERSTATE":
+                globalUserState = (TwitchMessage) msg;
+                nickname = globalUserState.getDisplayName();
                 break;
 
             case "USERSTATE":
-            case "GLOBALUSERSTATE":
                 userState = (TwitchMessage) msg;
                 nickname = userState.getDisplayName();
                 break;
@@ -66,13 +74,31 @@ public final class TwitchClient extends Client {
     @Override
     protected void sendToChannel(Message msg) {
         if (channels.containsKey(msg.params)) {
-            channels.get(msg.params).add(msg, (m) -> TextUtils.buildTextDraweeView((TwitchMessage) m));
+            channels.get(msg.params).add(msg,
+                    (m) -> TextUtils.buildTextDraweeView((TwitchMessage) m));
         }
     }
 
+    @Override
     protected void sendToChannel(Message msg, Function<Message, CharSequence> function) {
+        if (nickname.toLowerCase().equals(msg.getParams().toLowerCase())) {
+            statusChannel.add(msg, function);
+        }
         if (channels.containsKey(msg.params)) {
             channels.get(msg.params).add(msg, function);
         }
+    }
+
+    @Override
+    @WorkerThread
+    public void sendMessage(Message message) {
+        TwitchMessage twitchMessage = (TwitchMessage) message;
+        send(message.toString());
+        twitchMessage
+                .setColor(globalUserState.getColor())
+                .setEmotes(Emote.parse(null, Splitter.splitWithSpace(twitchMessage.getTrailing()),
+                        twitchMessage.getParams()))
+                .setNickname(nickname);
+        messageQueue.add(message);
     }
 }

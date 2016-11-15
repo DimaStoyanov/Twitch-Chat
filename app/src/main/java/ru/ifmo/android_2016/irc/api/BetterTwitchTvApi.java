@@ -17,6 +17,10 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+import ru.ifmo.android_2016.irc.utils.FunctionUtils;
+
+import static ru.ifmo.android_2016.irc.utils.FunctionUtils.tryWith;
+
 /**
  * Created by ghost on 11/11/2016.
  */

@@ -2,16 +2,20 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 import android.util.Log;
+
+import com.annimon.stream.Stream;
+import com.annimon.stream.function.Function;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,10 +43,20 @@ public class Client {
     protected BufferedReader in;
     protected PrintWriter out;
     protected final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
-    protected Map<String, Channel> channels = new TreeMap<>();
+    protected final BlockingQueue<Request> requestQueue = new LinkedBlockingQueue<>();
+    protected List<Channel> channelList = new ArrayList<>();
+    protected Map<String, Channel> channels = new android.support.v4.util.ArrayMap<>();
     @Nullable
     protected Callback ui;
-    protected Channel statusChannel = new Channel("Status");
+    protected Channel statusChannel = new Channel(this, "Status");
+    protected Function<Exception, Void> defaultExceptionHandler = (e) -> {
+        statusChannel.add(e.toString());
+        Stream.of(e.getStackTrace())
+                .forEach((ste) -> statusChannel.add(ste.toString()));
+        e.printStackTrace();
+        //notifyUi();
+        return null;
+    };
 
     Client(ClientService clientService) {
         this.clientService = clientService;
@@ -52,17 +66,18 @@ public class Client {
         this.clientSettings = clientSettings;
         executor.execute(this::run);
 
-        channels.put("Status", statusChannel);
+        putNewChannel("Status", statusChannel);
         statusChannel.add("Client started");
         return true;
     }
 
+    protected void putNewChannel(String status, Channel channel) {
+        channelList.add(channel);
+        channels.put(status, channel);
+    }
+
     protected void joinChannels(List<String> channels) {
-        for (String channel : channels) {
-            join(channel);
-            this.channels.put(channel, new Channel(channel));
-        }
-        if (ui != null) ui.runOnUiThread(ui::onChannelChange);
+        Stream.of(channels).forEach(this::join);
     }
 
     protected final void join(String channel) {
@@ -107,19 +122,37 @@ public class Client {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            executor.execute(FunctionUtils.catchExceptions(this::responseFetcher));
+            executor.execute(FunctionUtils.catchExceptions(this::responseFetcher,
+                    defaultExceptionHandler));
 
             actions();
 
             executor.execute(FunctionUtils.catchExceptions(() -> {
                 //noinspection InfiniteLoopStatement
                 while (true) doCommand(messageQueue.take());
-            }));
+            }, defaultExceptionHandler));
+
+            executor.execute(FunctionUtils.catchExceptions(this::handler, defaultExceptionHandler));
 
         } catch (IOException | RuntimeException e) {
             Log.e(TAG, e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    @WorkerThread
+    private void handler() throws InterruptedException {
+        while (true) {
+            Request request = requestQueue.take();
+            switch (request.type) {
+                case SEND:
+                    sendMessage((Message) request.msg);
+                    break;
+
+                default:
+                    statusChannel.add("Unknown request: " + request.type.name());
+            }
         }
     }
 
@@ -158,12 +191,29 @@ public class Client {
             case "PRIVMSG":
                 sendToChannel(msg);
                 break;
+
+            case "JOIN":
+                if (nickname.toLowerCase().equals(msg.getNickname().toLowerCase())) {
+                    putNewChannel(msg.getParams(), new Channel(this, msg.getParams()));
+                    notifyUi();
+                }
+                break;
         }
+    }
+
+    private void notifyUi() {
+        if (ui != null) ui.runOnUiThread(ui::onChannelChange);
     }
 
     protected void sendToChannel(Message msg) {
         if (channels.containsKey(msg.params)) {
             channels.get(msg.params).add(msg);
+        }
+    }
+
+    protected void sendToChannel(Message msg, Function<Message, CharSequence> func) {
+        if (channels.containsKey(msg.params)) {
+            channels.get(msg.params).add(msg, func);
         }
     }
 
@@ -204,11 +254,31 @@ public class Client {
         }
     }
 
+    @WorkerThread
+    public void sendMessage(Message message) {
+        send(message.toString());
+        sendToChannel(message.setNickname(getNickname()));
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    @UiThread
+    @WorkerThread
+    public void request(Request request) {
+        requestQueue.add(request);
+    }
+
     public interface Callback {
         void runOnUiThread(Runnable run);
 
         @UiThread
         void onChannelChange();
+    }
+
+    public List<Channel> getChannelList() {
+        return channelList;
     }
 
     public Map<String, Channel> getChannels() {
@@ -218,5 +288,19 @@ public class Client {
     @SuppressWarnings("unused")
     public Channel getStatusChannel() {
         return statusChannel;
+    }
+
+    public static class Request {
+        private Type type;
+        private Object msg;
+
+        public Request(Type type, Object msg) {
+            this.type = type;
+            this.msg = msg;
+        }
+
+        enum Type {
+            SEND,
+        }
     }
 }

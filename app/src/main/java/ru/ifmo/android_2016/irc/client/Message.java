@@ -69,6 +69,10 @@ public class Message {
         return trailing;
     }
 
+    public String getParams() {
+        return params;
+    }
+
     private static class Prefix {
         private static final Pattern pattern =
                 Pattern.compile("([\\w.-]+)|(?:([\\w_]+)(?:(?:!([\\w]+))?@([\\w.-]+))?)");
@@ -113,7 +117,7 @@ public class Message {
         }
     }
 
-    public String getNickName() {
+    public String getNickname() {
         return nickName;
     }
 
@@ -146,7 +150,7 @@ public class Message {
         return this;
     }
 
-    public Message setNickName(String nickName) {
+    public Message setNickname(String nickName) {
         this.nickName = nickName;
         return this;
     }
@@ -169,10 +173,15 @@ public class Message {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (command != null) {
-            sb.append(command).append(" ");
-            sb.append(params).append(" ");
-            sb.append(":").append(trailing);
+        if (optPrefix != null) {
+            sb.append(optPrefix).append(' ');
+        }
+        sb.append(command).append(' ');
+        if (params != null) {
+            sb.append(params).append(' ');
+        }
+        if (trailing != null) {
+            sb.append(':').append(trailing);
         }
         return sb.toString();
     }

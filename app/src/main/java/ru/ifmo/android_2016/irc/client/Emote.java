@@ -3,6 +3,8 @@ package ru.ifmo.android_2016.irc.client;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import com.annimon.stream.Stream;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -67,7 +69,7 @@ public class Emote implements Comparable<Emote> {
     }
 
     @Nullable
-    static List<Emote> parseEmotes(String emotes, String messageText, String channel) {
+    static List<Emote> parse(String emotes, List<Splitter.Result> splitResult, String channel) {
         List<Emote> result = new ArrayList<>(4);
         if (emotes != null) {
             String[] emote = emotes.split("/");
@@ -93,8 +95,7 @@ public class Emote implements Comparable<Emote> {
         }
 
         /* BetterTTV */
-        if (messageText != null) {
-            Splitter splitResult = Splitter.splitWithSpace(messageText);
+        if (splitResult != null) {
             parseBttvEmotes(result, splitResult, BetterTwitchTvApi.globalEmotes);
             parseBttvEmotes(result, splitResult, BetterTwitchTvApi.getChannelEmotes(channel));
         }
@@ -106,17 +107,13 @@ public class Emote implements Comparable<Emote> {
         }
     }
 
-    private static void parseBttvEmotes(List<Emote> result, Splitter splitResult,
+    private static void parseBttvEmotes(final List<Emote> result, List<Splitter.Result> splitResult,
                                         Map<String, String> bttvEmotes) {
         if (bttvEmotes != null) {
-            for (int i = 0; i < splitResult.words.size(); i++) {
-                if (bttvEmotes.containsKey(splitResult.words.get(i))) {
-                    result.add(Emote.getBttvEmote(
-                            bttvEmotes.get(splitResult.words.get(i)),
-                            splitResult.begin.get(i),
-                            splitResult.end.get(i)));
-                }
-            }
+            Stream.of(splitResult)
+                    .filter((r) -> bttvEmotes.containsKey(r.word))
+                    .forEach((r) ->
+                            result.add(Emote.getBttvEmote(bttvEmotes.get(r.word), r.begin, r.end)));
         }
     }
 }

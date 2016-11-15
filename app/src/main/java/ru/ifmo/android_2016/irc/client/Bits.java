@@ -1,33 +1,43 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.util.Log;
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 
-import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
+
+import ru.ifmo.android_2016.irc.utils.Splitter;
 
 /**
  * Created by ghost3432 on 14.11.16.
  */
 
 public class Bits {
+    private static final Pattern pattern = Pattern.compile("cheer\\d+");
     private static final String TAG = Bits.class.getSimpleName();
     private final int bits;
     private final String BITS_URL_TEMPLATE =
             "https://static-cdn.jtvnw.net/bits/{{theme}}/{{type}}/{{color}}/{{size}}";
+    private final int begin_text;
+    private final int end_text;
+    private final int begin_image;
+    private final int end_image;
 
-    public Bits(String bits) {
-        try {
-            this.bits = Integer.parseInt(bits);
-        } catch (NumberFormatException x) {
-            Log.d(TAG, bits);
-            throw null; //TODO:
-        }
+    public Bits(String bits, int begin, int end) {
+        bits = bits.replace("cheer", "");
+        this.bits = Integer.parseInt(bits);
+        this.begin_image = begin;
+        this.end_image = end - bits.length();
+        this.begin_text = this.end_image + 1;
+        this.end_text = this.end_image;
     }
 
-    public static List<Bits> parse(String bits, String message) {
+    public static List<Bits> parse(String bits, List<Splitter.Result> message) {
         if (bits == null) return null;
-        //TODO:
-        return Collections.singletonList(new Bits(bits));
+        return Stream.of(message)
+                .filter((m) -> pattern.matcher(m.word).matches())
+                .map((m) -> new Bits(m.word, m.begin, m.end))
+                .collect(Collectors.toList());
     }
 
     public String getBitsUrl() {

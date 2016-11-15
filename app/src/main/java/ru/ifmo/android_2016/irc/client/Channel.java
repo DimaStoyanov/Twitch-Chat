@@ -3,6 +3,7 @@ package ru.ifmo.android_2016.irc.client;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.util.Log;
 
 import com.annimon.stream.function.Function;
 
@@ -16,6 +17,8 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
  * Created by ghost on 11/12/2016.
  */
 public class Channel {
+    private static final String TAG = Channel.class.getSimpleName();
+    private Client client;
     @NonNull
     private final String name;
     @NonNull
@@ -25,12 +28,14 @@ public class Channel {
     @Nullable
     private Callback ui;
 
-    Channel(@NonNull String name) {
-        this(name, TextUtils::buildDefaultText);
+    Channel(@NonNull Client client, @NonNull String name) {
+        this(client, name, TextUtils::buildDefaultText);
     }
 
     @SuppressWarnings("WeakerAccess")
-    Channel(@NonNull String name, @Nullable Function<Message, CharSequence> postExecute) {
+    Channel(@NonNull Client client, @NonNull String name,
+            @Nullable Function<Message, CharSequence> postExecute) {
+        this.client = client;
         this.name = name;
         this.messages = new ArrayList<>(16);
         this.postExecute = postExecute;
@@ -75,6 +80,17 @@ public class Channel {
     @NonNull
     public final List<CharSequence> getMessages() {
         return messages;
+    }
+
+    @UiThread
+    public void send(String message) {
+        Message msg = new TwitchMessage()
+                .setCommand("PRIVMSG")
+                .setParams(getName())
+                .setTrailing(message);
+
+        Log.d(TAG, "requesting " + message + "/" + msg.toString());
+        client.request(new Client.Request(Client.Request.Type.SEND, msg));
     }
 
     public interface Callback {

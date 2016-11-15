@@ -1,6 +1,7 @@
 package ru.ifmo.android_2016.irc.utils;
 
 import android.graphics.Typeface;
+import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -34,7 +35,11 @@ public final class TextUtils {
             nickNBadges.setSpan(new ForegroundColorSpan(msg.getColor()), 0, nickNBadges.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
+        return nickNBadges.append(buildMessageTextWithEmotes(msg));
+    }
 
+    @NonNull
+    private static SpannableStringBuilder buildMessageTextWithEmotes(TwitchMessage msg) {
         SpannableStringBuilder messageText = new SpannableStringBuilder();
         messageText.append(msg.getTrailing());
         if (msg.getAction() && msg.getColor() != 0) {
@@ -52,23 +57,33 @@ public final class TextUtils {
                         Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
         }
-
-        nickNBadges.append(messageText);
-
-        return nickNBadges;
+        return messageText;
     }
 
     @WorkerThread
     public static SpannableStringBuilder buildDefaultText(Message msg) {
-        return new SpannableStringBuilder().append("<").append(msg.getNickName()).append("> ")
+        return new SpannableStringBuilder().append("<").append(msg.getNickname()).append("> ")
                 .append(msg.getTrailing());
     }
 
+    @WorkerThread
     public static CharSequence buildBanText(TwitchMessage msg) {
         return new SpannableStringBuilder().append(msg.getBan().toString(msg.getTrailing()));
     }
 
+    @WorkerThread
     public static CharSequence buildNotice(TwitchMessage msg) {
         return new SpannableStringBuilder().append(msg.getTrailing());
+    }
+
+    @WorkerThread
+    public static CharSequence buildWhisper(TwitchMessage msg) {
+        return new SpannableStringBuilder()
+                .append(msg.getNickname())
+                .append(" \u25B6 ")
+                .append(msg.getParams())
+                .append(": ")
+                .append(buildMessageTextWithEmotes(msg));
+
     }
 }

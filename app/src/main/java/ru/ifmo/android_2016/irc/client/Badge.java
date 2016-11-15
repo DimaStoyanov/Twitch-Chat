@@ -11,25 +11,25 @@ import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
 public class Badge {
-    private final int value;
-    private final String name;
+    private final String version;
+    private final Type name;
 
     Badge(String badge) {
         String[] p = badge.split("/");
-        if (p.length >= 2) {
-            name = p[0];
-            value = TwitchMessage.parseNumber(p[1]);
+        if (p.length == 2) {
+            name = Type.parse(p[0]);
+            version = p[1];
         } else {
             throw null; //TODO: не должно такого быть
         }
     }
 
     @SuppressWarnings("unused")
-    public int getValue() {
-        return value;
+    public String getVersion() {
+        return version;
     }
 
-    public String getName() {
+    public Type getName() {
         return name;
     }
 
@@ -37,5 +37,31 @@ public class Badge {
         return badges == null ? null : Stream.of(badges.split(","))
                 .map(Badge::new)
                 .collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unused")
+    public enum Type {
+        UNKNOWN,
+
+        ADMIN,
+        BITS,
+        BROADCASTER,
+        GLOBAL_MOD,
+        MODERATOR,
+        PREMIUM,
+        STAFF,
+        SUBSCRIBER,
+        TURBO,
+        WARCRAFT,
+
+        BTTV_BOT,;
+
+        static Type parse(String type) {
+            try {
+                return Enum.valueOf(Type.class, type.toUpperCase());
+            } catch (IllegalArgumentException x) {
+                return UNKNOWN;
+            }
+        }
     }
 }

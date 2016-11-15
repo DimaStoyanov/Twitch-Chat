@@ -6,8 +6,11 @@ import android.util.Log;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import ru.ifmo.android_2016.irc.utils.Splitter;
 
 /**
  * Created by ghost on 10/29/2016.
@@ -39,8 +42,9 @@ public final class TwitchMessage extends Message {
     private String broadcasterLang;
     private int[] emoteSets;
     private Ban ban;
+    private List<Splitter.Result> splitResult;
 
-    private TwitchMessage() {
+    TwitchMessage() {
     }
 
     public static TwitchMessage fromString(String rawMessage) {
@@ -50,6 +54,9 @@ public final class TwitchMessage extends Message {
     @Override
     protected TwitchMessage parse(String rawMessage) {
         super.parse(rawMessage);
+        if (getTrailing() != null) {
+            splitResult = Splitter.splitWithSpace(getTrailing());
+        }
         if (optPrefix != null) {
             addToMessage(Stream.of(optPrefix)
                     .flatMap(s -> Stream.of(s.split(";")))
@@ -65,7 +72,7 @@ public final class TwitchMessage extends Message {
         color = parseColor(map.get("color"));
         displayName = map.get("display-name");
 
-        emotes = Emote.parseEmotes(map.get("emotes"), this.getTrailing(), params);
+        emotes = Emote.parse(map.get("emotes"), splitResult, params);
 
         id = map.get("id");
         mod = parseBool(map.get("mod"));
@@ -74,7 +81,7 @@ public final class TwitchMessage extends Message {
         roomId = map.get("room-id");
         userId = map.get("user-id");
         userType = UserType.parse(map.get("user-type"));
-        bits = Bits.parse(map.get("bits"), this.getTrailing());
+        bits = Bits.parse(map.get("bits"), splitResult);
 
         emoteSets = parseEmoteSets(map.get("emote-sets"));
 
@@ -149,8 +156,9 @@ public final class TwitchMessage extends Message {
         return displayName;
     }
 
+    @Override
     public String getNickname() {
-        return getDisplayName() == null ? super.getNickName() : getDisplayName();
+        return getDisplayName() == null ? super.getNickname() : getDisplayName();
     }
 
     public List<Emote> getEmotes() {
@@ -177,6 +185,11 @@ public final class TwitchMessage extends Message {
 
     public Ban getBan() {
         return ban;
+    }
+
+    public TwitchMessage setEmotes(List<Emote> emotes) {
+        this.emotes = emotes;
+        return this;
     }
 }
 
