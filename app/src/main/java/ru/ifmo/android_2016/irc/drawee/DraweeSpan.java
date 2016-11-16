@@ -33,6 +33,8 @@ import android.text.TextUtils;
 import android.text.style.DynamicDrawableSpan;
 import android.util.Log;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
 import com.facebook.common.executors.UiThreadImmediateExecutorService;
 import com.facebook.common.logging.FLog;
 import com.facebook.common.references.CloseableReference;
@@ -81,6 +83,8 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
     private boolean mIsAttached;
     private boolean mShouldShowAnim = false;
 
+    public static float dp;
+
     /**
      * Use {@link Builder} to build a DraweeSpan.
      */
@@ -95,7 +99,7 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
     }
 
     protected void layout() {
-        mActualDrawable.setBounds(0, 0, mLayout.x, mLayout.y);
+        mActualDrawable.setBounds(0, 0, (int) (mLayout.x * dp), (int) (mLayout.y * dp));
     }
 
     @Override
@@ -121,10 +125,18 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
 
     @Override
     public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
+//        String log = Stream.of(text, start, end, x, top, y, bottom)
+//                .map(String::valueOf)
+//                .collect(Collectors.joining(","));
+//        Log.d(TAG, log);
         super.draw(canvas, text, start, end, x + mMargin.left, top, y, bottom, paint);
     }
 
     public void setImage(Drawable drawable) {
+        mLayout.set(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+//        mPlaceHolder.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+//        mActualDrawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+        layout();
         if (mDrawable != drawable) {
             releaseDrawable(mDrawable);
             setDrawableInner(drawable);
