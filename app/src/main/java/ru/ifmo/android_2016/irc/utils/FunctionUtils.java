@@ -38,7 +38,7 @@ public class FunctionUtils {
     public interface CallableWithException<E extends Exception, R> {
         R call() throws E;
     }
-    
+
     @FunctionalInterface
     public interface Procedure<P> {
         void call(P param);
@@ -49,10 +49,11 @@ public class FunctionUtils {
         void call(P param) throws E;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public static class TryWithUrlConnection<E extends Exception> {
         private final CallableWithException<E, HttpURLConnection> func;
 
-        public TryWithUrlConnection(CallableWithException<E, HttpURLConnection> func) {
+        private TryWithUrlConnection(CallableWithException<E, HttpURLConnection> func) {
             this.func = func;
         }
 
@@ -68,15 +69,29 @@ public class FunctionUtils {
                 }
             });
         }
-        
+
         public class WithException implements RunnableWithException<E> {
             private final RunnableWithException<E> runnable;
 
-            public WithException(RunnableWithException<E> runnable) {
+            private WithException(RunnableWithException<E> runnable) {
                 this.runnable = runnable;
             }
-            
-            public Runnable catchWithException(Procedure<Exception> catcher) {
+
+            public WithException catchWith(Class<E> exception, Procedure<Exception> catcher) {
+                return new WithException(() -> {
+                    try {
+                        this.run();
+                    } catch (Exception x) {
+                        if (exception.isInstance(x)) {
+                            catcher.call(x);
+                        } else {
+                            throw x;
+                        }
+                    }
+                });
+            }
+
+            public Runnable catchException(Procedure<Exception> handler) {
                 return () -> {
                     try {
                         run();
@@ -84,11 +99,19 @@ public class FunctionUtils {
                         x.printStackTrace();
                     }
                 };
-            } 
+            }
 
             @Override
             public void run() throws E {
                 runnable.run();
+            }
+
+            public void runUnchecked() {
+                try {
+                    run();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
             }
         }
     }
@@ -96,5 +119,9 @@ public class FunctionUtils {
     public static TryWithUrlConnection<IOException> tryWith(
             CallableWithException<IOException, HttpURLConnection> func) {
         return new TryWithUrlConnection<>(func);
+    }
+
+    public static class Reference<T> {
+        public T ref;
     }
 }

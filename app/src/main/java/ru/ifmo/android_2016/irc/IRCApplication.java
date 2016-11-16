@@ -1,12 +1,12 @@
 package ru.ifmo.android_2016.irc;
 
-import android.content.Intent;
+import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 
 /**
  * Created by ghost on 11/14/2016.
  */
 
-public class IrcApplication extends android.app.Application {
+public class IRCApplication extends android.app.Application {
     private Thread.UncaughtExceptionHandler old;
 
     private Thread.UncaughtExceptionHandler uncaughtExceptionHandler = (thread, throwable) -> {
@@ -16,6 +16,8 @@ public class IrcApplication extends android.app.Application {
 
     @Override
     public void onCreate() {
+        DraweeSpan.dp = getResources().getDisplayMetrics().density / 2;
+
         //TODO: Uncaught Exceptions on the screen
         old = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);

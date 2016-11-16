@@ -10,7 +10,7 @@ import com.annimon.stream.function.Function;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -39,7 +39,7 @@ public class Channel {
         this.name = name;
         this.messages = new ArrayList<>(16);
         this.postExecute = postExecute;
-        new BetterTwitchTvApi.BttvEmotesLoaderTask().execute(name);
+        new BttvEmotesLoaderTask().execute(name);
     }
 
     void add(Message msg) {

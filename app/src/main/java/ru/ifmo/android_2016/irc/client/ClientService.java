@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ru.ifmo.android_2016.irc.R;
-import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
 
 public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
@@ -56,7 +56,7 @@ public class ClientService extends Service {
             case START_SERVICE:
                 if (!isRunning) {
                     startForeground(1, getNotification("Service is running"));
-                    new BetterTwitchTvApi.BttvEmotesLoaderTask().execute();
+                    new BttvEmotesLoaderTask().execute();
                     isRunning = true;
                 }
                 break;
