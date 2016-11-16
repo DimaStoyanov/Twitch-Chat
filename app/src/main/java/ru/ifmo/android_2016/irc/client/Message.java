@@ -1,7 +1,5 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -23,7 +21,7 @@ public class Message {
     @Nullable String params;
     @Nullable String trailing;
     @Nullable String serverName;
-    @Nullable String nickName;
+    @Nullable String nickname;
     @Nullable String userName;
     @Nullable String hostName;
     private static final Pattern actionPattern = Pattern.compile("\1ACTION ([^\1]+)\1");
@@ -82,7 +80,7 @@ public class Message {
                 Matcher matcher = pattern.matcher(s);
                 if (matcher.matches()) {
                     message.serverName = matcher.group(1);
-                    message.nickName = matcher.group(2);
+                    message.nickname = matcher.group(2);
                     message.userName = matcher.group(3);
                     message.hostName = matcher.group(4);
                     return true;
@@ -117,8 +115,9 @@ public class Message {
         }
     }
 
+    @Nullable
     public String getNickname() {
-        return nickName;
+        return nickname;
     }
 
     public boolean getAction() {
@@ -150,8 +149,8 @@ public class Message {
         return this;
     }
 
-    public Message setNickname(String nickName) {
-        this.nickName = nickName;
+    public Message setNickname(String nickname) {
+        this.nickname = nickname;
         return this;
     }
 

@@ -235,7 +235,7 @@ public class Client {
         nickname = nick;
     }
 
-    protected final void send(String s) {
+    protected void send(String s) {
         if (out != null) {
             Log.i(TAG, s);
             out.println(s);

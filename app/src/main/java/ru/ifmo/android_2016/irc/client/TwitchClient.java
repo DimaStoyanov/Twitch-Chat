@@ -101,4 +101,10 @@ public final class TwitchClient extends Client {
                 .setNickname(nickname);
         messageQueue.add(message);
     }
+
+    @Override
+    protected void send(String s) {
+        //TODO: global ban protection
+        super.send(s);
+    }
 }

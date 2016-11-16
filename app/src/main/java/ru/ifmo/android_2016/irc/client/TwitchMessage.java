@@ -6,7 +6,6 @@ import android.util.Log;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +39,7 @@ public final class TwitchMessage extends Message {
     private UserType userType;
     private List<Bits> bits;
     private String broadcasterLang;
-    private int[] emoteSets;
+    private Integer[] emoteSets;
     private Ban ban;
     private List<Splitter.Result> splitResult;
 
@@ -98,10 +97,10 @@ public final class TwitchMessage extends Message {
         ban = Ban.parse(map.get("ban-reason"), map.get("ban-duration"));
     }
 
-    private static int[] parseEmoteSets(String emoteSets) {
+    private static Integer[] parseEmoteSets(String emoteSets) {
         if (emoteSets == null) return null;
         try {
-            return Stream.of(emoteSets.split(",")).mapToInt(Integer::parseInt).toArray();
+            return Stream.of(emoteSets.split(",")).map(Integer::parseInt).toArray(Integer[]::new);
         } catch (NumberFormatException x) {
             throw null; //TODO: impossible
         }
@@ -190,6 +189,10 @@ public final class TwitchMessage extends Message {
     public TwitchMessage setEmotes(List<Emote> emotes) {
         this.emotes = emotes;
         return this;
+    }
+
+    public Integer[] getEmoteSets() {
+        return emoteSets;
     }
 }
 
