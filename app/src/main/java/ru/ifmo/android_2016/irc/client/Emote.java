@@ -7,11 +7,13 @@ import com.annimon.stream.Stream;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.ifmo.android_2016.irc.api.TwitchApi;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
+import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
 import ru.ifmo.android_2016.irc.utils.Splitter;
 
 /**
@@ -112,5 +114,35 @@ public class Emote implements Comparable<Emote> {
         Stream.of(splitResult)
                 .filter((r) -> BttvEmotes.isEmote(r.word, channel))
                 .forEach((r) -> result.add(Emote.getBttvEmote(r.word, channel, r.begin, r.end)));
+    }
+
+    public static List<Emote> findAllEmotes(String privmsgText,
+                                            String privmsgTarget,
+                                            Set<Integer> emoteSets) {
+        return findAllEmotes(Splitter.splitWithSpace(privmsgText), privmsgTarget, emoteSets);
+    }
+
+    public static List<Emote> findAllEmotes(List<Splitter.Result> text,
+                                            String target,
+                                            Set<Integer> emoteSets) {
+        List<Emote> emotes = new ArrayList<>();
+        if (text != null) {
+            parseBttvEmotes(emotes, text, target);
+            parseTwitchEmotes(emotes, text, emoteSets);
+        }
+
+        if (emotes.size() > 0) return emotes;
+        return null;
+    }
+
+    private static void parseTwitchEmotes(List<Emote> result,
+                                          List<Splitter.Result> text,
+                                          Set<Integer> emoteSets) {
+        Stream.of(text)
+                .filter(r -> TwitchEmotes.isEmote(r.word, emoteSets))
+                .forEach(r -> result.add(Emote.getTwitchEmote(
+                        TwitchEmotes.getEmoteByCode(r.word),
+                        r.begin,
+                        r.end)));
     }
 }

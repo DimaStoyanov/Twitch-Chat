@@ -1,4 +1,4 @@
-package ru.ifmo.android_2016.irc.api;
+package ru.ifmo.android_2016.irc.api.twitch;
 
 import android.os.AsyncTask;
 import android.util.JsonReader;
@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by ghost on 11/15/2016.
  */
 
-public class TwitchBadgeApi {
+public class TwitchBadges {
     private static final String UNDOCUMENTED_GLOBAL_BADGES_URL =
             "https://badges.twitch.tv/v1/badges/global/display";
     private static final String UNDOCUMENTED_CHANNEL_BADGES_URL_TEMPLATE =
@@ -23,7 +23,7 @@ public class TwitchBadgeApi {
 
     private static final Map<String, String> map = new HashMap<>();
 
-    private TwitchBadgeApi() {
+    private TwitchBadges() {
     }
 
     //TODO:

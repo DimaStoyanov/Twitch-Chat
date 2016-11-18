@@ -37,7 +37,7 @@ public class Client {
 
     protected ClientService clientService;
     protected ClientSettings clientSettings;
-    protected String nickname;
+    private String nickname;
 
     protected Socket socket;
     protected BufferedReader in;
@@ -194,7 +194,8 @@ public class Client {
 
             case "JOIN":
                 if (nickname.toLowerCase().equals(msg.getNickname().toLowerCase())) {
-                    putNewChannel(msg.getParams(), new Channel(this, msg.getParams()));
+                    putNewChannel(msg.getPrivmsgTarget(),
+                            new Channel(this, msg.getPrivmsgTarget()));
                     notifyUi();
                 }
                 break;
@@ -206,14 +207,14 @@ public class Client {
     }
 
     protected void sendToChannel(Message msg) {
-        if (channels.containsKey(msg.params)) {
-            channels.get(msg.params).add(msg);
+        if (channels.containsKey(msg.getPrivmsgTarget())) {
+            channels.get(msg.getPrivmsgTarget()).add(msg);
         }
     }
 
     protected void sendToChannel(Message msg, Function<Message, CharSequence> func) {
-        if (channels.containsKey(msg.params)) {
-            channels.get(msg.params).add(msg, func);
+        if (channels.containsKey(msg.getPrivmsgTarget())) {
+            channels.get(msg.getPrivmsgTarget()).add(msg, func);
         }
     }
 
