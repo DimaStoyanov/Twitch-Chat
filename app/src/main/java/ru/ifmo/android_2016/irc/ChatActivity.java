@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.design.widget.TabLayout;
@@ -15,6 +16,9 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.HapticFeedbackConstants;
+import android.view.Menu;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
@@ -51,6 +55,7 @@ public class ChatActivity extends AppCompatActivity
     private ViewPager viewPager;
     private ScrollView emotes_scroll;
     private LinearLayout emotes_ll;
+    private boolean spam_mode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,9 +104,10 @@ public class ChatActivity extends AppCompatActivity
 
         findViewById(R.id.send).setOnClickListener(v -> {
             Log.d(TAG, String.valueOf(viewPager.getCurrentItem()));
+            v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             viewPagerAdapter.channels.get(viewPager.getCurrentItem())
                     .send(typeMessage.getText().toString());
-            typeMessage.setText("");
+            if (!spam_mode) typeMessage.setText("");
         });
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -167,6 +173,7 @@ public class ChatActivity extends AppCompatActivity
     }
 
     public void onEmotesShowClick(View view) {
+        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(),
                 InputMethodManager.HIDE_NOT_ALWAYS);
@@ -193,6 +200,8 @@ public class ChatActivity extends AppCompatActivity
                 emote.setLayoutParams(emoteParams);
                 emote.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_INSIDE);
                 emote.setOnClickListener(new OnEmotesClickListener((String) keyset[i]));
+                emote.setHapticFeedbackEnabled(true);
+                emote.setOnTouchListener(new OnEmotesTouchListener((String) keyset[i], emote));
                 emote.setImageURI(Uri.parse(BttvEmotes.getEmoteUrlByCode(String.valueOf(keyset[i++]), channel)));
                 row.addView(emote);
             }
@@ -201,6 +210,58 @@ public class ChatActivity extends AppCompatActivity
         emotes_scroll.setVisibility(View.VISIBLE);
         emotes_scroll.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
 
+    }
+
+    private class OnEmotesTouchListener implements View.OnTouchListener {
+        final String code;
+        private Handler handler;
+        private int duration, totalDuration;
+        private View view;
+
+        OnEmotesTouchListener(String code, View view) {
+            this.code = code;
+            duration = 500;
+            totalDuration = 0;
+            this.view = view;
+        }
+
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            switch (motionEvent.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    if (handler != null) return true;
+                    handler = new Handler();
+                    totalDuration = duration;
+                    handler.postDelayed(mAction, duration);
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                case MotionEvent.ACTION_UP:
+                    if (handler == null) return true;
+                    handler.removeCallbacks(mAction);
+                    handler = null;
+                    break;
+            }
+            return false;
+        }
+
+        Runnable mAction = new Runnable() {
+            @Override
+            public void run() {
+                if (totalDuration == 500) {
+                    totalDuration += 500;
+                    handler.postDelayed(this, duration);
+                    return;
+                }
+                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                typeMessage.append(code + " ");
+                if (totalDuration == 2000)
+                    duration = 250;
+                if (totalDuration == 3500)
+                    duration = 100;
+                totalDuration += duration;
+                handler.postDelayed(this, duration);
+            }
+        };
     }
 
     private class OnEmotesClickListener implements View.OnClickListener {
@@ -212,6 +273,7 @@ public class ChatActivity extends AppCompatActivity
 
         @Override
         public void onClick(View view) {
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
             typeMessage.append(code + " ");
         }
     }
@@ -223,6 +285,10 @@ public class ChatActivity extends AppCompatActivity
 
     private boolean isEmotesShowing() {
         return emotes_scroll.getVisibility() == View.VISIBLE;
+    }
+
+    public void onClearClick(View view) {
+        typeMessage.setText("");
     }
 
     @Override
@@ -281,5 +347,17 @@ public class ChatActivity extends AppCompatActivity
         public CharSequence getPageTitle(int position) {
             return channels.get(position).getName();
         }
+    }
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        menu.add(0, 0, Menu.CATEGORY_ALTERNATIVE, "Clear type message after send").setCheckable(true).setChecked(true)
+                .setOnMenuItemClickListener(menuItem -> {
+                    menuItem.setChecked(!menuItem.isChecked());
+                    spam_mode = !menuItem.isChecked();
+                    return false;
+                });
+        return true;
     }
 }

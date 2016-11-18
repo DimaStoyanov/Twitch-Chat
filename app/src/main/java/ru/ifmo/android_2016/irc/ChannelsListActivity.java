@@ -104,7 +104,6 @@ public class ChannelsListActivity extends AppCompatActivity {
     }
 
 
-
     @UiThread
     private void updateChannelList() {
         pb.setVisibility(View.GONE);
@@ -396,7 +395,6 @@ public class ChannelsListActivity extends AppCompatActivity {
                 .setChannel(args[5])
                 .setSsl(Boolean.parseBoolean(args[6]));
     }
-
 
 
     public void onTwitchLoginClick(View v) {

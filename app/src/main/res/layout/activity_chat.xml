@@ -75,38 +75,46 @@
         android:id="@+id/answer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:orientation="horizontal"
-        android:paddingBottom="@dimen/activity_vertical_margin"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin">
+        android:orientation="horizontal">
 
         <ImageButton
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.14"
+            android:hapticFeedbackEnabled="true"
             android:onClick="onEmotesShowClick"
-            android:background="?attr/colorControlHighlight"
-            android:src="@drawable/emotes_button"
+            android:background="@android:color/transparent"
+            android:src="@android:drawable/ic_menu_gallery"
             android:contentDescription="@string/emotes" />
 
         <EditText
             android:id="@+id/text_message"
             android:layout_width="0dp"
-            android:layout_marginLeft="10dp"
             android:layout_height="match_parent"
             android:layout_weight="6.14"
             android:hint="@string/your_message" />
 
 
-        <Button
+        <ImageButton
+            android:id="@+id/clear"
+            android:background="@android:color/transparent"
+            android:contentDescription="clear"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:layout_width="0dp"
+            android:layout_weight="1.05"
+            android:onClick="onClearClick"
+            android:hapticFeedbackEnabled="true"
+            android:layout_height="match_parent" />
+
+        <ImageButton
             android:id="@+id/send"
             android:layout_width="0dp"
+            android:hapticFeedbackEnabled="true"
             android:layout_height="match_parent"
             android:layout_weight="1.52"
-            android:background="?attr/colorControlHighlight"
-            android:text="@string/send" />
+            android:src="@android:drawable/ic_menu_send"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/send" />
 
     </LinearLayout>
 

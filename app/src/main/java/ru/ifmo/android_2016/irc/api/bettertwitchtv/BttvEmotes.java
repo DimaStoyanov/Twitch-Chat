@@ -25,6 +25,8 @@ public class BttvEmotes {
     }
 
     public static Object[] getChannelEmotesKey(String channel) {
+        if (getChannelEmotes(channel) == null)
+            return getGlobalEmotesKey();
         Object[] chkeys = getChannelEmotes(channel).keySet().toArray();
         Object[] glkeys = getGlobalEmotesKey();
         Object[] keys = new Object[chkeys.length + glkeys.length];
