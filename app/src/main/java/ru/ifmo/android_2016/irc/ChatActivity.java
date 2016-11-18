@@ -65,10 +65,9 @@ public class ChatActivity extends AppCompatActivity
         }
 
         initView();
-
         // Determine keyboard height
         LinearLayout ll = (LinearLayout) findViewById(R.id.root_view);
-        keyboardHeight = ll.getRootView().getHeight() / 3;
+        keyboardHeight = 550;
         ll.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             Rect r = new Rect();
             ll.getWindowVisibleDisplayFrame(r);
@@ -107,7 +106,22 @@ public class ChatActivity extends AppCompatActivity
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
         viewPager.setAdapter(viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager()));
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+                closeEmotes();
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+
+            }
+        });
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
         tabLayout.setupWithViewPager(viewPager);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
@@ -156,13 +170,8 @@ public class ChatActivity extends AppCompatActivity
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(view.getWindowToken(),
                 InputMethodManager.HIDE_NOT_ALWAYS);
-        if (emotes_scroll.getVisibility() == View.VISIBLE) {
+        if (isEmotesShowing()) {
             closeEmotes();
-            return;
-        }
-        if (emotes_ll.getHeight() != 0) {
-            emotes_scroll.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
-            emotes_scroll.setVisibility(View.VISIBLE);
             return;
         }
         String channel = client.getChannelList().get(viewPager.getCurrentItem()).getName();
@@ -208,13 +217,18 @@ public class ChatActivity extends AppCompatActivity
     }
 
     private void closeEmotes() {
+        emotes_ll.removeAllViews();
         emotes_scroll.setVisibility(View.GONE);
+    }
+
+    private boolean isEmotesShowing() {
+        return emotes_scroll.getVisibility() == View.VISIBLE;
     }
 
     @Override
     public void onBackPressed() {
-        if (emotes_scroll.getVisibility() == View.VISIBLE) {
-            emotes_scroll.setVisibility(View.GONE);
+        if (isEmotesShowing()) {
+            closeEmotes();
             return;
         }
         ClientService.stopClient(clientSettings.getId());
@@ -251,6 +265,7 @@ public class ChatActivity extends AppCompatActivity
         public ViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
         }
+
 
         @Override
         public Fragment getItem(int position) {
