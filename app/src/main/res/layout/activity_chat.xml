@@ -81,9 +81,10 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1.14"
+            android:hapticFeedbackEnabled="true"
             android:onClick="onEmotesShowClick"
             android:background="@android:color/transparent"
-            android:src="@drawable/emotes_button"
+            android:src="@android:drawable/ic_menu_gallery"
             android:contentDescription="@string/emotes" />
 
         <EditText
@@ -94,13 +95,26 @@
             android:hint="@string/your_message" />
 
 
-        <Button
+        <ImageButton
+            android:id="@+id/clear"
+            android:background="@android:color/transparent"
+            android:contentDescription="clear"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:layout_width="0dp"
+            android:layout_weight="1.05"
+            android:onClick="onClearClick"
+            android:hapticFeedbackEnabled="true"
+            android:layout_height="match_parent" />
+
+        <ImageButton
             android:id="@+id/send"
             android:layout_width="0dp"
+            android:hapticFeedbackEnabled="true"
             android:layout_height="match_parent"
             android:layout_weight="1.52"
+            android:src="@android:drawable/ic_menu_send"
             android:background="@android:color/transparent"
-            android:text="@string/send" />
+            android:contentDescription="@string/send" />
 
     </LinearLayout>
 
