@@ -3,8 +3,11 @@ package ru.ifmo.android_2016.irc.client;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,7 +21,7 @@ public class Message {
     public Date date;
     @Nullable String optPrefix;
     @NonNull String command = "@NOT_SET";
-    @Nullable String params;
+    @NonNull List<String> params = Collections.emptyList();
     @Nullable String trailing;
     @Nullable String serverName;
     @Nullable String nickname;
@@ -40,7 +43,12 @@ public class Message {
             optPrefix = MessagePattern.group(matcher, "opt-prefix");
             Prefix.parse(this, MessagePattern.group(matcher, "prefix"));
             command = MessagePattern.group(matcher, "command");
-            params = MessagePattern.group(matcher, "params");
+            String param = MessagePattern.group(matcher, "params");
+
+            if (param != null) {
+                params = Arrays.asList(param.split(" "));
+            }
+
             trailing = MessagePattern.group(matcher, "trailing");
         }
         trailing = parseTrailing(trailing);
@@ -67,7 +75,7 @@ public class Message {
         return trailing;
     }
 
-    public String getParams() {
+    public List<String> getParams() {
         return params;
     }
 
@@ -134,7 +142,7 @@ public class Message {
         return this;
     }
 
-    public Message setParams(String params) {
+    public Message setParams(List<String> params) {
         this.params = params;
         return this;
     }
@@ -176,12 +184,21 @@ public class Message {
             sb.append(optPrefix).append(' ');
         }
         sb.append(command).append(' ');
-        if (params != null) {
-            sb.append(params).append(' ');
+        for (String param : params) {
+            sb.append(param).append(' ');
         }
         if (trailing != null) {
             sb.append(':').append(trailing);
         }
         return sb.toString();
+    }
+
+    public String getPrivmsgTarget() {
+        if (params.size() > 0) return params.get(0);
+        return null;
+    }
+
+    public String getPrivmsgText() {
+        return trailing;
     }
 }

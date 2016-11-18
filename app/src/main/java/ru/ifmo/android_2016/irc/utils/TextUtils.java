@@ -81,7 +81,7 @@ public final class TextUtils {
         return new SpannableStringBuilder()
                 .append(msg.getNickname())
                 .append(" \u25B6 ")
-                .append(msg.getParams())
+                .append(msg.getPrivmsgTarget())
                 .append(": ")
                 .append(buildMessageTextWithEmotes(msg));
 

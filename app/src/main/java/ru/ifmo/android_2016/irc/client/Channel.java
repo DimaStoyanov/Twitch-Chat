@@ -8,6 +8,7 @@ import android.util.Log;
 import com.annimon.stream.function.Function;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
@@ -86,7 +87,7 @@ public class Channel {
     public void send(String message) {
         Message msg = new TwitchMessage()
                 .setCommand("PRIVMSG")
-                .setParams(getName())
+                .setParams(Collections.singletonList(getName()))
                 .setTrailing(message);
 
         Log.d(TAG, "requesting " + message + "/" + msg.toString());

@@ -5,7 +5,12 @@ import android.support.annotation.WorkerThread;
 import com.annimon.stream.function.Function;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
+import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotesLoaderTask;
 import ru.ifmo.android_2016.irc.utils.Splitter;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
@@ -15,8 +20,13 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 public final class TwitchClient extends Client {
     private static final String TAG = TwitchClient.class.getSimpleName();
-    private TwitchMessage userState;
-    private TwitchMessage globalUserState;
+//    private TwitchMessage userState;
+//    private TwitchMessage globalUserState;
+
+    private String displayName;
+    private int nickColor = 0;
+    private final Set<Integer> emoteSets = new HashSet<>();
+
 
     TwitchClient(ClientService clientService) {
         super(clientService);
@@ -49,13 +59,11 @@ public final class TwitchClient extends Client {
                 break;
 
             case "GLOBALUSERSTATE":
-                globalUserState = (TwitchMessage) msg;
-                nickname = globalUserState.getDisplayName();
+                updateGlobalUserstate((TwitchMessage) msg);
                 break;
 
             case "USERSTATE":
-                userState = (TwitchMessage) msg;
-                nickname = userState.getDisplayName();
+                updateUserstate((TwitchMessage) msg);
                 break;
 
             case "CLEARCHAT":
@@ -73,19 +81,19 @@ public final class TwitchClient extends Client {
 
     @Override
     protected void sendToChannel(Message msg) {
-        if (channels.containsKey(msg.params)) {
-            channels.get(msg.params).add(msg,
+        if (channels.containsKey(msg.getPrivmsgTarget())) {
+            channels.get(msg.getPrivmsgTarget()).add(msg,
                     (m) -> TextUtils.buildTextDraweeView((TwitchMessage) m));
         }
     }
 
     @Override
     protected void sendToChannel(Message msg, Function<Message, CharSequence> function) {
-        if (nickname.toLowerCase().equals(msg.getParams().toLowerCase())) {
+        if (getOriginalNickname().equals(msg.getPrivmsgTarget())) {
             statusChannel.add(msg, function);
         }
-        if (channels.containsKey(msg.params)) {
-            channels.get(msg.params).add(msg, function);
+        if (channels.containsKey(msg.getPrivmsgTarget())) {
+            channels.get(msg.getPrivmsgTarget()).add(msg, function);
         }
     }
 
@@ -94,17 +102,47 @@ public final class TwitchClient extends Client {
     public void sendMessage(Message message) {
         TwitchMessage twitchMessage = (TwitchMessage) message;
         send(message.toString());
+
+        if (parseMyMessage(twitchMessage)) messageQueue.offer(message);
+    }
+
+    private boolean parseMyMessage(TwitchMessage twitchMessage) {
         twitchMessage
-                .setColor(globalUserState.getColor())
-                .setEmotes(Emote.parse(null, Splitter.splitWithSpace(twitchMessage.getTrailing()),
-                        twitchMessage.getParams()))
-                .setNickname(nickname);
-        messageQueue.add(message);
+                .setColor(nickColor)
+                .setEmotes(Emote.findAllEmotes(
+                        twitchMessage.getPrivmsgText(),
+                        twitchMessage.getPrivmsgTarget(),
+                        emoteSets))
+                .setNickname(getNickname());
+
+        return true;
     }
 
     @Override
     protected void send(String s) {
         //TODO: global ban protection
         super.send(s);
+    }
+
+    @Override
+    public String getNickname() {
+        return displayName;
+    }
+
+    public String getOriginalNickname() {
+        return super.getNickname();
+    }
+
+    private void updateGlobalUserstate(TwitchMessage userState) {
+//        globalUserState = userState;
+        updateUserstate(userState); //TODO:
+    }
+
+    private void updateUserstate(TwitchMessage userState) {
+        //TODO:
+        nickColor = userState.getColor();
+        displayName = userState.getDisplayName();
+        emoteSets.addAll(Arrays.asList(userState.getEmoteSets()));
+        new TwitchEmotesLoaderTask().execute(userState.getEmoteSets());
     }
 }

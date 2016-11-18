@@ -71,7 +71,7 @@ public final class TwitchMessage extends Message {
         color = parseColor(map.get("color"));
         displayName = map.get("display-name");
 
-        emotes = Emote.parse(map.get("emotes"), splitResult, params);
+        emotes = Emote.parse(map.get("emotes"), splitResult, getPrivmsgTarget());
 
         id = map.get("id");
         mod = parseBool(map.get("mod"));
