@@ -1,7 +1,6 @@
 package ru.ifmo.android_2016.irc;
 
 
-import android.annotation.SuppressLint;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -70,7 +69,6 @@ public class ChannelsListActivity extends AppCompatActivity {
         pb = (ProgressBar) findViewById(R.id.pbar);
         Button button = (Button) findViewById(R.id.twitch_login);
         button.getBackground().setColorFilter(0xFF6441A5, PorterDuff.Mode.MULTIPLY);
-        //fileManager = new FileManager(FileManager.FileType.Login, new FilePathConstant(this));
         context = this;
         Log.d(TAG, "On create");
         startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
@@ -99,44 +97,12 @@ public class ChannelsListActivity extends AppCompatActivity {
         Log.d(TAG, "On start");
         if (!updateDataFromCache) {
             ll.removeAllViews();
-            //readFromCache();
             startService(new Intent(this, ClientService.class).setAction(GET_SERVER_LIST));
             updateDataFromCache = true;
         }
 
     }
 
-    @UiThread
-    @Deprecated
-    private void readFromCache() {
-//        Log.d(TAG, "Read parse cache");
-//        pb.setVisibility(View.VISIBLE);
-//
-//        // мб сделать чтобы при повороте экрана не начиналась новая загрузка
-//        // - сделаем
-//        AsyncTask<Void, Void, ArrayList<ClientSettings>> readTask = new AsyncTask<Void, Void, ArrayList<ClientSettings>>() {
-//
-//            @Override
-//            protected void onPostExecute(ArrayList<ClientSettings> clientSettingses) {
-//                super.onPostExecute(clientSettingses);
-//                updateChannelList(clientSettingses);
-//            }
-//
-//            @Override
-//            @WorkerThread
-//            protected ArrayList<ClientSettings> doInBackground(Void... voids) {
-//                ArrayList<ClientSettings> data = null;
-//                try {
-//                    data = (ArrayList<ClientSettings>) fileManager.getData();
-//                } catch (Exception e) {
-//                    Log.d(TAG, e.getMessage() == null ? "null" : e.getMessage());
-//                }
-//                return data;
-//
-//            }
-//        };
-//        readTask.execute();
-    }
 
 
     @UiThread
@@ -194,7 +160,6 @@ public class ChannelsListActivity extends AppCompatActivity {
             AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
                 @Override
                 protected Void doInBackground(Void... voids) {
-                    //fileManager.deleteData(data);
                     ServerList.getInstance().remove(id);
                     return null;
                 }
@@ -221,54 +186,41 @@ public class ChannelsListActivity extends AppCompatActivity {
                     .setView(R.layout.dialog_login);
             final AlertDialog dialog = builder.create();
 
-            dialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            dialog.setOnShowListener(dialogInterface -> {
+                final EditText name = (EditText) dialog.findViewById(R.id.name);
+                final EditText server = (EditText) dialog.findViewById(R.id.server);
+                final EditText port = (EditText) dialog.findViewById(R.id.port);
+                final EditText username = (EditText) dialog.findViewById(R.id.username);
+                final EditText password = (EditText) dialog.findViewById(R.id.password);
+                final EditText channel = (EditText) dialog.findViewById(R.id.channel);
+                final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
+                name.setText(data.getName());
+                server.setText(data.getAddress());
+                port.setText(Integer.toString(data.getPort()));
+                username.setText(data.getUsername());
+                password.setText(data.getPassword());
+                channel.setText(data.getChannel());
+                ssl.setChecked(data.isSsl());
+                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dialog.dismiss());
+                dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> {
 
-                @SuppressLint("SetTextI18n")
-                @Override
-                public void onShow(DialogInterface dialogInterface) {
-                    final EditText name = (EditText) dialog.findViewById(R.id.name);
-                    final EditText server = (EditText) dialog.findViewById(R.id.server);
-                    final EditText port = (EditText) dialog.findViewById(R.id.port);
-                    final EditText username = (EditText) dialog.findViewById(R.id.username);
-                    final EditText password = (EditText) dialog.findViewById(R.id.password);
-                    final EditText channel = (EditText) dialog.findViewById(R.id.channel);
-                    final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
-                    name.setText(data.getName());
-                    server.setText(data.getAddress());
-                    port.setText(Integer.toString(data.getPort()));
-                    username.setText(data.getUsername());
-                    password.setText(data.getPassword());
-                    channel.setText(data.getChannel());
-                    ssl.setChecked(data.isSsl());
-                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            dialog.dismiss();
-                        }
-                    });
-                    dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
+                    Toast toast = new Toast(context);
+                    if (!TextUtils.isEmpty(server.getText()) &&
+                            !TextUtils.isEmpty(port.getText())
+                           /* && !TextUtils.isEmpty(username.getText())*/
+                            && !TextUtils.isEmpty(password.getText())
+                            && !TextUtils.isEmpty(channel.getText())) {
 
-                            Toast toast = new Toast(context);
-                            if (!TextUtils.isEmpty(server.getText()) &&
-                                    !TextUtils.isEmpty(port.getText())
-                                    && !TextUtils.isEmpty(username.getText())
-                                    && !TextUtils.isEmpty(password.getText())
-                                    && !TextUtils.isEmpty(channel.getText())) {
-
-                                dialog.cancel();
-                                new EditChannelTask().execute(data.getId(), buildClientSettings(name.getText().toString(), server.getText().toString(),
-                                        port.getText().toString(), username.getText().toString(), password.getText().toString(),
-                                        channel.getText().toString(), String.valueOf(ssl.isChecked())));
-                            } else {
-                                toast.cancel();
-                                toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
-                                toast.show();
-                            }
-                        }
-                    });
-                }
+                        dialog.cancel();
+                        new EditChannelTask().execute(data.getId(), buildClientSettings(name.getText().toString(), server.getText().toString(),
+                                port.getText().toString(), username.getText().toString(), password.getText().toString(),
+                                channel.getText().toString(), String.valueOf(ssl.isChecked())));
+                    } else {
+                        toast.cancel();
+                        toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
+                        toast.show();
+                    }
+                });
             });
             dialog.show();
         }
@@ -288,7 +240,6 @@ public class ChannelsListActivity extends AppCompatActivity {
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
             updateChannelList();
-            //readFromCache();
         }
     }
 
@@ -303,144 +254,133 @@ public class ChannelsListActivity extends AppCompatActivity {
                 .setIcon(R.mipmap.ic_launcher);
         final AlertDialog dialog = builder.create();
 
-        dialog.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialogInterface) {
-                final EditText name = (EditText) dialog.findViewById(R.id.name);
-                final EditText server = (EditText) dialog.findViewById(R.id.server);
-                final EditText port = (EditText) dialog.findViewById(R.id.port);
-                final EditText username = (EditText) dialog.findViewById(R.id.username);
-                final EditText password = (EditText) dialog.findViewById(R.id.password);
-                final EditText channel = (EditText) dialog.findViewById(R.id.channel);
-                final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        dialog.dismiss();
-                    }
-                });
-                dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
+        dialog.setOnShowListener(dialogInterface -> {
+            final EditText name = (EditText) dialog.findViewById(R.id.name);
+            final EditText server = (EditText) dialog.findViewById(R.id.server);
+            final EditText port = (EditText) dialog.findViewById(R.id.port);
+            final EditText username = (EditText) dialog.findViewById(R.id.username);
+            final EditText password = (EditText) dialog.findViewById(R.id.password);
+            final EditText channel = (EditText) dialog.findViewById(R.id.channel);
+            final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dialog.dismiss());
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> {
 
-                        Toast toast = new Toast(context);
-                        if (!TextUtils.isEmpty(server.getText()) &&
-                                !TextUtils.isEmpty(port.getText())
-                                && !TextUtils.isEmpty(username.getText())
-                                && !TextUtils.isEmpty(password.getText())
-                                && !TextUtils.isEmpty(channel.getText())) {
+                Toast toast = new Toast(context);
+                if (!TextUtils.isEmpty(server.getText()) &&
+                        !TextUtils.isEmpty(port.getText())
+                        /*&& !TextUtils.isEmpty(username.getText())*/
+                        && !TextUtils.isEmpty(password.getText())
+                        && !TextUtils.isEmpty(channel.getText())) {
 
-                            long id = ServerList.getInstance().add(new ClientSettings()
-                                    .setName(name.getText().toString())
-                                    .setAddress(server.getText().toString())
-                                    .setPort(Integer.parseInt(port.getText().toString()))
-                                    .setUsername(username.getText().toString())
-                                    .setPassword(password.getText().toString())
-                                    .setChannel(channel.getText().toString())
-                                    .setSsl(ssl != null && ssl.isChecked()));
+                    long id = ServerList.getInstance().add(new ClientSettings()
+                            .setName(name.getText().toString())
+                            .setAddress(server.getText().toString())
+                            .setPort(Integer.parseInt(port.getText().toString()))
+                            .setUsername(username.getText().toString())
+                            .setPassword(password.getText().toString())
+                            .setChannel(channel.getText().toString())
+                            .setSsl(ssl != null && ssl.isChecked()));
 
-                            dialog.cancel();
+                    dialog.cancel();
 
-                            startActivity(new Intent(context, ChatActivity.class)
-                                    .putExtra(SERVER_ID, id));
-                        } else {
-                            toast.cancel();
-                            toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
-                            toast.show();
-                        }
-                    }
-                });
-                final ImageView server_status = (ImageView) dialog.findViewById(R.id.server_status);
-                final ImageView port_status = (ImageView) dialog.findViewById(R.id.port_status);
-                final ImageView nick_status = (ImageView) dialog.findViewById(R.id.username_status);
-                final ImageView password_status = (ImageView) dialog.findViewById(R.id.password_status);
-                final ImageView channel_status = (ImageView) dialog.findViewById(R.id.channel_status);
+                    startActivity(new Intent(context, ChatActivity.class)
+                            .putExtra(SERVER_ID, id));
+                } else {
+                    toast.cancel();
+                    toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+            final ImageView server_status = (ImageView) dialog.findViewById(R.id.server_status);
+            final ImageView port_status = (ImageView) dialog.findViewById(R.id.port_status);
+            final ImageView nick_status = (ImageView) dialog.findViewById(R.id.username_status);
+            final ImageView password_status = (ImageView) dialog.findViewById(R.id.password_status);
+            final ImageView channel_status = (ImageView) dialog.findViewById(R.id.channel_status);
 
 
-                server.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+            server.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void afterTextChanged(Editable editable) {
-                        server_status.setImageResource(Patterns.WEB_URL.matcher(editable).matches() ?
-                                R.drawable.ok : R.drawable.not_ok);
-                    }
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    server_status.setImageResource(Patterns.WEB_URL.matcher(editable).matches() ?
+                            R.drawable.ok : R.drawable.not_ok);
+                }
 
-                });
+            });
 
-                port.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+            port.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-                    }
+                }
 
-                    @Override
-                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-                    }
+                }
 
-                    @Override
-                    public void afterTextChanged(Editable editable) {
-                        port_status.setImageResource(Pattern.compile("^[0-9]+$").matcher(editable).matches() ?
-                                R.drawable.ok : R.drawable.not_ok);
-                    }
-                });
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    port_status.setImageResource(Pattern.compile("^[0-9]+$").matcher(editable).matches() ?
+                            R.drawable.ok : R.drawable.not_ok);
+                }
+            });
 
-                username.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+            username.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void afterTextChanged(Editable editable) {
-                        nick_status.setImageResource(Pattern.compile("^[_a-z-A-Z0-9]+$").matcher(editable).matches() ?
-                                R.drawable.ok : R.drawable.not_ok);
-                    }
-                });
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    nick_status.setImageResource(Pattern.compile("^[_a-z-A-Z0-9]+$").matcher(editable).matches() ?
+                            R.drawable.ok : R.drawable.not_ok);
+                }
+            });
 
-                password.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+            password.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void afterTextChanged(Editable editable) {
-                        password_status.setImageResource(Pattern.compile("^$").matcher(editable).matches() ?
-                                R.drawable.not_ok : R.drawable.ok);
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    password_status.setImageResource(Pattern.compile("^$").matcher(editable).matches() ?
+                            R.drawable.not_ok : R.drawable.ok);
 
-                    }
-                });
+                }
+            });
 
-                channel.addTextChangedListener(new TextWatcher() {
-                    @Override
-                    public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+            channel.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                    }
+                @Override
+                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                }
 
-                    @Override
-                    public void afterTextChanged(Editable editable) {
-                        channel_status.setImageResource(Pattern.compile("^#[_a-z-A-Z0-9]+$").matcher(editable).matches() ?
-                                R.drawable.ok : R.drawable.not_ok);
-                    }
-                });
-            }
+                @Override
+                public void afterTextChanged(Editable editable) {
+                    channel_status.setImageResource(Pattern.compile("^#[_a-z-A-Z0-9]+$").matcher(editable).matches() ?
+                            R.drawable.ok : R.drawable.not_ok);
+                }
+            });
         });
         dialog.show();
     }
@@ -457,70 +397,10 @@ public class ChannelsListActivity extends AppCompatActivity {
                 .setSsl(Boolean.parseBoolean(args[6]));
     }
 
-    @WorkerThread
-    private class AddChannelsTask extends AsyncTask<ClientSettings, Void, Void> {
 
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            Log.d(TAG, "Start adding client settings");
-        }
-
-        @Override
-        protected Void doInBackground(ClientSettings... params) {
-            ServerList.getInstance().add(params[0]);
-            //fileManager.addData(params[0]);
-            return null;
-
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            updateChannelList();
-        }
-    }
-
-    @SuppressLint("SetJavaScriptEnabled")
     public void onTwitchLoginClick(View v) {
         startActivityForResult(new Intent(this, TwitchLoginActivity.class), 1);
-//        final Dialog dialog = new Dialog(this);
-//        if (dialog.getWindow() != null)
-//            dialog.getWindow().setTitle("Twitch OAuth 2.0");
-//        dialog.setCancelable(true);
-//        dialog.setContentView(R.layout.dialog_twitch_oauth);
-//        WebView wv = (WebView) dialog.findViewById(R.id.wv);
-//        final ProgressBar progressBar = (ProgressBar) dialog.findViewById(R.id.pbar);
-//        wv.getSettings().setJavaScriptEnabled(true);
-//
-//        wv.setWebViewClient(new WebViewClient() {
-//
-//            @Override
-//            public void onPageStarted(WebView view, String url, Bitmap favicon) {
-//                progressBar.setVisibility(View.VISIBLE);
-//            }
-//
-//            @Override
-//            public void onPageFinished(WebView view, String url) {
-//                progressBar.setVisibility(View.GONE);
-//            }
-//
-//            @Override
-//            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-//                if (url.startsWith(REDIRECT_URL)) {
-//                    dialog.cancel();
-//                    getSupportLoaderManager().initLoader(10, null, new NickLoaderCallback(getAccessToken(url, context)));
-//                    return true;
-//                }
-//                return false;
-//
-//            }
-//        });
-//        if (checkInternetConnection(true)) {
-//            wv.loadUrl(OAUTH_URL);
-//            dialog.show();
-//        }
     }
 
     @UiThread
@@ -537,24 +417,13 @@ public class ChannelsListActivity extends AppCompatActivity {
     private void showNoInternetDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("No internet connection")
-                .setNegativeButton("Retry", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        dialogInterface.cancel();
-                        checkInternetConnection(true);
-                    }
-                }).setNeutralButton("Exit", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                finishAffinity();
-            }
-        }).setPositiveButton("OK", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i) {
-                dialogInterface.cancel();
-                checkInternetConnection(false);
+                .setNegativeButton("Retry", (dialogInterface, i) -> {
+                    dialogInterface.cancel();
+                    checkInternetConnection(true);
+                }).setNeutralButton("Exit", (dialogInterface, i) -> finish()).setPositiveButton("OK", (dialogInterface, i) -> {
+            dialogInterface.cancel();
+            checkInternetConnection(false);
 
-            }
         });
         builder.create().show();
 
@@ -597,44 +466,36 @@ public class ChannelsListActivity extends AppCompatActivity {
                 alert = builder.create();
 
 
-                alert.setOnShowListener(new DialogInterface.OnShowListener() {
-                    @Override
-                    public void onShow(DialogInterface dialogInterface) {
-                        alert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-                            Toast toast = new Toast(ChannelsListActivity.this);
+                alert.setOnShowListener(dialogInterface -> {
+                    alert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
+                        Toast toast = new Toast(ChannelsListActivity.this);
 
-                            @Override
-                            public void onClick(View view) {
-                                final EditText name = (EditText) alert.findViewById(R.id.name);
-                                final EditText channel = (EditText) alert.findViewById(R.id.channel);
-                                final CheckBox ssl = (CheckBox) alert.findViewById(R.id.use_ssl);
-                                if (!TextUtils.isEmpty(channel.getText())) {
-                                    long id = ServerList.getInstance()
-                                            .add(ClientSettings.getTwitchSettings(token, ssl.isChecked())
-                                                    .setName(TextUtils.isEmpty(name.getText()) ?
-                                                            channel.getText().toString() :
-                                                            name.getText().toString())
-                                                    .setNicks(result.data)
-                                                    .setChannel(channel.getText().toString()));
+                        @Override
+                        public void onClick(View view) {
+                            final EditText name = (EditText) alert.findViewById(R.id.name);
+                            final EditText channel = (EditText) alert.findViewById(R.id.channel);
+                            final CheckBox ssl = (CheckBox) alert.findViewById(R.id.use_ssl);
+                            if (!TextUtils.isEmpty(channel.getText())) {
+                                long id = ServerList.getInstance()
+                                        .add(ClientSettings.getTwitchSettings(token, ssl.isChecked())
+                                                .setName(TextUtils.isEmpty(name.getText()) ?
+                                                        channel.getText().toString() :
+                                                        name.getText().toString())
+                                                .setNicks(result.data)
+                                                .setChannel(channel.getText().toString()));
 
-                                    alert.dismiss();
-
-                                    startActivity(new Intent(context, ChatActivity.class)
-                                            .putExtra(SERVER_ID, id));
-                                } else {
-                                    toast.cancel();
-                                    toast = Toast.makeText(ChannelsListActivity.this, "Empty channel", Toast.LENGTH_SHORT);
-                                    toast.show();
-                                }
-                            }
-                        });
-                        alert.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
                                 alert.dismiss();
+
+                                startActivity(new Intent(context, ChatActivity.class)
+                                        .putExtra(SERVER_ID, id));
+                            } else {
+                                toast.cancel();
+                                toast = Toast.makeText(ChannelsListActivity.this, "Empty channel", Toast.LENGTH_SHORT);
+                                toast.show();
                             }
-                        });
-                    }
+                        }
+                    });
+                    alert.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> alert.dismiss());
                 });
                 pb.setVisibility(View.GONE);
                 alert.show();

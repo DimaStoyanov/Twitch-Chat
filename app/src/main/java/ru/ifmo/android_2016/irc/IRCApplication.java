@@ -1,5 +1,7 @@
 package ru.ifmo.android_2016.irc;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
+
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 
 /**
@@ -19,6 +21,7 @@ public class IRCApplication extends android.app.Application {
         DraweeSpan.dp = getResources().getDisplayMetrics().density / 2;
 
         //TODO: Uncaught Exceptions on the screen
+        Fresco.initialize(this);
         old = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         super.onCreate();

@@ -20,6 +20,23 @@ public class BttvEmotes {
         return globalEmotes;
     }
 
+    static Object[] getGlobalEmotesKey() {
+        return globalEmotes.keySet().toArray();
+    }
+
+    public static Object[] getChannelEmotesKey(String channel) {
+        Object[] chkeys = getChannelEmotes(channel).keySet().toArray();
+        Object[] glkeys = getGlobalEmotesKey();
+        Object[] keys = new Object[chkeys.length + glkeys.length];
+        System.arraycopy(chkeys, 0, keys, 0, chkeys.length);
+        System.arraycopy(glkeys, 0, keys, chkeys.length, glkeys.length);
+        return keys;
+    }
+
+    public static String getEmoteUrlByCode(String code, String channel) {
+        return getEmoteUrl(getEmoteByCode(code, channel), "3x");
+    }
+
     static void setGlobalEmotes(Map<String, String> globalEmotes) {
         BttvEmotes.globalEmotes = globalEmotes;
     }

@@ -1,5 +1,8 @@
 package ru.ifmo.android_2016.irc;
 
+import android.content.Context;
+import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -12,13 +15,20 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 
-import com.annimon.stream.Stream;
+import com.facebook.drawee.drawable.ScalingUtils;
+import com.facebook.drawee.view.SimpleDraweeView;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.Client;
 import ru.ifmo.android_2016.irc.client.ClientService;
@@ -33,11 +43,14 @@ public class ChatActivity extends AppCompatActivity
 
     private EditText typeMessage;
     private long id = 0;
+    private int keyboardHeight;
     private ClientSettings clientSettings;
     @Nullable
     private Client client;
     private ViewPagerAdapter viewPagerAdapter;
     private ViewPager viewPager;
+    private ScrollView emotes_scroll;
+    private LinearLayout emotes_ll;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,10 +66,43 @@ public class ChatActivity extends AppCompatActivity
 
         initView();
 
+        // Determine keyboard height
+        LinearLayout ll = (LinearLayout) findViewById(R.id.root_view);
+        keyboardHeight = ll.getRootView().getHeight() / 3;
+        ll.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            ll.getWindowVisibleDisplayFrame(r);
+
+            int screenHeight = ll.getRootView()
+                    .getHeight();
+            int heightDifference = screenHeight
+                    - (r.bottom - r.top);
+            int resourceId = getResources()
+                    .getIdentifier("status_bar_height",
+                            "dimen", "android");
+            if (resourceId > 0) {
+                heightDifference -= getResources()
+                        .getDimensionPixelSize(resourceId);
+            }
+            if (heightDifference > 100) {
+                keyboardHeight = heightDifference;
+            }
+
+            Log.d("Keyboard Size", "Size: " + heightDifference);
+        });
+
+
+        typeMessage.setOnTouchListener(((view, motionEvent) -> {
+            if (emotes_scroll.getVisibility() == View.VISIBLE)
+                closeEmotes();
+            return false;
+        }));
+
         findViewById(R.id.send).setOnClickListener(v -> {
             Log.d(TAG, String.valueOf(viewPager.getCurrentItem()));
             viewPagerAdapter.channels.get(viewPager.getCurrentItem())
                     .send(typeMessage.getText().toString());
+            typeMessage.setText("");
         });
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -88,6 +134,8 @@ public class ChatActivity extends AppCompatActivity
     private void initView() {
         setContentView(R.layout.activity_chat);
         typeMessage = (EditText) findViewById(R.id.text_message);
+        emotes_scroll = (ScrollView) findViewById(R.id.emotes_scroll);
+        emotes_ll = (LinearLayout) findViewById(R.id.emotes_ll);
     }
 
     private void load() {
@@ -104,8 +152,71 @@ public class ChatActivity extends AppCompatActivity
         outState.putLong("Id", id);
     }
 
+    public void onEmotesShowClick(View view) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(view.getWindowToken(),
+                InputMethodManager.HIDE_NOT_ALWAYS);
+        if (emotes_scroll.getVisibility() == View.VISIBLE) {
+            closeEmotes();
+            return;
+        }
+        if (emotes_ll.getHeight() != 0) {
+            emotes_scroll.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
+            emotes_scroll.setVisibility(View.VISIBLE);
+            return;
+        }
+        String channel = client.getChannelList().get(viewPager.getCurrentItem()).getName();
+        int columns = viewPager.getWidth() / 120;
+        Log.d(TAG, channel);
+        Object[] keyset = BttvEmotes.getChannelEmotesKey(channel);
+        Log.d(TAG, "Keyset length " + keyset.length);
+
+        int i = 0;
+        while (i < keyset.length) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            int j = 0;
+            while (i < keyset.length && j++ < columns) {
+                SimpleDraweeView emote = new SimpleDraweeView(this);
+                LinearLayout.LayoutParams emoteParams = new LinearLayout.LayoutParams(100, 100);
+                emoteParams.setMargins(10, 10, 10, 10);
+                emoteParams.weight = 1;
+                emote.setLayoutParams(emoteParams);
+                emote.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_INSIDE);
+                emote.setOnClickListener(new OnEmotesClickListener((String) keyset[i]));
+                emote.setImageURI(Uri.parse(BttvEmotes.getEmoteUrlByCode(String.valueOf(keyset[i++]), channel)));
+                row.addView(emote);
+            }
+            emotes_ll.addView(row);
+        }
+        emotes_scroll.setVisibility(View.VISIBLE);
+        emotes_scroll.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
+
+    }
+
+    private class OnEmotesClickListener implements View.OnClickListener {
+        final String code;
+
+        OnEmotesClickListener(String code) {
+            this.code = code;
+        }
+
+        @Override
+        public void onClick(View view) {
+            typeMessage.append(code + " ");
+        }
+    }
+
+    private void closeEmotes() {
+        emotes_scroll.setVisibility(View.GONE);
+    }
+
     @Override
     public void onBackPressed() {
+        if (emotes_scroll.getVisibility() == View.VISIBLE) {
+            emotes_scroll.setVisibility(View.GONE);
+            return;
+        }
         ClientService.stopClient(clientSettings.getId());
         super.onBackPressed();
     }

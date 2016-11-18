@@ -2,6 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:id="@+id/root_view"
     android:orientation="vertical">
 
     <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -29,7 +30,7 @@
                     style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Twitch Chat" />
+                    android:text="@string/twitch_chat" />
             </android.support.v7.widget.Toolbar>
 
             <android.support.design.widget.TabLayout
@@ -81,12 +82,23 @@
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin">
 
+        <ImageButton
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1.14"
+            android:onClick="onEmotesShowClick"
+            android:background="?attr/colorControlHighlight"
+            android:src="@drawable/emotes_button"
+            android:contentDescription="@string/emotes" />
+
         <EditText
             android:id="@+id/text_message"
             android:layout_width="0dp"
+            android:layout_marginLeft="10dp"
             android:layout_height="match_parent"
             android:layout_weight="6.14"
             android:hint="@string/your_message" />
+
 
         <Button
             android:id="@+id/send"
@@ -97,4 +109,17 @@
             android:text="@string/send" />
 
     </LinearLayout>
+
+    <ScrollView
+        android:id="@+id/emotes_scroll"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/emotes_ll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    </ScrollView>
 </LinearLayout>

@@ -2,6 +2,16 @@
 
 Заметки, написанные в течениe разработки
 
+### 18.11.2016
+* Теперь в экране чата можно переключаться между каналами. Реализован viewpager и coordinatorlayout.
+* Появилась вьюшка со смайлами.
+* Был изменен дизайн главной активти.
+
+    <img alt="New design in channel list activity" src="https://pp.vk.me/c837630/v837630212/11ac3/TQV4WQ3YC20.jpg" height="178px">
+    <img alt="New smiles view" src="https://pp.vk.me/c837630/v837630212/11ab9/apbKPyC0a3E.jpg" height="178px">
+    <img alt="New smiles view[2]" src="https://pp.vk.me/c837630/v837630212/11aaf/20NrreIAI8c.jpg" height="178px">
+
+
 ### 31.10.2016
 * Переписан экран чата, теперь отображение эмоций соответсвует отображение их на твиче.
 * Теперь экран логина - диалговое окно.
