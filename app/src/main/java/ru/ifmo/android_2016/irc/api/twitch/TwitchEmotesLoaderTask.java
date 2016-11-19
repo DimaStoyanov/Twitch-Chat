@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,7 +39,8 @@ public class TwitchEmotesLoaderTask extends AsyncTask<Integer, Void, Void> {
                     .map(i -> Integer.toString(i))
                     .collect(Collectors.joining(","));
 
-            final Reference<Map<Integer, Map<String, String>>> result = new Reference<>();
+            final Reference<Map<Integer, Map<String, String>>> result =
+                    new Reference<>(Collections.emptyMap());
 
             tryWith(() -> TwitchApi.getEmoticonImages(sets)).doOp(httpURLConnection -> {
                 httpURLConnection.connect();
@@ -48,10 +50,8 @@ public class TwitchEmotesLoaderTask extends AsyncTask<Integer, Void, Void> {
                 }
             }).catchWith(IOException.class, Throwable::printStackTrace).runUnchecked();
 
-            if (result.ref != null) {
-                for (Entry<Integer, Map<String, String>> emotes : result.ref.entrySet()) {
-                    TwitchEmotes.setEmotesByEmoteSet(emotes.getKey(), emotes.getValue());
-                }
+            for (Entry<Integer, Map<String, String>> emotes : result.ref.entrySet()) {
+                TwitchEmotes.addEmotes(emotes.getKey(), emotes.getValue());
             }
         }
         return null;

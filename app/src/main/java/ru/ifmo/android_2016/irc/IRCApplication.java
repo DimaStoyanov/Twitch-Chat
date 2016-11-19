@@ -18,6 +18,8 @@ public class IRCApplication extends android.app.Application {
 
     @Override
     public void onCreate() {
+        Fresco.initialize(this);
+
         DraweeSpan.dp = getResources().getDisplayMetrics().density / 2;
 
         //TODO: Uncaught Exceptions on the screen

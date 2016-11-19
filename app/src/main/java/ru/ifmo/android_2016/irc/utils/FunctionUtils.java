@@ -123,5 +123,13 @@ public class FunctionUtils {
 
     public static class Reference<T> {
         public T ref;
+
+        public Reference() {
+            ref = null;
+        }
+
+        public Reference(T ref) {
+            this.ref = ref;
+        }
     }
 }

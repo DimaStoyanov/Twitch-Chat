@@ -122,7 +122,8 @@ public class Client {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            executor.execute(FunctionUtils.catchExceptions(this::responseFetcher,
+            executor.execute(FunctionUtils.catchExceptions(
+                    this::responseFetcher,
                     defaultExceptionHandler));
 
             actions();
@@ -132,7 +133,9 @@ public class Client {
                 while (true) doCommand(messageQueue.take());
             }, defaultExceptionHandler));
 
-            executor.execute(FunctionUtils.catchExceptions(this::handler, defaultExceptionHandler));
+            executor.execute(FunctionUtils.catchExceptions(
+                    this::requestListener,
+                    defaultExceptionHandler));
 
         } catch (IOException | RuntimeException e) {
             Log.e(TAG, e.toString());
@@ -142,7 +145,7 @@ public class Client {
     }
 
     @WorkerThread
-    private void handler() throws InterruptedException {
+    private void requestListener() throws InterruptedException {
         while (true) {
             Request request = requestQueue.take();
             switch (request.type) {
@@ -268,7 +271,7 @@ public class Client {
     @UiThread
     @WorkerThread
     public void request(Request request) {
-        requestQueue.add(request);
+        requestQueue.offer(request);
     }
 
     public interface Callback {

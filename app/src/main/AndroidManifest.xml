@@ -24,7 +24,6 @@
         </activity>
         <activity
             android:name=".ChatActivity"
-            android:label=""
             android:theme="@style/AppTheme"
             android:windowSoftInputMode="stateHidden|adjustPan">
 

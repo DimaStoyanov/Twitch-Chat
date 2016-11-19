@@ -2,6 +2,7 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.annimon.stream.Stream;
 
@@ -40,8 +41,10 @@ public class Emote implements Comparable<Emote> {
     }
 
     private static Emote getBttvEmote(String emoteCode, String channel, int begin, int end) {
-        return new Emote(BttvEmotes.getEmoteUrl(BttvEmotes.getEmoteByCode(emoteCode, channel)),
-                begin, end);
+        return new Emote(
+                BttvEmotes.getEmoteUrl(BttvEmotes.getEmoteByCode(emoteCode, channel)),
+                begin,
+                end);
     }
 
     @Override
@@ -112,8 +115,12 @@ public class Emote implements Comparable<Emote> {
     private static void parseBttvEmotes(final List<Emote> result, List<Splitter.Result> splitResult,
                                         final String channel) {
         Stream.of(splitResult)
-                .filter((r) -> BttvEmotes.isEmote(r.word, channel))
-                .forEach((r) -> result.add(Emote.getBttvEmote(r.word, channel, r.begin, r.end)));
+                .filter(r -> BttvEmotes.isEmote(r.word, channel))
+                .forEach(r -> result.add(Emote.getBttvEmote(
+                        r.word,
+                        channel,
+                        r.begin,
+                        r.end)));
     }
 
     public static List<Emote> findAllEmotes(String privmsgText,

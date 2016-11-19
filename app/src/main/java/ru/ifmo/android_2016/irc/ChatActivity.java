@@ -2,6 +2,7 @@ package ru.ifmo.android_2016.irc;
 
 import android.content.Context;
 import android.graphics.Rect;
+import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,8 +27,12 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.drawee.controller.BaseControllerListener;
 import com.facebook.drawee.drawable.ScalingUtils;
+import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.facebook.imagepipeline.image.ImageInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,8 +134,7 @@ public class ChatActivity extends AppCompatActivity
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-
+        setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
 
         ActionBar actionBar = getSupportActionBar();
@@ -138,6 +142,7 @@ public class ChatActivity extends AppCompatActivity
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
         }
 
         if (client != null) {
@@ -198,7 +203,21 @@ public class ChatActivity extends AppCompatActivity
                 emote.setOnClickListener(new OnEmotesClickListener((String) keyset[i]));
                 emote.setHapticFeedbackEnabled(true);
                 emote.setOnTouchListener(new OnEmotesTouchListener((String) keyset[i], emote));
-                emote.setImageURI(Uri.parse(BttvEmotes.getEmoteUrlByCode(String.valueOf(keyset[i++]), channel)));
+
+                DraweeController draweeController = Fresco.newDraweeControllerBuilder()
+                        .setUri(BttvEmotes.getEmoteUrlByCode(String.valueOf(keyset[i++]), channel))
+                        .setControllerListener(new BaseControllerListener<ImageInfo>() {
+                            @Override
+                            public void onFinalImageSet(String id, @javax.annotation.Nullable ImageInfo imageInfo, @javax.annotation.Nullable Animatable animatable) {
+                                super.onFinalImageSet(id, imageInfo, animatable);
+                                if (animatable != null) {
+                                    animatable.start();
+                                }
+                            }
+                        })
+                        .build();
+                emote.setController(draweeController);
+
                 row.addView(emote);
             }
             emotesLl.addView(row);
@@ -299,7 +318,7 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        client.detachUi();
+        if (client != null) client.detachUi();
         super.onDestroy();
     }
 
@@ -348,7 +367,9 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 0, Menu.CATEGORY_ALTERNATIVE, "Clear type message after send").setCheckable(true).setChecked(true)
+        menu.add(0, 0, Menu.CATEGORY_ALTERNATIVE, "Clear type message after send")
+                .setCheckable(true)
+                .setChecked(true)
                 .setOnMenuItemClickListener(menuItem -> {
                     menuItem.setChecked(!menuItem.isChecked());
                     spamMode = !menuItem.isChecked();

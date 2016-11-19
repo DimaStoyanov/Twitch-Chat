@@ -69,6 +69,7 @@ public class ChannelsListActivity extends AppCompatActivity {
         pb = (ProgressBar) findViewById(R.id.pbar);
         Button button = (Button) findViewById(R.id.twitch_login);
         button.getBackground().setColorFilter(0xFF6441A5, PorterDuff.Mode.MULTIPLY);
+        button.setOnClickListener(this::onTwitchLoginClick);
         context = this;
         Log.d(TAG, "On create");
         startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
