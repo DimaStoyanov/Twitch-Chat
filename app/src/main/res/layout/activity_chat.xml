@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/root_view"
     android:orientation="vertical">
 
     <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -65,11 +65,11 @@
         <ImageButton
             android:layout_width="46dp"
             android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:contentDescription="@string/emotes"
             android:hapticFeedbackEnabled="true"
             android:onClick="onEmotesShowClick"
-            android:background="@android:color/transparent"
-            android:src="@android:drawable/ic_menu_gallery"
-            android:contentDescription="@string/emotes" />
+            android:src="@android:drawable/ic_menu_gallery" />
 
         <EditText
             android:id="@+id/text_message"
@@ -81,35 +81,31 @@
 
         <ImageButton
             android:id="@+id/clear"
+            android:layout_width="46dp"
+            android:layout_height="match_parent"
             android:background="@android:color/transparent"
             android:contentDescription="clear"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:layout_width="46dp"
-            android:onClick="onClearClick"
             android:hapticFeedbackEnabled="true"
-            android:layout_height="match_parent" />
+            android:onClick="onClearClick"
+            android:src="@android:drawable/ic_menu_close_clear_cancel" />
 
         <ImageButton
             android:id="@+id/send"
             android:layout_width="46dp"
-            android:hapticFeedbackEnabled="true"
             android:layout_height="match_parent"
-            android:src="@android:drawable/ic_menu_send"
             android:background="@android:color/transparent"
-            android:contentDescription="@string/send" />
+            android:contentDescription="@string/send"
+            android:hapticFeedbackEnabled="true"
+            android:src="@android:drawable/ic_menu_send" />
 
     </LinearLayout>
 
-    <ScrollView
-        android:id="@+id/emotes_scroll"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:id="@+id/emotes_ll"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-    </ScrollView>
+    <android.support.v4.view.ViewPager
+        android:id="@+id/emotes_viewpager"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone" />
+
+
 </LinearLayout>
