@@ -3,7 +3,6 @@ package ru.ifmo.android_2016.irc.api.twitch;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,6 +17,8 @@ public class TwitchEmotes {
     private final static Map<String, String> emotes = new HashMap<>();
     private final static Map<String, Integer> emoteSet = new HashMap<>();
     private final static Set<Integer> loadedSets = new HashSet<>();
+
+    private static List<String> lazyGlobalEmotesList;
 
     private TwitchEmotes() {
     }
@@ -41,12 +42,12 @@ public class TwitchEmotes {
         return emotes.get(code);
     }
 
-    private static List<String> lazyGlobalEmotesList;
     public static List<String> getGlobalEmotesList() {
         //TODO: slow? not thread safe?
-        return lazyGlobalEmotesList != null ? lazyGlobalEmotesList : Stream.of(emoteSet)
-                .filter(e -> e.getValue() == 0)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+        return lazyGlobalEmotesList != null ? lazyGlobalEmotesList :
+                (lazyGlobalEmotesList = Stream.of(emoteSet)
+                        .filter(e -> e.getValue() == 0)
+                        .map(Map.Entry::getKey)
+                        .collect(Collectors.toList()));
     }
 }

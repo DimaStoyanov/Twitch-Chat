@@ -1,5 +1,6 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
@@ -11,13 +12,16 @@ import com.annimon.stream.function.Function;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InterruptedIOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -33,7 +37,7 @@ import ru.ifmo.android_2016.irc.utils.FunctionUtils;
 @SuppressWarnings("WeakerAccess")
 public class Client {
     private static final String TAG = Client.class.getSimpleName();
-    protected final ExecutorService executor = Executors.newCachedThreadPool();
+    protected final static Executor executor = Executors.newCachedThreadPool();
 
     protected ClientService clientService;
     protected ClientSettings clientSettings;
@@ -49,26 +53,42 @@ public class Client {
     @Nullable
     protected Callback ui;
     protected Channel statusChannel = new Channel(this, "Status");
+    protected Thread responseFetcherThread;
+    protected Thread requestListenerThread;
+    protected Thread messageHandlerThread;
+
     protected Function<Exception, Void> defaultExceptionHandler = (e) -> {
-        statusChannel.add(e.toString());
+        statusChannel.add(e.toString(), Color.RED);
         Stream.of(e.getStackTrace())
-                .forEach((ste) -> statusChannel.add(ste.toString()));
+                .forEach((ste) -> statusChannel.add(ste.toString(), Color.RED));
         e.printStackTrace();
+        quit();
+        reconnect();
         //notifyUi();
         return null;
+    };
+    protected Function<Exception, Void> interruptedExceptionHandler = e -> {
+        if (e instanceof InterruptedException) return null;
+        return defaultExceptionHandler.apply(e);
     };
 
     Client(ClientService clientService) {
         this.clientService = clientService;
     }
 
-    boolean connect(ClientSettings clientSettings) {
+    void connect(ClientSettings clientSettings) {
         this.clientSettings = clientSettings;
-        executor.execute(this::run);
+        connect();
+    }
 
+    private void connect() {
+        executor.execute(this::run);
         putNewChannel("Status", statusChannel);
         statusChannel.add("Client started");
-        return true;
+    }
+
+    private void reconnect() {
+        executor.execute(this::run);
     }
 
     protected void putNewChannel(String status, Channel channel) {
@@ -86,14 +106,24 @@ public class Client {
 
     protected void close() {
         quit();
+        shutdownThreads();
         try {
             if (socket != null) {
                 socket.close();
             }
         } catch (IOException e) {
+            defaultExceptionHandler.apply(e);
             e.printStackTrace();
         }
-        executor.shutdownNow();
+    }
+
+    private void shutdownThreads() {
+        if (requestListenerThread != null) requestListenerThread.interrupt();
+        if (responseFetcherThread != null) responseFetcherThread.interrupt();
+        if (messageHandlerThread != null) messageHandlerThread.interrupt();
+        requestListenerThread = null;
+        responseFetcherThread = null;
+        messageHandlerThread = null;
     }
 
     protected void quit() {
@@ -108,7 +138,7 @@ public class Client {
     protected final void run() {
         try {
             if (!clientSettings.isSsl()) {
-                socket = new Socket(clientSettings.address, clientSettings.port);
+                socket = new Socket(clientSettings.getAddress(), clientSettings.getPort());
             } else {
                 SSLSocketFactory sslFactory = (SSLSocketFactory) SSLSocketFactory.getDefault();
                 SSLSocket sslSocket = (SSLSocket) (socket = sslFactory.createSocket(
@@ -124,29 +154,38 @@ public class Client {
 
             executor.execute(FunctionUtils.catchExceptions(
                     this::responseFetcher,
-                    defaultExceptionHandler));
+                    interruptedExceptionHandler));
 
             actions();
 
-            executor.execute(FunctionUtils.catchExceptions(() -> {
-                //noinspection InfiniteLoopStatement
-                while (true) doCommand(messageQueue.take());
-            }, defaultExceptionHandler));
+            executor.execute(FunctionUtils.catchExceptions(
+                    this::messageHandler,
+                    interruptedExceptionHandler));
 
             executor.execute(FunctionUtils.catchExceptions(
                     this::requestListener,
-                    defaultExceptionHandler));
+                    interruptedExceptionHandler));
 
-        } catch (IOException | RuntimeException e) {
-            Log.e(TAG, e.toString());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } catch (UnknownHostException x) {
+            statusChannel.add("Unknown host " + x.getMessage(), Color.RED);
+            x.printStackTrace();
+        } catch (IOException x) {
+            statusChannel.add(x.toString());
+            x.printStackTrace();
         }
+    }
+
+    private void messageHandler() throws InterruptedException {
+        Thread thisThread = Thread.currentThread();
+        messageHandlerThread = thisThread;
+        while (!thisThread.isInterrupted()) doCommand(messageQueue.take());
     }
 
     @WorkerThread
     private void requestListener() throws InterruptedException {
-        while (true) {
+        Thread thisThread = Thread.currentThread();
+        requestListenerThread = thisThread;
+        while (!thisThread.isInterrupted()) {
             Request request = requestQueue.take();
             switch (request.type) {
                 case SEND:
@@ -159,18 +198,21 @@ public class Client {
         }
     }
 
-    protected void actions() throws IOException, InterruptedException {
+    protected void actions() throws IOException {
         pass(clientSettings.password);
         enterNick(clientSettings.nicks);
         joinChannels(clientSettings.channels);
     }
 
     protected void responseFetcher() throws IOException, InterruptedException {
-        while (socket.isConnected()) {
+        Thread thisThread = Thread.currentThread();
+        responseFetcherThread = thisThread;
+        while (socket.isConnected() && !thisThread.isInterrupted()) {
             String s = read();
             if (s != null) {
 //                Log.d(TAG, s);
-                messageQueue.put(parse(s));
+                Message parsed = parse(s);
+                if (parsed != null) messageQueue.put(parsed);
             }
         }
     }
@@ -181,11 +223,17 @@ public class Client {
     }
 
     protected Message parse(String s) {
-        return getMessageFromString(s);
+        try {
+            return getMessageFromString(s);
+        } catch (ParserException x) {
+            statusChannel.add("Can't parse message: " + s);
+            defaultExceptionHandler.apply(x);
+            return null;
+        }
     }
 
     protected void doCommand(Message msg) {
-        switch (msg.command) {
+        switch (msg.getCommand()) {
             case "PING":
                 //Log.i(TAG, "PING caught");
                 pong();
@@ -196,16 +244,17 @@ public class Client {
                 break;
 
             case "JOIN":
-                if (nickname.toLowerCase().equals(msg.getNickname().toLowerCase())) {
-                    putNewChannel(msg.getPrivmsgTarget(),
-                            new Channel(this, msg.getPrivmsgTarget()));
+                if (nickname.equals(msg.getNickname()) &&
+                        !channels.containsKey(msg.getJoinChannel())) {
+                    putNewChannel(msg.getJoinChannel(),
+                            new Channel(this, msg.getJoinChannel()));
                     notifyUi();
                 }
                 break;
         }
     }
 
-    private void notifyUi() {
+    protected void notifyUi() {
         if (ui != null) ui.runOnUiThread(ui::onChannelChange);
     }
 
@@ -235,8 +284,12 @@ public class Client {
 
     protected void enterNick(String... nicks) {
         String nick = nicks[0];
-        send("NICK " + nick);
+        nick(nick);
         nickname = nick;
+    }
+
+    protected void nick(String nick) {
+        send("NICK " + nick);
     }
 
     protected void send(String s) {

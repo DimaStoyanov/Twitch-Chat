@@ -1,6 +1,8 @@
 package ru.ifmo.android_2016.irc.client;
 
 import android.graphics.Color;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import com.annimon.stream.Collectors;
@@ -18,10 +20,10 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
 public final class TwitchMessage extends Message {
     private final static String TAG = TwitchMessage.class.getSimpleName();
 
-    private List<Badge> badges;
+    @Nullable private List<Badge> badges;
     private int color;
-    private String displayName;
-    private String id;
+    @Nullable private String displayName;
+    @Nullable private String id;
 
     private boolean mod;
     private boolean subscriber;
@@ -102,7 +104,7 @@ public final class TwitchMessage extends Message {
         try {
             return Stream.of(emoteSets.split(",")).map(Integer::parseInt).toArray(Integer[]::new);
         } catch (NumberFormatException x) {
-            throw null; //TODO: impossible
+            throw new ParserException(x);
         }
     }
 
@@ -113,7 +115,7 @@ public final class TwitchMessage extends Message {
         try {
             return Color.parseColor(color);
         } catch (IllegalArgumentException x) {
-            throw null; //TODO: impossible
+            throw new ParserException(x);
         }
     }
 
@@ -124,13 +126,13 @@ public final class TwitchMessage extends Message {
         try {
             return Integer.parseInt(number);
         } catch (NumberFormatException x) {
-            throw null; //TODO: impossible
+            throw new ParserException(x);
         }
     }
 
     private static String parseMessage(String message) {
         if (message == null) return null;
-        String result = message.replaceAll("\\s", " ");
+        String result = message.replaceAll("\\\\s", " ");
         Log.d(TAG, "SystemMessage/BanReason: " + result);
         return result;
     }
@@ -147,7 +149,7 @@ public final class TwitchMessage extends Message {
             case "1":
                 return true;
             default:
-                throw null;  //TODO: impossible
+                throw new ParserException("can't parse bool " + value);
         }
     }
 

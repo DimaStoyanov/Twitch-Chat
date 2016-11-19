@@ -18,7 +18,7 @@ public class Ban {
         try {
             time = duration == null ? 0 : Integer.parseInt(duration);
         } catch (NumberFormatException x) {
-            throw null; //TODO: impossible
+            throw new ParserException(x);
         }
         return new Ban(reason, time);
     }

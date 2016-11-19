@@ -33,7 +33,7 @@ public final class TwitchClient extends Client {
     }
 
     @Override
-    protected void actions() throws IOException, InterruptedException {
+    protected void actions() throws IOException {
         capReq("twitch.tv/membership");
         capReq("twitch.tv/commands");
         capReq("twitch.tv/tags");
@@ -53,7 +53,7 @@ public final class TwitchClient extends Client {
 
     @Override
     protected void doCommand(Message msg) {
-        switch (msg.command) {
+        switch (msg.getCommand()) {
             case "WHISPER":
                 sendToChannel(msg, (m) -> TextUtils.buildWhisper((TwitchMessage) m));
                 break;

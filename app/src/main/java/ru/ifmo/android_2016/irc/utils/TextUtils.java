@@ -49,7 +49,8 @@ public final class TextUtils {
         if (msg.getEmotes() != null) {
             for (Emote emote : msg.getEmotes()) {
                 messageText.setSpan(
-                        new DraweeSpan.Builder(emote.getEmoteUrl()).setLayout(50, 50)
+                        new DraweeSpan.Builder(emote.getEmoteUrl())
+                                .setLayout(50, 50)
                                 //.setShowAnimaImmediately(true)    //LAAAAAGGGGSSSS!!! NotLikeThis
                                 .build(),
                         emote.getBegin(),
@@ -74,6 +75,15 @@ public final class TextUtils {
     @WorkerThread
     public static CharSequence buildNotice(TwitchMessage msg) {
         return new SpannableStringBuilder().append(msg.getTrailing());
+    }
+
+    @WorkerThread
+    public static Spanned buildColoredText(String msg, int color) {
+        SpannableStringBuilder result = new SpannableStringBuilder(msg);
+        result.setSpan(new ForegroundColorSpan(color), 0, msg.length(),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        return result;
     }
 
     @WorkerThread

@@ -19,16 +19,19 @@ public class Message {
     private static final String TAG = Message.class.getSimpleName();
 
     public Date date;
+
     @Nullable String optPrefix;
-    @NonNull String command = "@NOT_SET";
-    @NonNull List<String> params = Collections.emptyList();
-    @Nullable String trailing;
-    @Nullable String serverName;
-    @Nullable String nickname;
-    @Nullable String userName;
-    @Nullable String hostName;
+    @NonNull private String command = "@NOT_SET";
+    @NonNull private List<String> params = Collections.emptyList();
+    @Nullable private String trailing;
+
+    @Nullable private String serverName;
+    @Nullable private String nickname;
+    @Nullable private String username;
+    @Nullable private String hostname;
+
     private static final Pattern actionPattern = Pattern.compile("\1ACTION ([^\1]+)\1");
-    boolean action = false;
+    private boolean action = false;
 
     public Message() {
     }
@@ -79,6 +82,23 @@ public class Message {
         return params;
     }
 
+    @NonNull
+    public String getCommand() {
+        return command;
+    }
+
+    public Message setPrivmsg(String name, String message) {
+        return Message.this
+                .setCommand("PRIVMSG")
+                .setParams(Collections.singletonList(message))
+                .setTrailing(message);
+    }
+
+    public String getJoinChannel() {
+        if (params.size() > 0) return params.get(0);
+        return null;
+    }
+
     private static class Prefix {
         private static final Pattern pattern =
                 Pattern.compile("([\\w.-]+)|(?:([\\w_]+)(?:(?:!([\\w]+))?@([\\w.-]+))?)");
@@ -89,8 +109,8 @@ public class Message {
                 if (matcher.matches()) {
                     message.serverName = matcher.group(1);
                     message.nickname = matcher.group(2);
-                    message.userName = matcher.group(3);
-                    message.hostName = matcher.group(4);
+                    message.username = matcher.group(3);
+                    message.hostname = matcher.group(4);
                     return true;
                 }
             }
@@ -162,13 +182,13 @@ public class Message {
         return this;
     }
 
-    public Message setUserName(String userName) {
-        this.userName = userName;
+    public Message setUsername(String username) {
+        this.username = username;
         return this;
     }
 
-    public Message setHostName(String hostName) {
-        this.hostName = hostName;
+    public Message setHostname(String hostname) {
+        this.hostname = hostname;
         return this;
     }
 

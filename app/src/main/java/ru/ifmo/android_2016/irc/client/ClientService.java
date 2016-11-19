@@ -76,12 +76,12 @@ public class ClientService extends Service {
         return START_STICKY;
     }
 
-    public static void stopClient(long serverId) {
+    public static void stopClient(Long... serverId) {
         instance.new CloseClientTask().execute(serverId);
     }
 
     public static void startClient(OnConnectedListener activity, long serverId) {
-        instance.new StartClientTask().execute(serverId, activity);
+        instance.new StartClientTask(serverId, activity).execute();
     }
 
     public static void stop() {
@@ -147,14 +147,17 @@ public class ClientService extends Service {
         }
     }
 
-    private class StartClientTask extends AsyncTask<Object, Void, String> {
-        private long id;
-        private OnConnectedListener listener;
+    private class StartClientTask extends AsyncTask<Void, Void, String> {
+        private final long id;
+        private final OnConnectedListener listener;
+
+        public StartClientTask(long serverId, OnConnectedListener activity) {
+            id = serverId;
+            listener = activity;
+        }
 
         @Override
-        protected String doInBackground(Object... args) {
-            id = (long) args[0];
-            listener = (OnConnectedListener) args[1];
+        protected String doInBackground(Void... args) {
             if (!clients.containsKey(id)) {
                 ClientSettings clientSettings;
                 if ((clientSettings = serverList.find(id)) != null) {
@@ -165,7 +168,7 @@ public class ClientService extends Service {
                     clients.put(id, client);
                     client.connect(clientSettings);
                 }
-                return clientSettings + " is running";
+                return clientSettings.getName() + " is running";
             } else {
                 Log.i(TAG, "Client " + id + " is already running");
             }
@@ -181,10 +184,10 @@ public class ClientService extends Service {
 
     private class CloseClientTask extends AsyncTask<Long, Void, Void> {
         @Override
-        protected Void doInBackground(Long... id) {
-            Client client = clients.remove(id[0]);
-            if (client != null) {
-                client.close();
+        protected Void doInBackground(Long... ids) {
+            for (long id : ids) {
+                Client client = clients.remove(id);
+                if (client != null) client.close();
             }
             return null;
         }

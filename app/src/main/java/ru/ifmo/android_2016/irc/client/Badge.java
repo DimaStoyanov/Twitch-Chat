@@ -20,7 +20,7 @@ public class Badge {
             name = Type.parse(p[0]);
             version = p[1];
         } else {
-            throw null; //TODO: не должно такого быть
+            throw new ParserException("Badge can't be parsed: " + badge);
         }
     }
 

@@ -3,6 +3,7 @@ package ru.ifmo.android_2016.irc.client;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.text.SpannableString;
 import android.util.Log;
 
 import com.annimon.stream.function.Function;
@@ -56,7 +57,7 @@ public class Channel {
         if (ui != null) ui.runOnUiThread(ui::onMessageReceived);
     }
 
-    void add(String msg) {
+    void add(CharSequence msg) {
         messages.add(msg);
         notifyUi();
     }
@@ -86,12 +87,14 @@ public class Channel {
     @UiThread
     public void send(String message) {
         Message msg = new TwitchMessage()
-                .setCommand("PRIVMSG")
-                .setParams(Collections.singletonList(getName()))
-                .setTrailing(message);
+                .setPrivmsg(getName(), message);
 
         Log.d(TAG, "requesting " + message + "/" + msg.toString());
         client.request(new Client.Request(Client.Request.Type.SEND, msg));
+    }
+
+    public void add(String msg, int color) {
+        add(TextUtils.buildColoredText(msg, color));
     }
 
     public interface Callback {
