@@ -63,9 +63,8 @@
         android:orientation="horizontal">
 
         <ImageButton
-            android:layout_width="0dp"
+            android:layout_width="46dp"
             android:layout_height="match_parent"
-            android:layout_weight="1.14"
             android:hapticFeedbackEnabled="true"
             android:onClick="onEmotesShowClick"
             android:background="@android:color/transparent"
@@ -76,7 +75,7 @@
             android:id="@+id/text_message"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="6.14"
+            android:layout_weight="1"
             android:hint="@string/your_message" />
 
 
@@ -85,18 +84,16 @@
             android:background="@android:color/transparent"
             android:contentDescription="clear"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:layout_width="0dp"
-            android:layout_weight="1.05"
+            android:layout_width="46dp"
             android:onClick="onClearClick"
             android:hapticFeedbackEnabled="true"
             android:layout_height="match_parent" />
 
         <ImageButton
             android:id="@+id/send"
-            android:layout_width="0dp"
+            android:layout_width="46dp"
             android:hapticFeedbackEnabled="true"
             android:layout_height="match_parent"
-            android:layout_weight="1.52"
             android:src="@android:drawable/ic_menu_send"
             android:background="@android:color/transparent"
             android:contentDescription="@string/send" />

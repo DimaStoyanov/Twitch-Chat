@@ -166,7 +166,7 @@ public class Client {
         while (socket.isConnected()) {
             String s = read();
             if (s != null) {
-                Log.d(TAG, s);
+//                Log.d(TAG, s);
                 messageQueue.put(parse(s));
             }
         }

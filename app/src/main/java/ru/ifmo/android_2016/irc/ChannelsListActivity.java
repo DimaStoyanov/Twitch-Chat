@@ -201,7 +201,7 @@ public class ChannelsListActivity extends AppCompatActivity {
                 channel.setText(data.getChannel());
                 ssl.setChecked(data.isSsl());
                 dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dialog.dismiss());
-                dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> {
+                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
 
                     Toast toast = new Toast(context);
                     if (!TextUtils.isEmpty(server.getText()) &&
@@ -211,9 +211,25 @@ public class ChannelsListActivity extends AppCompatActivity {
                             && !TextUtils.isEmpty(channel.getText())) {
 
                         dialog.cancel();
-                        new EditChannelTask().execute(data.getId(), buildClientSettings(name.getText().toString(), server.getText().toString(),
-                                port.getText().toString(), username.getText().toString(), password.getText().toString(),
-                                channel.getText().toString(), String.valueOf(ssl.isChecked())));
+
+                        data
+                                .setName(name.getText().toString())
+                                .setAddress(server.getText().toString())
+                                .setPort(Integer.parseInt(port.getText().toString()))
+                                .setUsername(username.getText().toString())
+                                .setPassword(password.getText().toString())
+                                .setChannel(channel.getText().toString())
+                                .setSsl(ssl.isChecked());
+
+//                        new EditChannelTask().execute(data.getId(),
+//                                buildClientSettings(
+//                                        name.getText().toString(),
+//                                        server.getText().toString(),
+//                                        port.getText().toString(),
+//                                        username.getText().toString(),
+//                                        password.getText().toString(),
+//                                        channel.getText().toString(),
+//                                        String.valueOf(ssl.isChecked())));
                     } else {
                         toast.cancel();
                         toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
@@ -226,21 +242,21 @@ public class ChannelsListActivity extends AppCompatActivity {
     }
 
 
-    class EditChannelTask extends AsyncTask<Object, Void, Void> {
-        @Override
-        @WorkerThread
-        protected Void doInBackground(Object... params) {
-            ServerList.getInstance().put((Long) params[0], (ClientSettings) params[1]);
-            return null;
-        }
-
-        @Override
-        @UiThread
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            updateChannelList();
-        }
-    }
+//    class EditChannelTask extends AsyncTask<Object, Void, Void> {
+//        @Override
+//        @WorkerThread
+//        protected Void doInBackground(Object... params) {
+//            ServerList.getInstance().put((Long) params[0], (ClientSettings) params[1]);
+//            return null;
+//        }
+//
+//        @Override
+//        @UiThread
+//        protected void onPostExecute(Void aVoid) {
+//            super.onPostExecute(aVoid);
+//            updateChannelList();
+//        }
+//    }
 
     @UiThread
     public void onAddChannelClick(View v) {
@@ -382,18 +398,6 @@ public class ChannelsListActivity extends AppCompatActivity {
             });
         });
         dialog.show();
-    }
-
-    @UiThread
-    private ClientSettings buildClientSettings(String... args) {
-        return new ClientSettings()
-                .setName(TextUtils.isEmpty(args[0]) ? args[5] : args[0])
-                .setAddress(args[1])
-                .setPort(Integer.parseInt(args[2]))
-                .setUsername(args[3])
-                .setPassword(args[4])
-                .setChannel(args[5])
-                .setSsl(Boolean.parseBoolean(args[6]));
     }
 
 

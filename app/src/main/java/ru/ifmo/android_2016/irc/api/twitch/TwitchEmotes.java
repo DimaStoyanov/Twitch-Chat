@@ -1,7 +1,5 @@
 package ru.ifmo.android_2016.irc.api.twitch;
 
-import android.annotation.SuppressLint;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;

@@ -33,9 +33,9 @@
 
         <EditText
             android:id="@+id/port"
-            android:layout_width="0dp"
+            android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="0"
             android:gravity="center"
             android:hint="@string/port"
             android:inputType="number"

@@ -94,7 +94,7 @@ public final class TwitchMessage extends Message {
         systemMsg = parseMessage(map.get("system-msg"));
         login = map.get("login");
 
-        ban = Ban.parse(map.get("ban-reason"), map.get("ban-duration"));
+        ban = Ban.parse(parseMessage(map.get("ban-reason")), map.get("ban-duration"));
     }
 
     private static Integer[] parseEmoteSets(String emoteSets) {

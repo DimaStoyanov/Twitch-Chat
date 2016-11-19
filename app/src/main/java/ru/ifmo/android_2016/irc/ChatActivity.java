@@ -53,9 +53,9 @@ public class ChatActivity extends AppCompatActivity
     private Client client;
     private ViewPagerAdapter viewPagerAdapter;
     private ViewPager viewPager;
-    private ScrollView emotes_scroll;
-    private LinearLayout emotes_ll;
-    private boolean spam_mode = false;
+    private ScrollView emotesScroll;
+    private LinearLayout emotesLl;
+    private boolean spamMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,18 +77,13 @@ public class ChatActivity extends AppCompatActivity
             Rect r = new Rect();
             ll.getWindowVisibleDisplayFrame(r);
 
-            int screenHeight = ll.getRootView()
-                    .getHeight();
-            int heightDifference = screenHeight
-                    - (r.bottom - r.top);
-            int resourceId = getResources()
-                    .getIdentifier("status_bar_height",
-                            "dimen", "android");
+            int screenHeight = ll.getRootView().getHeight();
+            int heightDifference = screenHeight - (r.bottom - r.top);
+            int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
             if (resourceId > 0) {
-                heightDifference -= getResources()
-                        .getDimensionPixelSize(resourceId);
+                heightDifference -= getResources().getDimensionPixelSize(resourceId);
             }
-            if (heightDifference > 100) {
+            if (heightDifference > 400) {
                 keyboardHeight = heightDifference;
             }
 
@@ -97,7 +92,7 @@ public class ChatActivity extends AppCompatActivity
 
 
         typeMessage.setOnTouchListener(((view, motionEvent) -> {
-            if (emotes_scroll.getVisibility() == View.VISIBLE)
+            if (emotesScroll.getVisibility() == View.VISIBLE)
                 closeEmotes();
             return false;
         }));
@@ -107,7 +102,7 @@ public class ChatActivity extends AppCompatActivity
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             viewPagerAdapter.channels.get(viewPager.getCurrentItem())
                     .send(typeMessage.getText().toString());
-            if (!spam_mode) typeMessage.setText("");
+            if (!spamMode) typeMessage.setText("");
         });
 
         viewPager = (ViewPager) findViewById(R.id.viewPager);
@@ -128,6 +123,7 @@ public class ChatActivity extends AppCompatActivity
 
             }
         });
+
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
         tabLayout.setupWithViewPager(viewPager);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
@@ -154,8 +150,8 @@ public class ChatActivity extends AppCompatActivity
     private void initView() {
         setContentView(R.layout.activity_chat);
         typeMessage = (EditText) findViewById(R.id.text_message);
-        emotes_scroll = (ScrollView) findViewById(R.id.emotes_scroll);
-        emotes_ll = (LinearLayout) findViewById(R.id.emotes_ll);
+        emotesScroll = (ScrollView) findViewById(R.id.emotes_scroll);
+        emotesLl = (LinearLayout) findViewById(R.id.emotes_ll);
     }
 
     private void load() {
@@ -205,10 +201,10 @@ public class ChatActivity extends AppCompatActivity
                 emote.setImageURI(Uri.parse(BttvEmotes.getEmoteUrlByCode(String.valueOf(keyset[i++]), channel)));
                 row.addView(emote);
             }
-            emotes_ll.addView(row);
+            emotesLl.addView(row);
         }
-        emotes_scroll.setVisibility(View.VISIBLE);
-        emotes_scroll.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
+        emotesScroll.setVisibility(View.VISIBLE);
+        emotesScroll.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
 
     }
 
@@ -279,12 +275,12 @@ public class ChatActivity extends AppCompatActivity
     }
 
     private void closeEmotes() {
-        emotes_ll.removeAllViews();
-        emotes_scroll.setVisibility(View.GONE);
+        emotesLl.removeAllViews();
+        emotesScroll.setVisibility(View.GONE);
     }
 
     private boolean isEmotesShowing() {
-        return emotes_scroll.getVisibility() == View.VISIBLE;
+        return emotesScroll.getVisibility() == View.VISIBLE;
     }
 
     public void onClearClick(View view) {
@@ -355,7 +351,7 @@ public class ChatActivity extends AppCompatActivity
         menu.add(0, 0, Menu.CATEGORY_ALTERNATIVE, "Clear type message after send").setCheckable(true).setChecked(true)
                 .setOnMenuItemClickListener(menuItem -> {
                     menuItem.setChecked(!menuItem.isChecked());
-                    spam_mode = !menuItem.isChecked();
+                    spamMode = !menuItem.isChecked();
                     return false;
                 });
         return true;
