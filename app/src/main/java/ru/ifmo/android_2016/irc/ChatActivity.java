@@ -2,10 +2,7 @@ package ru.ifmo.android_2016.irc;
 
 import android.content.Context;
 import android.graphics.Rect;
-import android.graphics.drawable.Animatable;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.design.widget.TabLayout;
@@ -19,25 +16,15 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
-
-import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.controller.BaseControllerListener;
-import com.facebook.drawee.drawable.ScalingUtils;
-import com.facebook.drawee.interfaces.DraweeController;
-import com.facebook.drawee.view.SimpleDraweeView;
-import com.facebook.imagepipeline.image.ImageInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.Client;
 import ru.ifmo.android_2016.irc.client.ClientService;
@@ -50,16 +37,14 @@ public class ChatActivity extends AppCompatActivity
         implements ClientService.OnConnectedListener, Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
 
-    private EditText typeMessage;
+    EditText typeMessage;
     private long id = 0;
     private int keyboardHeight;
     private ClientSettings clientSettings;
     @Nullable
-    private Client client;
+    Client client;
     private ViewPagerAdapter viewPagerAdapter;
-    private ViewPager viewPager;
-    private ScrollView emotesScroll;
-    private LinearLayout emotesLl;
+    ViewPager viewPager, emotesViewPager;
     private boolean spamMode = false;
 
     @Override
@@ -97,7 +82,7 @@ public class ChatActivity extends AppCompatActivity
 
 
         typeMessage.setOnTouchListener(((view, motionEvent) -> {
-            if (emotesScroll.getVisibility() == View.VISIBLE)
+            if (isEmotesShowing())
                 closeEmotes();
             return false;
         }));
@@ -110,7 +95,6 @@ public class ChatActivity extends AppCompatActivity
             if (!spamMode) typeMessage.setText("");
         });
 
-        viewPager = (ViewPager) findViewById(R.id.viewPager);
         viewPager.setAdapter(viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager()));
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -128,7 +112,6 @@ public class ChatActivity extends AppCompatActivity
 
             }
         });
-
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabLayout);
         tabLayout.setupWithViewPager(viewPager);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
@@ -142,21 +125,21 @@ public class ChatActivity extends AppCompatActivity
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
-            actionBar.setDisplayShowTitleEnabled(false);
         }
 
         if (client != null) {
             client.attachUi(this);
             onChannelChange();
         }
+
     }
 
 
     private void initView() {
         setContentView(R.layout.activity_chat);
         typeMessage = (EditText) findViewById(R.id.text_message);
-        emotesScroll = (ScrollView) findViewById(R.id.emotes_scroll);
-        emotesLl = (LinearLayout) findViewById(R.id.emotes_ll);
+        viewPager = (ViewPager) findViewById(R.id.viewPager);
+        emotesViewPager = (ViewPager) findViewById(R.id.emotes_viewpager);
     }
 
     private void load() {
@@ -182,128 +165,43 @@ public class ChatActivity extends AppCompatActivity
             closeEmotes();
             return;
         }
-        String channel = client.getChannelList().get(viewPager.getCurrentItem()).getName();
-        int columns = viewPager.getWidth() / 120;
-        Log.d(TAG, channel);
-        Object[] keyset = BttvEmotes.getChannelEmotesKey(channel);
-        Log.d(TAG, "Keyset length " + keyset.length);
+        emotesViewPager.setAdapter(new EmotesViewPagerAdapter(getSupportFragmentManager()));
 
-        int i = 0;
-        while (i < keyset.length) {
-            LinearLayout row = new LinearLayout(this);
-            row.setOrientation(LinearLayout.HORIZONTAL);
-            int j = 0;
-            while (i < keyset.length && j++ < columns) {
-                SimpleDraweeView emote = new SimpleDraweeView(this);
-                LinearLayout.LayoutParams emoteParams = new LinearLayout.LayoutParams(100, 100);
-                emoteParams.setMargins(10, 10, 10, 10);
-                emoteParams.weight = 1;
-                emote.setLayoutParams(emoteParams);
-                emote.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_INSIDE);
-                emote.setOnClickListener(new OnEmotesClickListener((String) keyset[i]));
-                emote.setHapticFeedbackEnabled(true);
-                emote.setOnTouchListener(new OnEmotesTouchListener((String) keyset[i], emote));
-
-                DraweeController draweeController = Fresco.newDraweeControllerBuilder()
-                        .setUri(BttvEmotes.getEmoteUrlByCode(String.valueOf(keyset[i++]), channel))
-                        .setControllerListener(new BaseControllerListener<ImageInfo>() {
-                            @Override
-                            public void onFinalImageSet(String id, @javax.annotation.Nullable ImageInfo imageInfo, @javax.annotation.Nullable Animatable animatable) {
-                                super.onFinalImageSet(id, imageInfo, animatable);
-                                if (animatable != null) {
-                                    animatable.start();
-                                }
-                            }
-                        })
-                        .build();
-                emote.setController(draweeController);
-
-                row.addView(emote);
-            }
-            emotesLl.addView(row);
-        }
-        emotesScroll.setVisibility(View.VISIBLE);
-        emotesScroll.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
+        emotesViewPager.setVisibility(View.VISIBLE);
+        emotesViewPager.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
 
     }
 
-    private class OnEmotesTouchListener implements View.OnTouchListener {
-        final String code;
-        private Handler handler;
-        private int duration, totalDuration;
-        private View view;
-
-        OnEmotesTouchListener(String code, View view) {
-            this.code = code;
-            duration = 500;
-            totalDuration = 0;
-            this.view = view;
-        }
-
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            switch (motionEvent.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    if (handler != null) return true;
-                    handler = new Handler();
-                    totalDuration = duration;
-                    handler.postDelayed(mAction, duration);
-                    break;
-                case MotionEvent.ACTION_CANCEL:
-                case MotionEvent.ACTION_UP:
-                    if (handler == null) return true;
-                    handler.removeCallbacks(mAction);
-                    handler = null;
-                    break;
-            }
-            return false;
-        }
-
-        Runnable mAction = new Runnable() {
-            @Override
-            public void run() {
-                if (totalDuration == 500) {
-                    totalDuration += 500;
-                    handler.postDelayed(this, duration);
-                    return;
-                }
-                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-                typeMessage.append(code + " ");
-                if (totalDuration == 2000)
-                    duration = 250;
-                if (totalDuration == 3500)
-                    duration = 100;
-                totalDuration += duration;
-                handler.postDelayed(this, duration);
-            }
-        };
-    }
-
-    private class OnEmotesClickListener implements View.OnClickListener {
-        final String code;
-
-        OnEmotesClickListener(String code) {
-            this.code = code;
-        }
-
-        @Override
-        public void onClick(View view) {
-            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
-            typeMessage.append(code + " ");
-        }
-    }
 
     private void closeEmotes() {
-        emotesLl.removeAllViews();
-        emotesScroll.setVisibility(View.GONE);
+        emotesViewPager.setVisibility(View.GONE);
     }
 
     private boolean isEmotesShowing() {
-        return emotesScroll.getVisibility() == View.VISIBLE;
+        return emotesViewPager.getVisibility() == View.VISIBLE;
     }
 
     public void onClearClick(View view) {
         typeMessage.setText("");
+    }
+
+
+    class EmotesViewPagerAdapter extends ViewPagerAdapter {
+
+
+        EmotesViewPagerAdapter(FragmentManager supportFragmentManager) {
+            super(supportFragmentManager);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            return EmoteScrollViewFragment.newInstance(position == 0 ? "twitch" : "bttv");
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
     }
 
     @Override
@@ -343,7 +241,7 @@ public class ChatActivity extends AppCompatActivity
     private class ViewPagerAdapter extends FragmentPagerAdapter {
         private List<Channel> channels = new ArrayList<>();
 
-        public ViewPagerAdapter(FragmentManager supportFragmentManager) {
+        ViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
         }
 
@@ -367,7 +265,7 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 0, Menu.CATEGORY_ALTERNATIVE, "Clear type message after send")
+        menu.add(0, 0, Menu.FIRST, "Clear type message after send")
                 .setCheckable(true)
                 .setChecked(true)
                 .setOnMenuItemClickListener(menuItem -> {

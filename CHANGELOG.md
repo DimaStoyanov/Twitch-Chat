@@ -2,6 +2,12 @@
 
 Заметки, написанные в течениe разработки
 
+### 19.11.2016
+* Теперь эмоции можно листать - классические twitch и bttv
+* Изменен дизайн кнопки чата
+
+    <img alt="New design in channel list activity" src="https://cloud.githubusercontent.com/assets/17340158/20457771/72b0a8e0-aea3-11e6-9ae0-8662f84a0f0f.png" height="178px">
+
 ### 18.11.2016
 * Теперь в экране чата можно переключаться между каналами. Реализован viewpager и coordinatorlayout.
 * Появилась вьюшка со смайлами.
