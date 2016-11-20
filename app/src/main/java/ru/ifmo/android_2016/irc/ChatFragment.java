@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -27,9 +28,12 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     private String channelName;
     private Channel channel;
     private RecyclerView recyclerView;
+    FloatingActionButton fab;
     private MessageAdapter adapter;
     private long serverId;
-    private boolean autoScroll = false;
+    private boolean autoScroll = false, isScrolling = false;
+    private LinearLayoutManager layoutManager;
+    private ChatActivity activity;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -64,6 +68,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        this.activity = (ChatActivity) context;
     }
 
     @Override
@@ -87,6 +92,15 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(adapter = new MessageAdapter(channel.getMessages()));
+        fab = (FloatingActionButton) view.findViewById(R.id.fab);
+        fab.setOnClickListener(view1 -> {
+            recyclerView.post(() -> {
+                recyclerView.scrollToPosition(adapter.getItemCount());
+                recyclerView.smoothScrollToPosition(adapter.getItemCount());
+            });
+            // TODO !!! scroll&snap toolbar
+            fab.setVisibility(View.GONE);
+        });
 
         //TODO: autoScroll
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
@@ -96,14 +110,20 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
                 lastDirection = dy;
+                isScrolling = true;
             }
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 autoScroll = lastState == 2 && newState == 0 && (lastDirection >= 0);
                 lastState = newState;
+                if (fab.getVisibility() == View.VISIBLE &&
+                        (recyclerView.getAdapter().getItemCount() - 1 - layoutManager.findLastVisibleItemPosition()) <= 5)
+                    fab.setVisibility(View.GONE);
+                isScrolling = false;
             }
         });
+        layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
     }
 
     @Override
@@ -117,6 +137,8 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         if (adapter != null) {
             adapter.notifyItemChanged(adapter.messages.size());
         }
+        if (!isScrolling && (recyclerView.getAdapter().getItemCount() - 1) - layoutManager.findLastVisibleItemPosition() >= 10)
+            fab.setVisibility(View.VISIBLE);
         if (autoScroll) {
             recyclerView.post(() -> {
                 recyclerView.scrollToPosition(adapter.getItemCount());

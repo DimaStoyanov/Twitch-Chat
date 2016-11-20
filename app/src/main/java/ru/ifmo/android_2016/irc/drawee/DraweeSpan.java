@@ -33,8 +33,6 @@ import android.text.TextUtils;
 import android.text.style.DynamicDrawableSpan;
 import android.util.Log;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
 import com.facebook.common.executors.UiThreadImmediateExecutorService;
 import com.facebook.common.logging.FLog;
 import com.facebook.common.references.CloseableReference;
@@ -129,7 +127,12 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
 //                .map(String::valueOf)
 //                .collect(Collectors.joining(","));
 //        Log.d(TAG, log);
-        super.draw(canvas, text, start, end, x + mMargin.left, top, y, bottom, paint);
+        try {
+            super.draw(canvas, text, start, end, x + mMargin.left, top, y, bottom, paint);
+        } catch (IllegalArgumentException e) {
+            // not great solution but this crashes are annoying
+            e.printStackTrace();
+        }
     }
 
     public void setImage(Drawable drawable) {
