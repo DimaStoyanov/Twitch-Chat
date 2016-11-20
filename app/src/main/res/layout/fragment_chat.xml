@@ -22,6 +22,7 @@
         android:src="@drawable/fab_scroll_down"
         android:visibility="gone"
         app:fabSize="mini"
+        android:layout_margin="16dp"
         app:backgroundTint="@color/colorPrimary" />
 
 </FrameLayout>
