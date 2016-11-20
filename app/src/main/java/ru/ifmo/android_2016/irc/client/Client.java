@@ -328,7 +328,7 @@ public class Client {
     @WorkerThread
     public void sendMessage(Message message) {
         send(message.toString());
-        sendToChannel(message.setNickname(getNickname()));
+        messageQueue.offer(message);
     }
 
     public String getNickname() {

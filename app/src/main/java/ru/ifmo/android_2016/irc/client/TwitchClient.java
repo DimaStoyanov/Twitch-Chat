@@ -111,8 +111,9 @@ public final class TwitchClient extends Client {
             String message = twitchMessage.getPrivmsgText();
             if (message.startsWith("/me ")) {
                 twitchMessage.setAction(true);
+                twitchMessage.setPrivmsgText(message.substring(4));
             }
-            twitchMessage.setPrivmsgText(message.replaceAll("^/\\w+ ", ""));
+            return false;
         }
         twitchMessage
                 .setColor(nickColor)
