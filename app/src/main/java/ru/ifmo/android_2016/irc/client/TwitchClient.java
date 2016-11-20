@@ -103,10 +103,17 @@ public final class TwitchClient extends Client {
         TwitchMessage twitchMessage = (TwitchMessage) message;
         send(message.toString());
 
-        if (parseMyMessage(twitchMessage)) messageQueue.offer(message);
+        if (parseMyMessage(twitchMessage)) messageQueue.offer(twitchMessage);
     }
 
     private boolean parseMyMessage(TwitchMessage twitchMessage) {
+        if (twitchMessage.getPrivmsgText().startsWith("/")) {
+            String message = twitchMessage.getPrivmsgText();
+            if (message.startsWith("/me ")) {
+                twitchMessage.setAction(true);
+            }
+            twitchMessage.setPrivmsgText(message.replaceAll("^/\\w+ ", ""));
+        }
         twitchMessage
                 .setColor(nickColor)
                 .setEmotes(Emote.findAllEmotes(

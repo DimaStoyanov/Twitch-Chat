@@ -107,6 +107,10 @@ public class Message {
         return null;
     }
 
+    public void setPrivmsgText(String privmsgText) {
+        this.trailing = privmsgText;
+    }
+
     private static class Prefix {
         private static final Pattern pattern =
                 Pattern.compile("([\\w.-]+)|(?:([\\w_]+)(?:(?:!([\\w]+))?@([\\w.-]+))?)");
