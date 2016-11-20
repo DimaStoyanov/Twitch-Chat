@@ -12,10 +12,8 @@ import com.annimon.stream.function.Function;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.InterruptedIOException;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,37 +56,58 @@ public class Client {
     protected Thread messageHandlerThread;
 
     protected Function<Exception, Void> defaultExceptionHandler = (e) -> {
-        statusChannel.add(e.toString(), Color.RED);
-        Stream.of(e.getStackTrace())
-                .forEach((ste) -> statusChannel.add(ste.toString(), Color.RED));
+        sendStatus(e.toString(), Color.RED);
+//        Stream.of(e.getStackTrace()).forEach((ste) -> statusChannel.add(ste.toString(), Color.RED));
         e.printStackTrace();
         quit();
+        shutdownThreads();
         reconnect();
         //notifyUi();
         return null;
     };
+
+    private void sendStatus(String msg, int color) {
+        statusChannel.add(msg, color);
+    }
+
     protected Function<Exception, Void> interruptedExceptionHandler = e -> {
         if (e instanceof InterruptedException) return null;
         return defaultExceptionHandler.apply(e);
     };
+    private boolean connected = false;
 
     Client(ClientService clientService) {
         this.clientService = clientService;
     }
 
     void connect(ClientSettings clientSettings) {
-        this.clientSettings = clientSettings;
-        connect();
+        if (!connected) {
+            connected = true;
+            this.clientSettings = clientSettings;
+            connect();
+        } else {
+            throw new IllegalStateException("Client is already running");
+        }
     }
 
     private void connect() {
         executor.execute(this::run);
         putNewChannel("Status", statusChannel);
-        statusChannel.add("Client started");
+        sendStatus("Client started");
     }
 
     private void reconnect() {
+        sendStatus("Reconnecting in 5 seconds");
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            //nothing
+        }
         executor.execute(this::run);
+    }
+
+    private void sendStatus(String message) {
+        statusChannel.add(message);
     }
 
     protected void putNewChannel(String status, Channel channel) {
@@ -147,7 +166,7 @@ public class Client {
                 sslSocket.startHandshake();
             }
 
-            statusChannel.add("Connected");
+            sendStatus("Connected");
 
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
@@ -165,13 +184,8 @@ public class Client {
             executor.execute(FunctionUtils.catchExceptions(
                     this::requestListener,
                     interruptedExceptionHandler));
-
-        } catch (UnknownHostException x) {
-            statusChannel.add("Unknown host " + x.getMessage(), Color.RED);
-            x.printStackTrace();
         } catch (IOException x) {
-            statusChannel.add(x.toString());
-            x.printStackTrace();
+            defaultExceptionHandler.apply(x);
         }
     }
 

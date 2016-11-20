@@ -131,7 +131,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
         private MessageAdapter(List<CharSequence> list) {
             messages = list;
-            setHasStableIds(true);
+            //setHasStableIds(true);
         }
 
         @Override
@@ -154,10 +154,10 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             return messages.size();
         }
 
-        @Override
-        public long getItemId(int position) {
-            return position;
-        }
+//        @Override
+//        public long getItemId(int position) {
+//            return position;
+//        }
 
         class ViewHolder extends RecyclerView.ViewHolder {
             private DraweeTextView itemView;
