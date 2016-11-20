@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -28,6 +29,7 @@ import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -55,6 +57,7 @@ public class ChatActivity extends AppCompatActivity
     ViewPager viewPager, emotesViewPager;
     Toolbar toolbar;
     private boolean spamMode = false;
+    private TextView chatTitle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +120,8 @@ public class ChatActivity extends AppCompatActivity
             @Override
             public void onPageSelected(int position) {
                 closeEmotes();
+                changeCheckedMenuItem(position);
+                chatTitle.setText(viewPagerAdapter.getPageTitle(position));
             }
 
             @Override
@@ -131,12 +136,20 @@ public class ChatActivity extends AppCompatActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
+        //TODO: Temp
+        tabLayout.setVisibility(View.GONE);
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams())
+                .setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
+        //TODO: Temp
+
+        chatTitle = (TextView) findViewById(R.id.title);
 
         ActionBar actionBar = getSupportActionBar();
 
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayShowHomeEnabled(true);
+            actionBar.setDisplayShowTitleEnabled(false);
         }
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.open, R.string.close);
@@ -208,16 +221,20 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
         viewPager.setCurrentItem(item.getItemId());
-        for (int i = 0; i < menu.size(); i++) {
-            menu.getItem(i).setChecked(false);
-        }
-        item.setChecked(true);
+        changeCheckedMenuItem(item.getItemId());
         ((DrawerLayout) findViewById(R.id.drawer_layout)).closeDrawer(GravityCompat.START);
         return true;
     }
 
+
+    private void changeCheckedMenuItem(int position) {
+        Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
+        for (int i = 0; i < menu.size(); i++) {
+            menu.getItem(i).setChecked(false);
+        }
+        menu.getItem(position).setChecked(true);
+    }
 
     class EmotesViewPagerAdapter extends ViewPagerAdapter {
 
@@ -273,16 +290,17 @@ public class ChatActivity extends AppCompatActivity
         viewPagerAdapter.channels.addAll(client.getChannelList());
         //Stream.of(client.getChannelList()).forEach(c -> Log.d(TAG, c.getName()));
         viewPagerAdapter.notifyDataSetChanged();
-        viewPager.setCurrentItem(1);
+        if (viewPagerAdapter.channels.size() < 2)
+            return;
         int i = 0;
         Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
-        menu.removeGroup(0);
         for (Channel ch : client.getChannelList()) {
             menu.add(0, i++, Menu.CATEGORY_CONTAINER, getChannelName(ch))
                     .setIcon(i == 1 ? android.R.drawable.ic_dialog_info : android.R.drawable.stat_notify_chat)
                     .setCheckable(true);
         }
-        menu.getItem(menu.size() == 1 ? 0 : 1).setChecked(true);
+        viewPager.setCurrentItem(1);
+        menu.getItem(1).setChecked(true);
 
     }
 
