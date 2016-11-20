@@ -144,10 +144,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             }
         }
         if (autoScroll) {
-            recyclerView.post(() -> {
-                recyclerView.scrollToPosition(adapter.getItemCount());
-                recyclerView.smoothScrollToPosition(adapter.getItemCount());
-            });
+            recyclerView.post(() -> recyclerView.scrollToPosition(adapter.getItemCount() - 1));
         }
     }
 
