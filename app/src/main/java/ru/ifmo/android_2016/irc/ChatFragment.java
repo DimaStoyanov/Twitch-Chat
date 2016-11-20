@@ -34,9 +34,8 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     private MessageAdapter adapter;
     private long serverId;
     private float startEventY;
-    private boolean autoScroll = false, isCanceled;
+    private boolean autoScroll = false, lastActionUp;
     private LinearLayoutManager layoutManager;
-    private ChatActivity activity;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -71,7 +70,6 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        this.activity = (ChatActivity) context;
     }
 
     @Override
@@ -102,30 +100,27 @@ public class ChatFragment extends Fragment implements Channel.Callback {
                 autoScroll = true;
                 layoutManager.scrollToPosition(adapter.getItemCount() - 1);
             });
-            // TODO !!! scroll&snap toolbar
             fab.setVisibility(View.GONE);
         });
         recyclerView.setOnTouchListener((view1, motionEvent) -> {
             switch (motionEvent.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    autoScroll = false;
-                    isCanceled = true;
                     startEventY = motionEvent.getY();
                     break;
                 case MotionEvent.ACTION_UP:
+                    lastActionUp = motionEvent.getY() - startEventY > 0;
                     Log.d(TAG, "Motion event diff = " + (startEventY - motionEvent.getY()));
                     if (startEventY - motionEvent.getY() > 30) {
                         // Action Down
                         fab.setVisibility(View.VISIBLE);
                     } else if (motionEvent.getY() - startEventY > 50) {
+                        autoScroll = false;
                         // Action Up
-                        isCanceled = false;
                     }
             }
             return false;
         });
 
-        //TODO: autoScroll
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
@@ -137,9 +132,8 @@ public class ChatFragment extends Fragment implements Channel.Callback {
                 if (fab.getVisibility() == View.VISIBLE &&
                         (recyclerView.getAdapter().getItemCount() - 1 - layoutManager.findLastVisibleItemPosition()) <= 5) {
                     fab.setVisibility(View.GONE);
-                    if (!isCanceled) {
+                    if (!lastActionUp)
                         autoScroll = true;
-                    }
                 }
             }
         });

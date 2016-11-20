@@ -166,7 +166,8 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
         if (mAttachedView != view) {
             mActualDrawable.setCallback(null);
             if (mAttachedView != null) {
-                throw new IllegalStateException("has been attached to view:" + mAttachedView);
+//                throw new IllegalStateException("has been attached to view:" + mAttachedView);
+                return;
             }
             mAttachedView = view;
             setDrawableInner(mDrawable);
