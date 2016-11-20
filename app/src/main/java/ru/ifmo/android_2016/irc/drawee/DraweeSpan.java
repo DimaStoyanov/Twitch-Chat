@@ -127,7 +127,12 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
 //                .map(String::valueOf)
 //                .collect(Collectors.joining(","));
 //        Log.d(TAG, log);
-        super.draw(canvas, text, start, end, x + mMargin.left, top, y, bottom, paint);
+        try {
+            super.draw(canvas, text, start, end, x + mMargin.left, top, y, bottom, paint);
+        } catch (IllegalArgumentException e) {
+            // not great solution but this crashes are annoying
+            e.printStackTrace();
+        }
     }
 
     public void setImage(Drawable drawable) {

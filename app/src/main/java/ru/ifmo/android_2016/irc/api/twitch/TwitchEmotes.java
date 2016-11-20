@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ru.ifmo.android_2016.irc.api.TwitchApi;
+import ru.ifmo.android_2016.irc.constant.TwitchApiConstant;
+
 /**
  * Created by ghost on 11/17/2016.
  */
@@ -50,4 +53,9 @@ public class TwitchEmotes {
                         .map(Map.Entry::getKey)
                         .collect(Collectors.toList()));
     }
+
+    public static String getEmoteUrlByCode(String code) {
+        return TwitchApi.getEmoteUrl(getEmoteByCode(code), TwitchApiConstant.EMOTICON_BIG);
+    }
+
 }
