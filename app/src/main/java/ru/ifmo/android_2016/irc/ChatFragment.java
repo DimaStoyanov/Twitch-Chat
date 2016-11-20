@@ -9,7 +9,9 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.util.Linkify;
+import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -31,7 +33,8 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     FloatingActionButton fab;
     private MessageAdapter adapter;
     private long serverId;
-    private boolean autoScroll = false, isScrolling = false;
+    private float startEventY;
+    private boolean autoScroll = false, lastActionUp;
     private LinearLayoutManager layoutManager;
     private ChatActivity activity;
 
@@ -87,6 +90,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        autoScroll = true;
         View view = getView();
         recyclerView = (RecyclerView) view.findViewById(R.id.messages);
 
@@ -95,32 +99,44 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         fab = (FloatingActionButton) view.findViewById(R.id.fab);
         fab.setOnClickListener(view1 -> {
             recyclerView.post(() -> {
-                recyclerView.scrollToPosition(adapter.getItemCount());
-                recyclerView.smoothScrollToPosition(adapter.getItemCount());
+                autoScroll = true;
+                layoutManager.scrollToPosition(adapter.getItemCount() - 1);
             });
-            // TODO !!! scroll&snap toolbar
             fab.setVisibility(View.GONE);
         });
+        recyclerView.setOnTouchListener((view1, motionEvent) -> {
+            switch (motionEvent.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    startEventY = motionEvent.getY();
+                    break;
+                case MotionEvent.ACTION_UP:
+                    lastActionUp = motionEvent.getY() - startEventY > 0;
+                    Log.d(TAG, "Motion event diff = " + (startEventY - motionEvent.getY()));
+                    if (startEventY - motionEvent.getY() > 30) {
+                        // Action Down
+                        fab.setVisibility(View.VISIBLE);
+                    } else if (motionEvent.getY() - startEventY > 50) {
+                        autoScroll = false;
+                        // Action Up
+                    }
+            }
+            return false;
+        });
 
-        //TODO: autoScroll
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-            int lastState;
-            int lastDirection;
 
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-                lastDirection = dy;
-                isScrolling = true;
             }
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                autoScroll = lastState == 2 && newState == 0 && (lastDirection >= 0);
-                lastState = newState;
                 if (fab.getVisibility() == View.VISIBLE &&
-                        (recyclerView.getAdapter().getItemCount() - 1 - layoutManager.findLastVisibleItemPosition()) <= 5)
+                        (recyclerView.getAdapter().getItemCount() - 1 - layoutManager.findLastVisibleItemPosition()) <= 5) {
                     fab.setVisibility(View.GONE);
-                isScrolling = false;
+                    if (!lastActionUp)
+                        autoScroll = true;
+                }
             }
         });
         recyclerView.setItemAnimator(null);
@@ -138,13 +154,9 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         if (adapter != null) {
             adapter.notifyItemChanged(adapter.messages.size());
             adapter.tryToClearOldMessages();
-            if (!isScrolling && (adapter.getItemCount() - 1) -
-                    layoutManager.findLastVisibleItemPosition() >= 10) {
-                fab.setVisibility(View.VISIBLE);
-            }
         }
         if (autoScroll) {
-            recyclerView.post(() -> recyclerView.scrollToPosition(adapter.getItemCount() - 1));
+            recyclerView.post(() -> recyclerView.smoothScrollToPosition(adapter.getItemCount() - 1));
         }
     }
 

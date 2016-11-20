@@ -121,7 +121,10 @@ public class ChatActivity extends AppCompatActivity
             @Override
             public void onPageSelected(int position) {
                 closeEmotes();
-                chatTitle.setText(viewPagerAdapter.getPageTitle(position));
+                changeCheckedMenuItem(position);
+                if (chatTitle != null && viewPagerAdapter.getPageTitle(position) != null) {
+                    chatTitle.setText(viewPagerAdapter.getPageTitle(position));
+                }
             }
 
             @Override
@@ -221,16 +224,20 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
         viewPager.setCurrentItem(item.getItemId());
-        for (int i = 0; i < menu.size(); i++) {
-            menu.getItem(i).setChecked(false);
-        }
-        item.setChecked(true);
+        changeCheckedMenuItem(item.getItemId());
         ((DrawerLayout) findViewById(R.id.drawer_layout)).closeDrawer(GravityCompat.START);
         return true;
     }
 
+
+    private void changeCheckedMenuItem(int position) {
+        Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
+        for (int i = 0; i < menu.size(); i++) {
+            menu.getItem(i).setChecked(false);
+        }
+        menu.getItem(position).setChecked(true);
+    }
 
     class EmotesViewPagerAdapter extends ViewPagerAdapter {
 
@@ -286,17 +293,22 @@ public class ChatActivity extends AppCompatActivity
         viewPagerAdapter.channels.addAll(client.getChannelList());
         //Stream.of(client.getChannelList()).forEach(c -> Log.d(TAG, c.getName()));
         viewPagerAdapter.notifyDataSetChanged();
-        viewPager.setCurrentItem(1);
-        int i = 0;
+        if (viewPagerAdapter.channels.size() > 1)
+            loadMenu();
+
+    }
+
+    public void loadMenu() {
         Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
         menu.removeGroup(0);
-        for (Channel ch : client.getChannelList()) {
-            menu.add(0, i++, Menu.CATEGORY_CONTAINER, getChannelName(ch))
+        List<Channel> channels = client.getChannelList();
+        for (int i = 0; i < channels.size(); i++) {
+            menu.add(0, i, Menu.CATEGORY_CONTAINER, getChannelName(channels.get(i)))
                     .setIcon(i == 1 ? android.R.drawable.ic_dialog_info : android.R.drawable.stat_notify_chat)
                     .setCheckable(true);
         }
-        menu.getItem(menu.size() == 1 ? 0 : 1).setChecked(true);
-
+        viewPager.setCurrentItem(1);
+        menu.getItem(1).setChecked(true);
     }
 
     private String getChannelName(Channel channel) {
