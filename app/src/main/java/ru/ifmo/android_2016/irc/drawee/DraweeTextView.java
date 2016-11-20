@@ -18,6 +18,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.text.Spanned;
 import android.util.AttributeSet;
 import android.widget.TextView;
@@ -43,6 +44,7 @@ public class DraweeTextView extends TextView {
         super(context, attrs, defStyleAttr);
     }
 
+    @SuppressWarnings("unused")
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     public DraweeTextView(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
@@ -90,7 +92,7 @@ public class DraweeTextView extends TextView {
     }
 
     @Override
-    public void invalidateDrawable(Drawable dr) {
+    public void invalidateDrawable(@NonNull Drawable dr) {
         if (mHasDraweeInText) {
             /* invalidate the whole view in this case because it's very
              * hard to know what the bounds of drawables actually is.
@@ -102,7 +104,7 @@ public class DraweeTextView extends TextView {
     }
 
     @Override
-    protected boolean verifyDrawable(Drawable who) {
+    protected boolean verifyDrawable(@NonNull Drawable who) {
         return super.verifyDrawable(who) || mHasDraweeInText
                 // only schedule animation on AnimatableDrawable
                 && (who instanceof ForwardingDrawable && who.getCurrent() instanceof AnimatableDrawable);

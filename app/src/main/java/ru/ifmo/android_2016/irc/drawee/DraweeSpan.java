@@ -123,14 +123,10 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
 
     @Override
     public void draw(Canvas canvas, CharSequence text, int start, int end, float x, int top, int y, int bottom, Paint paint) {
-//        String log = Stream.of(text, start, end, x, top, y, bottom)
-//                .map(String::valueOf)
-//                .collect(Collectors.joining(","));
-//        Log.d(TAG, log);
         try {
             super.draw(canvas, text, start, end, x + mMargin.left, top, y, bottom, paint);
-        } catch (IllegalArgumentException e) {
-            // not great solution but this crashes are annoying
+        } catch (RuntimeException e) {
+            //TODO: not great solution but this crashes are annoying
             e.printStackTrace();
         }
     }

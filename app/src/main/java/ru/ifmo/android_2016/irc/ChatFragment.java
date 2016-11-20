@@ -8,7 +8,6 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
 import android.text.util.Linkify;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -139,9 +138,11 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         if (adapter != null) {
             adapter.notifyItemChanged(adapter.messages.size());
             adapter.tryToClearOldMessages();
+            if (!isScrolling && (adapter.getItemCount() - 1) -
+                    layoutManager.findLastVisibleItemPosition() >= 10) {
+                fab.setVisibility(View.VISIBLE);
+            }
         }
-        if (!isScrolling && (recyclerView.getAdapter().getItemCount() - 1) - layoutManager.findLastVisibleItemPosition() >= 10)
-            fab.setVisibility(View.VISIBLE);
         if (autoScroll) {
             recyclerView.post(() -> {
                 recyclerView.scrollToPosition(adapter.getItemCount());
