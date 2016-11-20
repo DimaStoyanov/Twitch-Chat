@@ -3,13 +3,11 @@ package ru.ifmo.android_2016.irc.client;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.text.SpannableString;
 import android.util.Log;
 
 import com.annimon.stream.function.Function;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
@@ -18,7 +16,7 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
 /**
  * Created by ghost on 11/12/2016.
  */
-public class Channel {
+public final class Channel {
     private static final String TAG = Channel.class.getSimpleName();
     private Client client;
     @NonNull
@@ -49,8 +47,7 @@ public class Channel {
     }
 
     void add(Message msg, Function<Message, CharSequence> func) {
-        if (func != null) messages.add(func.apply(msg));
-        notifyUi();
+        if (func != null) add(func.apply(msg));
     }
 
     private void notifyUi() {
@@ -58,7 +55,9 @@ public class Channel {
     }
 
     void add(CharSequence msg) {
-        messages.add(msg);
+        synchronized (messages) {
+            messages.add(msg);
+        }
         notifyUi();
     }
 

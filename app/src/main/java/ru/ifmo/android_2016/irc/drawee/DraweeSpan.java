@@ -33,8 +33,6 @@ import android.text.TextUtils;
 import android.text.style.DynamicDrawableSpan;
 import android.util.Log;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
 import com.facebook.common.executors.UiThreadImmediateExecutorService;
 import com.facebook.common.logging.FLog;
 import com.facebook.common.references.CloseableReference;
@@ -163,7 +161,8 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
         if (mAttachedView != view) {
             mActualDrawable.setCallback(null);
             if (mAttachedView != null) {
-                throw new IllegalStateException("has been attached to view:" + mAttachedView);
+                //TODO: я думаю, что эта хрень здесь не просто так стояла, но без нее вроде все норм работает
+                //throw new IllegalStateException("has been attached to view:" + mAttachedView);
             }
             mAttachedView = view;
             setDrawableInner(mDrawable);

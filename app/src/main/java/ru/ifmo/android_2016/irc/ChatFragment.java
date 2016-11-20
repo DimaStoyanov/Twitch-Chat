@@ -116,6 +116,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     public void onMessageReceived() {
         if (adapter != null) {
             adapter.notifyItemChanged(adapter.messages.size());
+            adapter.tryToClearOldMessages();
         }
         if (autoScroll) {
             recyclerView.post(() -> {
@@ -152,6 +153,15 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         @Override
         public int getItemCount() {
             return messages.size();
+        }
+
+        public void tryToClearOldMessages() {
+            if (messages.size() > 300) {
+                synchronized (messages) {
+                    messages.subList(0, 199).clear();
+                }
+                notifyItemRangeRemoved(0, 200);
+            }
         }
 
 //        @Override

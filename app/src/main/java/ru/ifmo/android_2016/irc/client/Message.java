@@ -20,15 +20,23 @@ public class Message {
 
     public Date date;
 
-    @Nullable String optPrefix;
-    @NonNull private String command = "@NOT_SET";
-    @NonNull private List<String> params = Collections.emptyList();
-    @Nullable private String trailing;
+    @Nullable
+    String optPrefix;
+    @NonNull
+    private String command = "@NOT_SET";
+    @NonNull
+    private List<String> params = Collections.emptyList();
+    @Nullable
+    private String trailing;
 
-    @Nullable private String serverName;
-    @Nullable private String nickname;
-    @Nullable private String username;
-    @Nullable private String hostname;
+    @Nullable
+    private String serverName;
+    @Nullable
+    private String nickname;
+    @Nullable
+    private String username;
+    @Nullable
+    private String hostname;
 
     private static final Pattern actionPattern = Pattern.compile("\1ACTION ([^\1]+)\1");
     private boolean action = false;
@@ -90,7 +98,7 @@ public class Message {
     public Message setPrivmsg(String name, String message) {
         return Message.this
                 .setCommand("PRIVMSG")
-                .setParams(Collections.singletonList(message))
+                .setParams(Collections.singletonList(name))
                 .setTrailing(message);
     }
 
