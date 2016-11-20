@@ -64,7 +64,9 @@ import com.facebook.imagepipeline.request.ImageRequestBuilder;
  *
  * @author yrom
  */
+@SuppressWarnings("WeakerAccess")
 public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.Releasable {
+    @SuppressWarnings("unused")
     private static final String TAG = "DraweeSpan";
 
     private final DeferredReleaser mDeferredReleaser;
@@ -161,6 +163,7 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
         mIsAttached = true;
         if (mAttachedView != view) {
             mActualDrawable.setCallback(null);
+            //noinspection StatementWithEmptyBody
             if (mAttachedView != null) {
                 //TODO: я думаю, что эта хрень здесь не просто так стояла, но без нее вроде все норм работает
                 //throw new IllegalStateException("has been attached to view:" + mAttachedView);
@@ -294,9 +297,9 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
                     ? new OrientedDrawable(bitmapDrawable, closeableStaticBitmap.getRotationAngle()) : bitmapDrawable);
         } else if (closeableImage instanceof CloseableAnimatedImage) {
             if (mShouldShowAnim) {
-                AnimatedFactory afactory = ImagePipelineFactory.getInstance().getAnimatedFactory();
-                if (afactory != null) {
-                    Drawable drawable = afactory.getAnimatedDrawableFactory(mAttachedView.getContext())
+                AnimatedFactory aFactory = ImagePipelineFactory.getInstance().getAnimatedFactory();
+                if (aFactory != null) {
+                    Drawable drawable = aFactory.getAnimatedDrawableFactory(mAttachedView.getContext())
                             .create(closeableImage);
                     if (drawable instanceof AbstractAnimatedDrawable) {
                         ((AbstractAnimatedDrawable) drawable).setLogId(getId());
@@ -375,6 +378,7 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
     /**
      * DraweeSpan builder.
      */
+    @SuppressWarnings("unused")
     public static class Builder {
         String uri;
         int width = 100;
