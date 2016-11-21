@@ -9,34 +9,40 @@
     <application
         android:name=".IRCApplication"
         android:allowBackup="true"
+        android:fullBackupContent="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="false"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".ChannelsListActivity"
+            android:name=".NewChannelListActivity"
+            android:label="@string/irc_client"
             android:windowSoftInputMode="stateHidden|adjustPan">
-            <intent-filter>
+            <intent-filter android:label="@string/irc_client">
+                <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
             android:name=".ChatActivity"
-            android:theme="@style/AppTheme.Dark"
             android:windowSoftInputMode="stateHidden|adjustPan">
 
-            <!-- <meta-data -->
-            <!-- android:name="android.support.PARENT_ACTIVITY" -->
-            <!-- android:value=".ChannelsListActivity" /> -->
 
         </activity>
 
         <service
             android:name=".client.ClientService"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="false" />
+
+        <activity android:name=".PreferenceActivity">
+            <intent-filter>
+                <action android:name="ru.ifmo.android_2016.irc.ACTION_USER_PREFERENCE" />
+            </intent-filter>
+        </activity>
+
 
         <activity
             android:name=".TwitchLoginActivity"

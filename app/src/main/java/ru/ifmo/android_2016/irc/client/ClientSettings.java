@@ -5,7 +5,6 @@ import android.os.Parcelable;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -28,7 +27,11 @@ public class ClientSettings implements Parcelable, Serializable {
 
     @Deprecated
     public ClientSettings setChannel(String channel) {
-        this.channels = Arrays.asList(channel.split(","));
+        if (!this.channels.isEmpty() && getChannel().equals(name)) {
+            this.channels = Arrays.asList(channel.split(","));
+            this.name = getChannel();
+        } else
+            this.channels = Arrays.asList(channel.split(","));
         return this;
     }
 
@@ -97,6 +100,14 @@ public class ClientSettings implements Parcelable, Serializable {
     @Deprecated
     public String getChannel() {
         return channels.get(0);
+    }
+
+    public String getChannels() {
+        StringBuilder builder = new StringBuilder();
+        for (String s : channels) {
+            builder.append(s).append(",");
+        }
+        return builder.deleteCharAt(builder.length() - 1).toString();
     }
 
     public String getChannel(int index) {
@@ -189,4 +200,5 @@ public class ClientSettings implements Parcelable, Serializable {
             return new ClientSettings[size];
         }
     };
+
 }

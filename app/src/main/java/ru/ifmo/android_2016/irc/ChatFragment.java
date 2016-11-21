@@ -1,5 +1,7 @@
 package ru.ifmo.android_2016.irc;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -10,7 +12,9 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.util.Linkify;
 import android.util.Log;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
+import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,6 +40,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     private float startEventY;
     private boolean autoScroll = false, lastActionUp;
     private LinearLayoutManager layoutManager;
+    private ChatActivity activity;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -70,6 +75,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+        activity = (ChatActivity) context;
     }
 
     @Override
@@ -113,9 +119,9 @@ public class ChatFragment extends Fragment implements Channel.Callback {
                     if (startEventY - motionEvent.getY() > 30) {
                         // Action Down
                         fab.setVisibility(View.VISIBLE);
-                    } else if (motionEvent.getY() - startEventY > 50) {
-                        autoScroll = false;
+                    } else if (motionEvent.getY() - startEventY > 30) {
                         // Action Up
+                        autoScroll = false;
                     }
             }
             return false;
@@ -203,14 +209,63 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
         class ViewHolder extends RecyclerView.ViewHolder {
             private DraweeTextView itemView;
+            private float startY;
+            private long startTime;
 
             ViewHolder(View itemView) {
                 super(itemView);
                 this.itemView = (DraweeTextView) itemView;
                 this.itemView.setAutoLinkMask(Linkify.ALL);
                 this.itemView.setLinksClickable(true);
+                this.itemView.setOnTouchListener((view, motionEvent) -> {
+                    Log.d(TAG, motionEvent.toString());
+                    switch (motionEvent.getAction()) {
+                        case MotionEvent.ACTION_DOWN:
+                            startY = motionEvent.getY();
+                            startTime = System.currentTimeMillis();
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            if (System.currentTimeMillis() - startTime > 100 && Math.abs(motionEvent.getY() - startY) < 5) {
+                                this.itemView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+                                break;
+                            }
+                        case MotionEvent.ACTION_CANCEL:
+                        case MotionEvent.ACTION_UP:
+                            this.itemView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+                    }
+                    return false;
+                });
+                registerForContextMenu(this.itemView);
             }
+
         }
     }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Copy message").setOnMenuItemClickListener(menuItem -> {
+            DraweeTextView textView = (DraweeTextView) v;
+            ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Copied text", textView.getText()
+                    .subSequence(textView.getText().toString().indexOf(":") + 2, textView.getText().length()));
+            clipboard.setPrimaryClip(clip);
+            return false;
+        });
+        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Send message").setOnMenuItemClickListener(menuItem -> {
+            DraweeTextView textView = (DraweeTextView) v;
+            activity.sendMessage(textView.getText().
+                    subSequence(textView.getText().toString().indexOf(":") + 2, textView.getText().length()).toString());
+            return false;
+        });
+        menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Answer").setOnMenuItemClickListener(menuItem -> {
+            DraweeTextView textView = (DraweeTextView) v;
+            CharSequence message = "@" + textView.getText().subSequence(0, textView.getText().toString().indexOf(":")) + ", ";
+            activity.typeMessage.setText(message);
+            activity.typeMessage.setSelection(message.length());
+            return false;
+        });
+    }
+
+
 
 }
