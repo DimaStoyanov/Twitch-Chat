@@ -37,8 +37,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     FloatingActionButton fab;
     private MessageAdapter adapter;
     private long serverId;
-    private float startEventY;
-    private boolean autoScroll = false, lastActionUp;
+    private boolean autoScroll = true;
     private LinearLayoutManager layoutManager;
     private ChatActivity activity;
 
@@ -100,31 +99,6 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(adapter = new MessageAdapter(channel.getMessages()));
         fab = activity.fab;
-        fab.setOnClickListener(view1 -> {
-            recyclerView.post(() -> {
-                autoScroll = true;
-                layoutManager.scrollToPosition(adapter.getItemCount() - 1);
-            });
-            fab.setVisibility(View.GONE);
-        });
-        recyclerView.setOnTouchListener((view1, motionEvent) -> {
-            switch (motionEvent.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    startEventY = motionEvent.getY();
-                    break;
-                case MotionEvent.ACTION_UP:
-                    lastActionUp = motionEvent.getY() - startEventY > 0;
-                    Log.d(TAG, "Motion event diff = " + (startEventY - motionEvent.getY()));
-                    if (startEventY - motionEvent.getY() > 30) {
-                        // Action Down
-                        fab.setVisibility(View.VISIBLE);
-                    } else if (motionEvent.getY() - startEventY > 30) {
-                        // Action Up
-                        autoScroll = false;
-                    }
-            }
-            return false;
-        });
 
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
@@ -134,11 +108,12 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                if (fab.getVisibility() == View.VISIBLE &&
-                        (recyclerView.getAdapter().getItemCount() - 1 - layoutManager.findLastVisibleItemPosition()) <= 5) {
-//                    fab.hide();
-                    if (!lastActionUp)
-                        autoScroll = true;
+                if (layoutManager.findLastCompletelyVisibleItemPosition()
+                        == adapter.messages.size() - 1) {
+                    autoScroll = true;
+                    fab.hide();
+                } else {
+                    autoScroll = false;
                 }
             }
         });
@@ -153,7 +128,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             adapter.notifyItemChanged(adapter.messages.size());
         }
         if (autoScroll) {
-            recyclerView.post(() -> recyclerView.smoothScrollToPosition(adapter.getItemCount() - 1));
+            recyclerView.post(() -> recyclerView.scrollToPosition(adapter.getItemCount() - 1));
         }
     }
 
@@ -161,6 +136,14 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @UiThread
     public void onMessagesRemoved(int start, int count) {
         adapter.notifyItemRangeRemoved(start, count);
+    }
+
+    public void scrollToBottom() {
+        recyclerView.post(() -> {
+            autoScroll = true;
+            layoutManager.scrollToPosition(adapter.getItemCount() - 1);
+        });
+        fab.hide();
     }
 
 
@@ -232,7 +215,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Copy message").setOnMenuItemClickListener(menuItem -> {
+        menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Copy to clipboard this message").setOnMenuItemClickListener(menuItem -> {
             DraweeTextView textView = (DraweeTextView) v;
             ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
             ClipData clip = ClipData.newPlainText("Copied text", textView.getText()
@@ -240,9 +223,9 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             clipboard.setPrimaryClip(clip);
             return false;
         });
-        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Send message").setOnMenuItemClickListener(menuItem -> {
+        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Copy this message").setOnMenuItemClickListener(menuItem -> {
             DraweeTextView textView = (DraweeTextView) v;
-            activity.sendMessage(textView.getText().
+            activity.typeMessage.setText(textView.getText().
                     subSequence(textView.getText().toString().indexOf(":") + 2, textView.getText().length()).toString());
             return false;
         });
@@ -254,7 +237,6 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             return false;
         });
     }
-
 
 
 }

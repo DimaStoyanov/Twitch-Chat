@@ -5,17 +5,17 @@ import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 /**
  * Created by ghost on 11/21/2016.
  */
 
+@SuppressWarnings("unused")
 public class FloatingActionButtonScrollBehavior
         extends FloatingActionButton.Behavior {
     public FloatingActionButtonScrollBehavior(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        super();
     }
 
     @Override
@@ -25,13 +25,11 @@ public class FloatingActionButtonScrollBehavior
         super.onNestedScroll(coordinatorLayout, child, target, dxConsumed, dyConsumed, dxUnconsumed,
                 dyUnconsumed);
 
-        if (dyConsumed > 0 && child.getVisibility() == View.VISIBLE) {
-            child.show();
-        } else if (dyConsumed < 0 && child.getVisibility() != View.VISIBLE) {
+        if (dyConsumed < 0 && child.getVisibility() == View.VISIBLE) {
             child.hide();
+        } else if (dyConsumed > 0 && child.getVisibility() != View.VISIBLE) {
+            child.show();
         }
-
-        Log.d("kek", "onNestedScroll");
     }
 
     @Override

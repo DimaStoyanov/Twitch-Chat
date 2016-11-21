@@ -24,15 +24,17 @@ import static ru.ifmo.android_2016.irc.utils.ThemeUtils.onActivityCreateSetTheme
  * Start time : 4:28
  */
 
-public class PreferenceActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class PreferenceActivity extends AppCompatActivity
+        implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_preferences);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         changeTheme(prefs.getString(THEME_KEY, ""));
         onActivityCreateSetTheme(this);
+        setContentView(R.layout.activity_preferences);
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         toolbar.setTitle("Settings");
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));

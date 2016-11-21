@@ -135,8 +135,6 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
 
     public void setImage(Drawable drawable) {
         mLayout.set(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-//        mPlaceHolder.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-//        mActualDrawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
         layout();
         if (mDrawable != drawable) {
             releaseDrawable(mDrawable);

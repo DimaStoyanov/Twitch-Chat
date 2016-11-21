@@ -132,6 +132,9 @@ public class ChatActivity extends AppCompatActivity
                 if (chatTitle != null && viewPagerAdapter.getPageTitle(position) != null) {
                     chatTitle.setText(viewPagerAdapter.getPageTitle(position));
                 }
+                fab.setOnClickListener(view1 -> {
+                    viewPagerAdapter.fragments.get(position).scrollToBottom();
+                });
             }
 
             @Override
@@ -148,7 +151,7 @@ public class ChatActivity extends AppCompatActivity
         toolbar.setNavigationOnClickListener(v -> finish());
         //TODO: Temp
         tabLayout.setVisibility(View.GONE);
-        ((AppBarLayout.LayoutParams)toolbar.getLayoutParams())
+        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams())
                 .setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
         //TODO: Temp
 
@@ -338,6 +341,7 @@ public class ChatActivity extends AppCompatActivity
 
     private class ViewPagerAdapter extends FragmentPagerAdapter {
         private List<Channel> channels = new ArrayList<>();
+        private List<ChatFragment> fragments = new ArrayList<>();
 
         ViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
@@ -346,7 +350,9 @@ public class ChatActivity extends AppCompatActivity
 
         @Override
         public Fragment getItem(int position) {
-            return ChatFragment.newInstance(id, channels.get(position).getName());
+            ChatFragment fragment = ChatFragment.newInstance(id, channels.get(position).getName());
+            fragments.add(position, fragment);
+            return fragment;
         }
 
         @Override

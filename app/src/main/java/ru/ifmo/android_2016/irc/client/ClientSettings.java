@@ -5,6 +5,7 @@ import android.os.Parcelable;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,7 +16,7 @@ public class ClientSettings implements Parcelable, Serializable {
     String address;
     String username;
     String password;
-    List<String> channels;
+    List<String> channels = Collections.emptyList();
     String[] nicks;
     int port = 6667;
     boolean ssl, twitch;

@@ -32,7 +32,6 @@
                 <TextView
                     android:id="@+id/title"
                     style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
-                    android:id="@+id/title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
@@ -69,12 +68,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end|bottom"
-            android:src="@drawable/fab_scroll_down"
-            android:visibility="visible"
-            app:fabSize="mini"
             android:layout_margin="16dp"
-            app:layout_behavior=".ui.FloatingActionButtonScrollBehavior"
-            app:backgroundTint="@color/colorPrimary" />
+            android:src="@drawable/fab_scroll_down"
+            android:visibility="gone"
+            app:backgroundTint="@color/colorPrimary"
+            app:fabSize="mini"
+            app:layout_behavior=".ui.FloatingActionButtonScrollBehavior" />
 
     </android.support.design.widget.CoordinatorLayout>
 
