@@ -1,13 +1,11 @@
 package ru.ifmo.android_2016.irc;
 
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.graphics.PorterDuff;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.UiThread;
@@ -22,47 +20,52 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Patterns;
-import android.view.LayoutInflater;
+import android.view.ContextMenu;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
+import android.widget.ListView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
+import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
 import ru.ifmo.android_2016.irc.loader.ResultType;
 import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
-import ru.ifmo.android_2016.irc.utils.IOUtils;
+import ru.ifmo.android_2016.irc.utils.ThemeUtils;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+import static ru.ifmo.android_2016.irc.client.ClientService.GET_SERVER_LIST;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
 import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
-import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_DARK_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.THEME_DARK;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.THEME_LIGHT;
 import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeTheme;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeThemeAndRecreate;
 import static ru.ifmo.android_2016.irc.utils.ThemeUtils.onActivityCreateSetTheme;
 
-public class ChannelsListActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+/**
+ * Created by Dima Stoyanov on 21.11.2016.
+ * Project Android-IRC
+ * Start time : 18:09
+ */
 
-    private LinearLayout ll;
+
+public class NewChannelListActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+
+    private ArrayAdapter<String> adapter;
+    private ArrayList<ClientSettings> clientSettings;
+    private ArrayList<String> channels;
     private boolean updateDataFromCache = false;
-    private ProgressBar pb;
     public final String TAG = ChannelsListActivity.class.getSimpleName();
     private LocalBroadcastManager lbm;
     private Context context;
@@ -70,20 +73,23 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Context appContext = getApplicationContext();
-        SharedPreferences prefs =
-                getDefaultSharedPreferences(appContext);
+
+        channels = new ArrayList<>();
+        clientSettings = new ArrayList<>();
+        SharedPreferences prefs = getDefaultSharedPreferences(getApplicationContext());
         prefs.registerOnSharedPreferenceChangeListener(this);
-        changeTheme(prefs.getString(THEME_KEY, "").equals(THEME_DARK_KEY) ? THEME_DARK : THEME_LIGHT);
+        changeTheme(prefs.getString(THEME_KEY, ""));
         onActivityCreateSetTheme(this);
-        setContentView(R.layout.activity_channels_list);
-        ll = (LinearLayout) findViewById(R.id.channels_ll);
-        pb = (ProgressBar) findViewById(R.id.pbar);
-        Button button = (Button) findViewById(R.id.twitch_login);
-        button.getBackground().setColorFilter(0xFF6441A5, PorterDuff.Mode.MULTIPLY);
-        button.setOnClickListener(this::onTwitchLoginClick);
+
+        setContentView(R.layout.activity_new_channel_list);
+        adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, channels);
+
+        ListView listView = (ListView) findViewById(R.id.list_veiw);
+        listView.setAdapter(adapter);
+        listView.setOnItemClickListener((adapterView, view, i, l) -> startActivity(new Intent(context, ChatActivity.class)
+                .putExtra(SERVER_ID, clientSettings.get(i).getId())));
+        registerForContextMenu(listView);
         context = this;
-        Log.d(TAG, "On create");
         startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
         lbm = LocalBroadcastManager.getInstance(this);
         lbm.registerReceiver(new BroadcastReceiver() {
@@ -94,165 +100,58 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
         }, new IntentFilter(ServerList.class.getCanonicalName()));
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+//        updateChannelList();
     }
 
 
-
-
-
-    @UiThread
-    private void updateChannelList() {
-        pb.setVisibility(View.GONE);
-        ll.removeAllViews();
-        Collection<ClientSettings> data = ServerList.getInstance().values();
-        View item;
-        Log.d(TAG, "LOGIN DATA:");
-        for (ClientSettings aData : data) {
-            Log.d(TAG, aData.toString());
-        }
-        LayoutInflater inflater = LayoutInflater.from(this);
-        for (ClientSettings aData : data) {
-            item = inflater.inflate(R.layout.chanel_item, null);
-            Button selectChannel = (Button) item.findViewById(R.id.selected_channel);
-
-            selectChannel.setText(aData.getName());
-            selectChannel.setOnClickListener(new OnSelectChannelListener(aData));
-            (item.findViewById(R.id.delete_channel)).setOnClickListener(new OnDeleteChannelListener(aData));
-            (item.findViewById(R.id.edit_channel)).setOnClickListener(new OnEditChannelListener(aData));
-            ll.addView(item);
-        }
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Log.d(TAG, "On pause");
+        updateDataFromCache = false;
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "On start");
+        if (!updateDataFromCache) {
+            startService(new Intent(this, ClientService.class).setAction(GET_SERVER_LIST));
+            updateDataFromCache = true;
+        }
+
+    }
+
+    @UiThread
+    private void updateChannelList() {
+        if (ServerList.getInstance() == null)
+            return;
+        Collection<ClientSettings> data = ServerList.getInstance().values();
+        clientSettings = new ArrayList<>();
+        channels = new ArrayList<>();
+        clientSettings.addAll(data);
+        for (ClientSettings cl : clientSettings) {
+            channels.add(cl.getName());
+        }
+
+        Log.d(TAG, clientSettings.toString());
+        Log.d(TAG, channels.toString());
+        adapter.clear();
+        adapter.addAll(channels);
+        adapter.notifyDataSetChanged();
+    }
+
+
+    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        if (s.equals("pref_theme"))
-            changeThemeAndRecreate(this, sharedPreferences.getString(s, ""));
-    }
-
-    @UiThread
-    private class OnSelectChannelListener implements View.OnClickListener {
-
-        private final long id;
-
-        OnSelectChannelListener(ClientSettings data) {
-            this.id = data.getId();
-        }
-
-        @Override
-        public void onClick(View v) {
-            Log.d(TAG, "On select channel click");
-            startActivity(new Intent(ChannelsListActivity.this, ChatActivity.class)
-                    .putExtra(SERVER_ID, id));
-        }
-    }
-
-    @UiThread
-    private class OnDeleteChannelListener implements View.OnClickListener {
-
-        private long id;
-
-        OnDeleteChannelListener(ClientSettings data) {
-            this.id = data.getId();
-        }
-
-        @Override
-        public void onClick(View v) {
-            ((ViewGroup) (v.getParent()).getParent()).removeView((View) v.getParent());
-            AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... voids) {
-                    ServerList.getInstance().remove(id);
-                    return null;
-                }
-            };
-            deleteTask.execute();
-            Log.d(TAG, "Delete channel");
-        }
-    }
-
-    @UiThread
-    private class OnEditChannelListener implements View.OnClickListener {
-        private ClientSettings data;
-
-        OnEditChannelListener(ClientSettings data) {
-            this.data = data;
-        }
-
-        @Override
-        public void onClick(final View edView) {
-            Log.d(TAG, "On edit channel click");
-            AlertDialog.Builder builder = new AlertDialog.Builder(context);
-            builder.setPositiveButton("Ok", null)
-                    .setNegativeButton("Cancel", null)
-                    .setView(R.layout.dialog_login);
-            final AlertDialog dialog = builder.create();
-
-            dialog.setOnShowListener(dialogInterface -> {
-                final EditText name = (EditText) dialog.findViewById(R.id.name);
-                final EditText server = (EditText) dialog.findViewById(R.id.server);
-                final EditText port = (EditText) dialog.findViewById(R.id.port);
-                final EditText username = (EditText) dialog.findViewById(R.id.username);
-                final EditText password = (EditText) dialog.findViewById(R.id.password);
-                final EditText channel = (EditText) dialog.findViewById(R.id.channel);
-                final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
-                name.setText(data.getName());
-                server.setText(data.getAddress());
-                port.setText(Integer.toString(data.getPort()));
-                username.setText(data.getUsername());
-                password.setText(data.getPassword());
-                channel.setText(data.getChannel());
-                ssl.setChecked(data.isSsl());
-                dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dialog.dismiss());
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
-
-                    Toast toast = new Toast(context);
-                    if (!TextUtils.isEmpty(server.getText()) &&
-                            !TextUtils.isEmpty(port.getText())
-                           /* && !TextUtils.isEmpty(username.getText())*/
-                            && !TextUtils.isEmpty(password.getText())
-                            && !TextUtils.isEmpty(channel.getText())) {
-
-                        dialog.cancel();
-
-                        data
-                                .setName(name.getText().toString())
-                                .setAddress(server.getText().toString())
-                                .setPort(Integer.parseInt(port.getText().toString()))
-                                .setUsername(username.getText().toString())
-                                .setPassword(password.getText().toString())
-                                .setChannel(channel.getText().toString())
-                                .setSsl(ssl.isChecked());
-                        updateChannelList();
-                    } else {
-                        toast.cancel();
-                        toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
-                        toast.show();
-                    }
-                });
-            });
-            dialog.show();
+        switch (s) {
+            case PreferencesConstant.THEME_KEY:
+                ThemeUtils.changeThemeAndRecreate(this, sharedPreferences.getString(s, ""));
         }
     }
 
 
-//    class EditChannelTask extends AsyncTask<Object, Void, Void> {
-//        @Override
-//        @WorkerThread
-//        protected Void doInBackground(Object... params) {
-//            ServerList.getInstance().put((Long) params[0], (ClientSettings) params[1]);
-//            return null;
-//        }
-//
-//        @Override
-//        @UiThread
-//        protected void onPostExecute(Void aVoid) {
-//            super.onPostExecute(aVoid);
-//            updateChannelList();
-//        }
-//    }
-
-    @UiThread
-    public void onAddChannelClick(View v) {
+    public void onAddChannelClick(View view) {
         Log.d(TAG, "On add channel click");
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setPositiveButton("Ok", null)
@@ -270,13 +169,12 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
             final EditText password = (EditText) dialog.findViewById(R.id.password);
             final EditText channel = (EditText) dialog.findViewById(R.id.channel);
             final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dialog.dismiss());
-            dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view -> {
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view1 -> dialog.dismiss());
+            dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view1 -> {
 
                 Toast toast = new Toast(context);
                 if (!TextUtils.isEmpty(server.getText()) &&
                         !TextUtils.isEmpty(port.getText())
-                        /*&& !TextUtils.isEmpty(username.getText())*/
                         && !TextUtils.isEmpty(password.getText())
                         && !TextUtils.isEmpty(channel.getText())) {
 
@@ -393,49 +291,23 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
         dialog.show();
     }
 
-
-    public void onTwitchLoginClick(View v) {
+    public void onTwitchOauthClick(View view) {
         startActivityForResult(new Intent(this, TwitchLoginActivity.class), 1);
     }
 
-    @UiThread
-    private boolean checkInternetConnection(boolean flag) {
-        if (!flag) return false;
-        if (!IOUtils.isConnectionAvailable(this, false)) {
-            showNoInternetDialog();
-        } else
-            return true;
-        return false;
-    }
-
-    @UiThread
-    private void showNoInternetDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("No internet connection")
-                .setNegativeButton("Retry", (dialogInterface, i) -> {
-                    dialogInterface.cancel();
-                    checkInternetConnection(true);
-                }).setNeutralButton("Exit", (dialogInterface, i) -> finish()).setPositiveButton("OK", (dialogInterface, i) -> {
-            dialogInterface.cancel();
-            checkInternetConnection(false);
-
-        });
-        builder.create().show();
-
+    public void onSettingsClick(View view) {
+        startActivityForResult(new Intent(this, PreferenceActivity.class), 16);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == 1 && resultCode == 200) {
-            getSupportLoaderManager().initLoader(10, null, new NickLoaderCallback(data.getStringExtra("ru.ifmo.android_2016.irc.Token")));
-        }
+            getSupportLoaderManager().initLoader(10, null,
+                    new NewChannelListActivity.NickLoaderCallback(data.getStringExtra("ru.ifmo.android_2016.irc.Token")));
 
-        if (requestCode == 228) {
-            // TODO
-            Toast.makeText(this, "Activity result", Toast.LENGTH_SHORT).show();
         }
-        super.onActivityResult(requestCode, resultCode, data);
     }
+
 
     private class NickLoaderCallback implements LoaderManager.LoaderCallbacks<LoadResult<String>> {
         private final String token;
@@ -446,7 +318,7 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
 
         @Override
         public Loader<LoadResult<String>> onCreateLoader(int id, Bundle args) {
-            return new TwitchUserNickLoader(ChannelsListActivity.this, token);
+            return new TwitchUserNickLoader(context, token);
         }
 
         @Override
@@ -455,7 +327,7 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
             AlertDialog.Builder builder;
             final AlertDialog alert;
             if (result.resultType == ResultType.OK) {
-                builder = new AlertDialog.Builder(ChannelsListActivity.this)
+                builder = new AlertDialog.Builder(context)
                         .setCancelable(true)
                         .setTitle("Type channel")
                         .setMessage("You can also type several channels, separated by a comma")
@@ -468,7 +340,7 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
 
                 alert.setOnShowListener(dialogInterface -> {
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
-                        Toast toast = new Toast(ChannelsListActivity.this);
+                        Toast toast = new Toast(context);
 
                         @Override
                         public void onClick(View view) {
@@ -490,20 +362,18 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
                                         .putExtra(SERVER_ID, id));
                             } else {
                                 toast.cancel();
-                                toast = Toast.makeText(ChannelsListActivity.this, "Empty channel", Toast.LENGTH_SHORT);
+                                toast = Toast.makeText(context, "Empty channel", Toast.LENGTH_SHORT);
                                 toast.show();
                             }
                         }
                     });
                     alert.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> alert.dismiss());
                 });
-                pb.setVisibility(View.GONE);
                 alert.show();
                 Log.d(TAG, "Twitch Authorized successfully");
             } else {
-                Toast.makeText(ChannelsListActivity.this, "error request api", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, "error request api", Toast.LENGTH_SHORT).show();
             }
-            pb.setVisibility(View.GONE);
             getSupportLoaderManager().destroyLoader(loader.getId());
         }
 
@@ -522,21 +392,97 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
     @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
         getMenuInflater().inflate(R.menu.channel_list_menu, menu);
-        menu.add(1, 1, 0, "Settings").setOnMenuItemClickListener(menuItem -> {
-            startActivityForResult(new Intent(this, PreferenceActivity.class), 228);
-            return false;
-        });
         return true;
     }
 
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            //case R.id.dark_theme:
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        if (v.getId() == R.id.list_veiw) {
+            AdapterView.AdapterContextMenuInfo acmi = (AdapterView.AdapterContextMenuInfo) menuInfo;
+
+            ListView lv = (ListView) v;
+            menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Run").setOnMenuItemClickListener(menuItem -> {
+                startActivity(new Intent(context, ChatActivity.class)
+                        .putExtra(SERVER_ID, clientSettings.get(acmi.position).getId()));
+                return false;
+            });
+            menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Edit").setOnMenuItemClickListener(menuItem -> {
+                onEditChannel(clientSettings.get(acmi.position));
+                return false;
+            });
+            menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Delete").setOnMenuItemClickListener(menuItem -> {
+                AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
+                    @Override
+                    protected Void doInBackground(Void... voids) {
+                        ServerList.getInstance().remove(clientSettings.get(acmi.position).getId());
+                        return null;
+                    }
+
+                    @Override
+                    protected void onPostExecute(Void aVoid) {
+                        updateChannelList();
+                    }
+                };
+                deleteTask.execute();
+                Log.d(TAG, "Delete channel");
+                return false;
+            });
 
         }
-
-        return super.onOptionsItemSelected(item);
     }
+
+
+    private void onEditChannel(ClientSettings data) {
+        Log.d(TAG, "On edit channel click");
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
+        builder.setPositiveButton("Ok", null)
+                .setNegativeButton("Cancel", null)
+                .setView(R.layout.dialog_login);
+        final AlertDialog dialog = builder.create();
+
+        dialog.setOnShowListener(dialogInterface -> {
+            final EditText name = (EditText) dialog.findViewById(R.id.name);
+            final EditText server = (EditText) dialog.findViewById(R.id.server);
+            final EditText port = (EditText) dialog.findViewById(R.id.port);
+            final EditText username = (EditText) dialog.findViewById(R.id.username);
+            final EditText password = (EditText) dialog.findViewById(R.id.password);
+            final EditText channel = (EditText) dialog.findViewById(R.id.channel);
+            final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
+            name.setText(data.getName());
+            server.setText(data.getAddress());
+            port.setText(Integer.toString(data.getPort()));
+            username.setText(data.getUsername());
+            password.setText(data.getPassword());
+            channel.setText(data.getChannels());
+            ssl.setChecked(data.isSsl());
+            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dialog.dismiss());
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
+
+                Toast toast = new Toast(context);
+                if (!TextUtils.isEmpty(server.getText()) &&
+                        !TextUtils.isEmpty(port.getText())
+                        && !TextUtils.isEmpty(password.getText())
+                        && !TextUtils.isEmpty(channel.getText())) {
+
+                    dialog.cancel();
+
+                    data.setName(name.getText().toString())
+                            .setPort(Integer.parseInt(port.getText().toString()))
+                            .setUsername(username.getText().toString())
+                            .setPassword(password.getText().toString())
+                            .setChannel(channel.getText().toString())
+                            .setSsl(ssl.isChecked());
+                    updateChannelList();
+                } else {
+                    toast.cancel();
+                    toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+        });
+        dialog.show();
+    }
+
 }
+

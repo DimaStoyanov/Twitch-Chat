@@ -1,6 +1,8 @@
 package ru.ifmo.android_2016.irc;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -42,10 +44,15 @@ import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
 
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
+import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
+import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeTheme;
+import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeThemeAndRecreate;
+import static ru.ifmo.android_2016.irc.utils.ThemeUtils.onActivityCreateSetTheme;
 
 public class ChatActivity extends AppCompatActivity
-        implements ClientService.OnConnectedListener, Client.Callback, NavigationView.OnNavigationItemSelectedListener {
+        implements ClientService.OnConnectedListener, Client.Callback, NavigationView.OnNavigationItemSelectedListener, SharedPreferences.OnSharedPreferenceChangeListener {
     private static final String TAG = ChatActivity.class.getSimpleName();
 
     EditText typeMessage;
@@ -54,7 +61,7 @@ public class ChatActivity extends AppCompatActivity
     private ClientSettings clientSettings;
     @Nullable
     Client client;
-    private ViewPagerAdapter viewPagerAdapter;
+    ViewPagerAdapter viewPagerAdapter;
     ViewPager viewPager, emotesViewPager;
     Toolbar toolbar;
     private boolean spamMode = false;
@@ -72,9 +79,11 @@ public class ChatActivity extends AppCompatActivity
         } else {
             load();
         }
-
+        SharedPreferences prefs = getDefaultSharedPreferences(getApplicationContext());
+        prefs.registerOnSharedPreferenceChangeListener(this);
+        changeTheme(prefs.getString(THEME_KEY, ""));
+        onActivityCreateSetTheme(this);
         initView();
-
 
         // Determine keyboard height
         LinearLayout ll = (LinearLayout) findViewById(R.id.root_view);
@@ -105,8 +114,7 @@ public class ChatActivity extends AppCompatActivity
             Log.d(TAG, String.valueOf(viewPager.getCurrentItem()));
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             if (!TextUtils.isEmpty(typeMessage.getText()))
-                viewPagerAdapter.channels.get(viewPager.getCurrentItem())
-                        .send(typeMessage.getText().toString());
+                sendMessage(typeMessage.getText().toString());
             if (!spamMode) typeMessage.setText("");
         });
 
@@ -182,6 +190,10 @@ public class ChatActivity extends AppCompatActivity
         ClientService.startClient(this, id);
     }
 
+    public void sendMessage(String message) {
+        viewPagerAdapter.channels.get(viewPager.getCurrentItem())
+                .send(message);
+    }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -237,6 +249,14 @@ public class ChatActivity extends AppCompatActivity
             menu.getItem(i).setChecked(false);
         }
         menu.getItem(position).setChecked(true);
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        switch (s) {
+            case THEME_KEY:
+                changeThemeAndRecreate(this, sharedPreferences.getString(s, ""));
+        }
     }
 
     class EmotesViewPagerAdapter extends ViewPagerAdapter {
@@ -351,6 +371,10 @@ public class ChatActivity extends AppCompatActivity
                     spamMode = !menuItem.isChecked();
                     return false;
                 });
+        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Settings").setOnMenuItemClickListener(menuItem -> {
+            startActivityForResult(new Intent(this, PreferenceActivity.class), 228);
+            return false;
+        });
         return true;
     }
 }

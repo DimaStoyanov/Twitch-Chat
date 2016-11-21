@@ -33,4 +33,31 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="twitch_chat">Twitch Chat</string>
     <string name="emotes">emotes</string>
+    <string name="title_activity_settings">Settings</string>
+
+
+    <!--Settings-->
+
+    <string name="theme">Theme</string>
+    <string-array name="pref_theme">
+        <item>Light</item>
+        <item>Dark</item>
+    </string-array>
+
+    <string-array name="text_size">
+        <item>10</item>
+        <item>12</item>
+        <item>14</item>
+        <item>16</item>
+        <item>18</item>
+        <item>20</item>
+    </string-array>
+
+
+    <!-- Strings related to Settings -->
+
+    <!-- Example General settings -->
+    <string name="pref_header_general">General</string>
+
+
 </resources>
