@@ -7,7 +7,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.CoordinatorLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
@@ -59,6 +59,7 @@ public class ChatActivity extends AppCompatActivity
     Toolbar toolbar;
     private boolean spamMode = false;
     private TextView chatTitle;
+    protected FloatingActionButton fab;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,14 +92,12 @@ public class ChatActivity extends AppCompatActivity
             if (heightDifference > 400) {
                 keyboardHeight = heightDifference;
             }
-// zaebal etot log
 //            Log.d("Keyboard Size", "Size: " + heightDifference);
         });
 
 
         typeMessage.setOnTouchListener(((view, motionEvent) -> {
-            if (isEmotesShowing())
-                closeEmotes();
+            if (isEmotesShowing()) closeEmotes();
             return false;
         }));
 
@@ -165,6 +164,7 @@ public class ChatActivity extends AppCompatActivity
             onChannelChange();
         }
 
+        fab = (FloatingActionButton) findViewById(R.id.fab);
     }
 
 
@@ -304,7 +304,7 @@ public class ChatActivity extends AppCompatActivity
         List<Channel> channels = client.getChannelList();
         for (int i = 0; i < channels.size(); i++) {
             menu.add(0, i, Menu.CATEGORY_CONTAINER, getChannelName(channels.get(i)))
-                    .setIcon(i == 1 ? android.R.drawable.ic_dialog_info : android.R.drawable.stat_notify_chat)
+                    .setIcon(i == 0 ? android.R.drawable.ic_dialog_info : android.R.drawable.stat_notify_chat)
                     .setCheckable(true);
         }
         viewPager.setCurrentItem(1);
@@ -343,7 +343,7 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 0, Menu.FIRST, "Clear type message after send")
+        menu.add(Menu.NONE, Menu.NONE, Menu.FIRST, "Clear type message after send")
                 .setCheckable(true)
                 .setChecked(true)
                 .setOnMenuItemClickListener(menuItem -> {

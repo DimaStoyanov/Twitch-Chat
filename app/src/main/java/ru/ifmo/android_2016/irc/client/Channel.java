@@ -1,5 +1,7 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -18,6 +20,7 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
  */
 public final class Channel {
     private static final String TAG = Channel.class.getSimpleName();
+    private final Handler mainThreadHandler;
     private Client client;
     @NonNull
     private final String name;
@@ -40,6 +43,7 @@ public final class Channel {
         this.messages = new ArrayList<>(16);
         this.postExecute = postExecute;
         new BttvEmotesLoaderTask().execute(name);
+        mainThreadHandler = new Handler(Looper.getMainLooper());
     }
 
     void add(Message msg) {
@@ -51,13 +55,21 @@ public final class Channel {
     }
 
     private void notifyUi() {
-        if (ui != null) ui.runOnUiThread(ui::onMessageReceived);
+        if (ui != null) mainThreadHandler.post(ui::onMessageReceived);
     }
 
     void add(CharSequence msg) {
         synchronized (messages) {
             messages.add(msg);
         }
+        mainThreadHandler.post(() -> {
+            if (messages.size() > 300) {
+                synchronized (messages) {
+                    messages.subList(0, 99).clear();
+                }
+                if (ui != null) ui.onMessagesRemoved(0, 100);
+            }
+        });
         notifyUi();
     }
 
@@ -97,9 +109,10 @@ public final class Channel {
     }
 
     public interface Callback {
-        void runOnUiThread(Runnable run);
-
         @UiThread
         void onMessageReceived();
+
+        @UiThread
+        void onMessagesRemoved(int start, int count);
     }
 }

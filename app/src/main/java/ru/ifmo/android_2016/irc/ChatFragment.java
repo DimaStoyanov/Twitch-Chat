@@ -9,9 +9,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -90,38 +88,37 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        autoScroll = true;
         View view = getView();
         recyclerView = (RecyclerView) view.findViewById(R.id.messages);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(adapter = new MessageAdapter(channel.getMessages()));
-        fab = (FloatingActionButton) view.findViewById(R.id.fab);
-        fab.setOnClickListener(view1 -> {
-            recyclerView.post(() -> {
-                autoScroll = true;
-                layoutManager.scrollToPosition(adapter.getItemCount() - 1);
-            });
-            fab.setVisibility(View.GONE);
-        });
-        recyclerView.setOnTouchListener((view1, motionEvent) -> {
-            switch (motionEvent.getAction()) {
-                case MotionEvent.ACTION_DOWN:
-                    startEventY = motionEvent.getY();
-                    break;
-                case MotionEvent.ACTION_UP:
-                    lastActionUp = motionEvent.getY() - startEventY > 0;
-                    Log.d(TAG, "Motion event diff = " + (startEventY - motionEvent.getY()));
-                    if (startEventY - motionEvent.getY() > 30) {
-                        // Action Down
-                        fab.setVisibility(View.VISIBLE);
-                    } else if (motionEvent.getY() - startEventY > 50) {
-                        autoScroll = false;
-                        // Action Up
-                    }
-            }
-            return false;
-        });
+        fab = activity.fab;
+//        fab.setOnClickListener(view1 -> {
+//            recyclerView.post(() -> {
+//                autoScroll = true;
+//                layoutManager.scrollToPosition(adapter.getItemCount() - 1);
+//            });
+//            fab.hide();
+//        });
+//        recyclerView.setOnTouchListener((view1, motionEvent) -> {
+//            switch (motionEvent.getAction()) {
+//                case MotionEvent.ACTION_DOWN:
+//                    startEventY = motionEvent.getY();
+//                    break;
+//                case MotionEvent.ACTION_UP:
+//                    lastActionUp = motionEvent.getY() - startEventY > 0;
+//                    Log.d(TAG, "Motion event diff = " + (startEventY - motionEvent.getY()));
+//                    if (startEventY - motionEvent.getY() > 30) {
+//                        // Action Down
+//                        fab.show();
+//                    } else if (motionEvent.getY() - startEventY > 50) {
+//                        autoScroll = false;
+//                        // Action Up
+//                    }
+//            }
+//            return false;
+//        });
 
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
@@ -133,7 +130,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
                 if (fab.getVisibility() == View.VISIBLE &&
                         (recyclerView.getAdapter().getItemCount() - 1 - layoutManager.findLastVisibleItemPosition()) <= 5) {
-                    fab.setVisibility(View.GONE);
+//                    fab.hide();
                     if (!lastActionUp)
                         autoScroll = true;
                 }
@@ -144,20 +141,20 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     }
 
     @Override
-    public void runOnUiThread(Runnable run) {
-        getActivity().runOnUiThread(run);
-    }
-
-    @Override
     @UiThread
     public void onMessageReceived() {
         if (adapter != null) {
             adapter.notifyItemChanged(adapter.messages.size());
-            adapter.tryToClearOldMessages();
         }
         if (autoScroll) {
             recyclerView.post(() -> recyclerView.smoothScrollToPosition(adapter.getItemCount() - 1));
         }
+    }
+
+    @Override
+    @UiThread
+    public void onMessagesRemoved(int start, int count) {
+        adapter.notifyItemRangeRemoved(start, count);
     }
 
 
@@ -187,15 +184,6 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         @Override
         public int getItemCount() {
             return messages.size();
-        }
-
-        public void tryToClearOldMessages() {
-            if (messages.size() > 300) {
-                synchronized (messages) {
-                    messages.subList(0, 199).clear();
-                }
-                notifyItemRangeRemoved(0, 200);
-            }
         }
 
 //        @Override

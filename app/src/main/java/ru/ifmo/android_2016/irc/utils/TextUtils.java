@@ -3,6 +3,7 @@ package ru.ifmo.android_2016.irc.utils;
 import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
+import android.support.v4.graphics.ColorUtils;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
@@ -31,19 +32,24 @@ public final class TextUtils {
         nickNBadges.append(msg.getAction() ? " " : ": ");
 
         nickNBadges.setSpan(new StyleSpan(Typeface.BOLD), 0, nickNBadges.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        if (msg.getColor() != 0) {
-            nickNBadges.setSpan(new ForegroundColorSpan(msg.getColor()), 0, nickNBadges.length(),
+        int color = msg.getColor();
+        if (color != 0) {
+            float[] hsl = new float[3];
+            ColorUtils.colorToHSL(color, hsl);
+            hsl[2] = (float) (180. / 256.);
+            color = ColorUtils.HSLToColor(hsl);
+            nickNBadges.setSpan(new ForegroundColorSpan(color), 0, nickNBadges.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        return nickNBadges.append(buildMessageTextWithEmotes(msg));
+        return nickNBadges.append(buildMessageTextWithEmotes(msg, color));
     }
 
     @NonNull
-    private static SpannableStringBuilder buildMessageTextWithEmotes(TwitchMessage msg) {
+    private static SpannableStringBuilder buildMessageTextWithEmotes(TwitchMessage msg, int color) {
         SpannableStringBuilder messageText = new SpannableStringBuilder();
         messageText.append(msg.getTrailing());
-        if (msg.getAction() && msg.getColor() != 0) {
-            messageText.setSpan(new ForegroundColorSpan(msg.getColor()), 0, messageText.length(),
+        if (msg.getAction() && color != 0) {
+            messageText.setSpan(new ForegroundColorSpan(color), 0, messageText.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         if (msg.getEmotes() != null) {
@@ -93,7 +99,7 @@ public final class TextUtils {
                 .append(" \u25B6 ")
                 .append(msg.getPrivmsgTarget())
                 .append(": ")
-                .append(buildMessageTextWithEmotes(msg));
+                .append(buildMessageTextWithEmotes(msg, 0));
 
     }
 }
