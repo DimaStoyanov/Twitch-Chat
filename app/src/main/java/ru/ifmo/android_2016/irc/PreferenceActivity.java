@@ -48,7 +48,7 @@ public abstract class PreferenceActivity extends BaseActivity
             Log.d("settings", preference.getKey());
             switch (preference.getKey()) {
                 case "clear_cache":
-//                     И это все равно не работает
+//                     It doesn't work!!!
 //                    FileUtils.deleteDirectory(new File(getActivity().getFilesDir().getPath() + "/data.obj"));
                     Toast.makeText(getActivity(), "Cache cleared", Toast.LENGTH_SHORT).show();
             }
