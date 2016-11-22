@@ -20,17 +20,15 @@
             android:windowSoftInputMode="stateHidden|adjustPan">
             <intent-filter android:label="@string/irc_client">
                 <category android:name="android.intent.category.DEFAULT" />
+
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ChatActivity"
-            android:windowSoftInputMode="stateHidden|adjustPan">
-
-
-        </activity>
+            android:windowSoftInputMode="stateHidden|adjustPan"></activity>
 
         <service
             android:name=".client.ClientService"
@@ -42,13 +40,12 @@
                 <action android:name="ru.ifmo.android_2016.irc.ACTION_USER_PREFERENCE" />
             </intent-filter>
         </activity>
-
-
         <activity
             android:name=".TwitchLoginActivity"
             android:label="Login"
             android:theme="@style/AppTheme.TwitchLogin" />
         <activity android:name=".ErrorActivity" />
+        <activity android:name=".BaseActivity"></activity>
     </application>
 
 </manifest>

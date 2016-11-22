@@ -9,12 +9,16 @@
 
 
     <ListPreference
-        android:defaultValue="0"
+        android:defaultValue="Small"
         android:entries="@array/text_size"
         android:entryValues="@array/text_size"
         android:key="text_size"
         android:title="Text size" />
-
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="pref_tab"
+        android:summary="Show headers of channel in chat"
+        android:title="Show tabs in chat" />
 
     <Preference
         android:key="clear_cache"
@@ -23,7 +27,7 @@
     <SwitchPreference
         android:defaultValue="false"
         android:key="spam_mode"
-        android:summary="Clear typed message after sending"
+        android:summary="Don't clear typed message after sending"
         android:title="Spam mode" />
 
 </PreferenceScreen>

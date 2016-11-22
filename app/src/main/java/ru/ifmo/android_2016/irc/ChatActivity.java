@@ -20,7 +20,6 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -43,16 +42,15 @@ import ru.ifmo.android_2016.irc.client.Client;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
+import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
-import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeTheme;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeThemeAndRecreate;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.onActivityCreateSetTheme;
+import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SHOW_TAB_KEY;
+import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SPAM_MODE_KEY;
 
-public class ChatActivity extends AppCompatActivity
-        implements ClientService.OnConnectedListener, Client.Callback, NavigationView.OnNavigationItemSelectedListener, SharedPreferences.OnSharedPreferenceChangeListener {
+public class ChatActivity extends BaseActivity
+        implements ClientService.OnConnectedListener, Client.Callback, NavigationView.OnNavigationItemSelectedListener {
     private static final String TAG = ChatActivity.class.getSimpleName();
 
     EditText typeMessage;
@@ -79,31 +77,10 @@ public class ChatActivity extends AppCompatActivity
         } else {
             load();
         }
-        SharedPreferences prefs = getDefaultSharedPreferences(getApplicationContext());
-        prefs.registerOnSharedPreferenceChangeListener(this);
-        changeTheme(prefs.getString(THEME_KEY, ""));
-        onActivityCreateSetTheme(this);
         initView();
 
-        // Determine keyboard height
-        LinearLayout ll = (LinearLayout) findViewById(R.id.root_view);
-        keyboardHeight = 550;
-        ll.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
-            Rect r = new Rect();
-            ll.getWindowVisibleDisplayFrame(r);
 
-            int screenHeight = ll.getRootView().getHeight();
-            int heightDifference = screenHeight - (r.bottom - r.top);
-            int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-            if (resourceId > 0) {
-                heightDifference -= getResources().getDimensionPixelSize(resourceId);
-            }
-            if (heightDifference > 400) {
-                keyboardHeight = heightDifference;
-            }
-//            Log.d("Keyboard Size", "Size: " + heightDifference);
-        });
-
+        setObserverListener();
 
         typeMessage.setOnTouchListener(((view, motionEvent) -> {
             if (isEmotesShowing()) closeEmotes();
@@ -174,8 +151,9 @@ public class ChatActivity extends AppCompatActivity
             client.attachUi(this);
             onChannelChange();
         }
-
-        fab = (FloatingActionButton) findViewById(R.id.fab);
+        SharedPreferences prefs = getDefaultSharedPreferences(getApplicationContext());
+        findViewById(R.id.tabLayout).setVisibility(prefs.getBoolean(PreferencesConstant.SHOW_TAB_KEY, false) ? View.VISIBLE : View.GONE);
+        spamMode = prefs.getBoolean(PreferencesConstant.SPAM_MODE_KEY, false);
     }
 
 
@@ -184,6 +162,30 @@ public class ChatActivity extends AppCompatActivity
         typeMessage = (EditText) findViewById(R.id.text_message);
         viewPager = (ViewPager) findViewById(R.id.viewPager);
         emotesViewPager = (ViewPager) findViewById(R.id.emotes_viewpager);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+    }
+
+
+    private void setObserverListener() {
+        // Determine keyboard height
+        LinearLayout ll = (LinearLayout) findViewById(R.id.root_view);
+        keyboardHeight = 550;
+        ll.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
+            Rect r = new Rect();
+            ll.getWindowVisibleDisplayFrame(r);
+
+            int screenHeight = ll.getRootView().getHeight();
+            int heightDifference = screenHeight - (r.bottom - r.top);
+            int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                heightDifference -= getResources().getDimensionPixelSize(resourceId);
+            }
+            if (heightDifference > 400) {
+                keyboardHeight = heightDifference;
+            }
+//            Log.d("Keyboard Size", "Size: " + heightDifference);
+        });
+
     }
 
     private void load() {
@@ -218,7 +220,7 @@ public class ChatActivity extends AppCompatActivity
             return;
         }
         emotesViewPager.setAdapter(new EmotesViewPagerAdapter(getSupportFragmentManager()));
-
+//            getTheme().
         emotesViewPager.setVisibility(View.VISIBLE);
         emotesViewPager.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
 
@@ -256,9 +258,14 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        super.onSharedPreferenceChanged(sharedPreferences, s);
         switch (s) {
-            case THEME_KEY:
-                changeThemeAndRecreate(this, sharedPreferences.getString(s, ""));
+            case SHOW_TAB_KEY:
+                findViewById(R.id.tabLayout).setVisibility(sharedPreferences.getBoolean(s, false) ? View.VISIBLE : View.GONE);
+                break;
+            case SPAM_MODE_KEY:
+                spamMode = sharedPreferences.getBoolean(s, false);
+                break;
         }
     }
 

@@ -11,8 +11,13 @@ public final class PreferencesConstant {
     public static final String CACHE_KEY = "clear_cache";
     public static final String TEXTSIZE_KEY = "text_size";
     public static final String SPAM_MODE_KEY = "spam_mode";
+    public static final String SHOW_TAB_KEY = "pref_tab";
 
     public static final String THEME_DARK_KEY = "Dark";
     public static final String THEME_LIGHT_KEY = "Light";
+
+    public static final String TEXT_SMALL = "Small";
+    public static final String TEXT_MEDIUM = "Medium";
+    public static final String TEXT_LARGE = "Large";
 
 }

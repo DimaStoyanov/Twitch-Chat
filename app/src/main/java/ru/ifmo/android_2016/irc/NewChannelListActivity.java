@@ -13,7 +13,6 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -42,16 +41,11 @@ import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
 import ru.ifmo.android_2016.irc.loader.ResultType;
 import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
-import ru.ifmo.android_2016.irc.utils.ThemeUtils;
 
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static ru.ifmo.android_2016.irc.client.ClientService.GET_SERVER_LIST;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
 import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
-import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeTheme;
-import static ru.ifmo.android_2016.irc.utils.ThemeUtils.onActivityCreateSetTheme;
 
 /**
  * Created by Dima Stoyanov on 21.11.2016.
@@ -60,7 +54,7 @@ import static ru.ifmo.android_2016.irc.utils.ThemeUtils.onActivityCreateSetTheme
  */
 
 
-public class NewChannelListActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class NewChannelListActivity extends BaseActivity {
 
     private ArrayAdapter<String> adapter;
     private ArrayList<ClientSettings> clientSettings;
@@ -76,10 +70,6 @@ public class NewChannelListActivity extends AppCompatActivity implements SharedP
 
         channels = new ArrayList<>();
         clientSettings = new ArrayList<>();
-        SharedPreferences prefs = getDefaultSharedPreferences(getApplicationContext());
-        prefs.registerOnSharedPreferenceChangeListener(this);
-        changeTheme(prefs.getString(THEME_KEY, ""));
-        onActivityCreateSetTheme(this);
 
         setContentView(R.layout.activity_new_channel_list);
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, channels);
@@ -100,7 +90,6 @@ public class NewChannelListActivity extends AppCompatActivity implements SharedP
         }, new IntentFilter(ServerList.class.getCanonicalName()));
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-//        updateChannelList();
     }
 
 
@@ -120,6 +109,14 @@ public class NewChannelListActivity extends AppCompatActivity implements SharedP
             updateDataFromCache = true;
         }
 
+    }
+
+    @Override
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
+        super.onSharedPreferenceChanged(sharedPreferences, s);
+        if (s.equals(PreferencesConstant.CACHE_KEY)) {
+            updateChannelList();
+        }
     }
 
     @UiThread
@@ -142,13 +139,6 @@ public class NewChannelListActivity extends AppCompatActivity implements SharedP
     }
 
 
-    @Override
-    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
-        switch (s) {
-            case PreferencesConstant.THEME_KEY:
-                ThemeUtils.changeThemeAndRecreate(this, sharedPreferences.getString(s, ""));
-        }
-    }
 
 
     public void onAddChannelClick(View view) {
