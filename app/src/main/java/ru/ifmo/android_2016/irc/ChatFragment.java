@@ -11,7 +11,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.util.Linkify;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -24,6 +23,7 @@ import java.util.List;
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 

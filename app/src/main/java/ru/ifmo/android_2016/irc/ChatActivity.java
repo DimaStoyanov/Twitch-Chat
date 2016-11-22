@@ -22,7 +22,6 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -43,6 +42,7 @@ import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SHOW_TAB_KEY;
@@ -115,7 +115,7 @@ public class ChatActivity extends BaseActivity
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                }
+            }
 
             @Override
             public void onPageScrollStateChanged(int state) {

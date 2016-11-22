@@ -8,7 +8,6 @@ import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.Space;
-import android.util.Log;
 import android.view.HapticFeedbackConstants;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -27,6 +26,7 @@ import com.facebook.imagepipeline.image.ImageInfo;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
 import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 
 public class EmoteScrollViewFragment extends Fragment {

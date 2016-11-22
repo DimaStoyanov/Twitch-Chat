@@ -20,7 +20,6 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -45,6 +44,7 @@ import ru.ifmo.android_2016.irc.loader.LoadResult;
 import ru.ifmo.android_2016.irc.loader.ResultType;
 import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
 import ru.ifmo.android_2016.irc.utils.IOUtils;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
@@ -58,7 +58,8 @@ import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeTheme;
 import static ru.ifmo.android_2016.irc.utils.ThemeUtils.changeThemeAndRecreate;
 import static ru.ifmo.android_2016.irc.utils.ThemeUtils.onActivityCreateSetTheme;
 
-public class ChannelsListActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class ChannelsListActivity extends AppCompatActivity
+        implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private LinearLayout ll;
     private boolean updateDataFromCache = false;
@@ -95,9 +96,6 @@ public class ChannelsListActivity extends AppCompatActivity implements SharedPre
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
     }
-
-
-
 
 
     @UiThread

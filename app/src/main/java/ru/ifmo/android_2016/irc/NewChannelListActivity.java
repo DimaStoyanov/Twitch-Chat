@@ -17,7 +17,6 @@ import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -41,6 +40,7 @@ import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
 import ru.ifmo.android_2016.irc.loader.ResultType;
 import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.GET_SERVER_LIST;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
@@ -60,7 +60,7 @@ public class NewChannelListActivity extends BaseActivity {
     private ArrayList<ClientSettings> clientSettings;
     private ArrayList<String> channels;
     private boolean updateDataFromCache = false;
-    public final String TAG = ChannelsListActivity.class.getSimpleName();
+    public final String TAG = NewChannelListActivity.class.getSimpleName();
     private LocalBroadcastManager lbm;
     private Context context;
 
@@ -91,7 +91,6 @@ public class NewChannelListActivity extends BaseActivity {
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
     }
-
 
 
     @Override
@@ -139,8 +138,6 @@ public class NewChannelListActivity extends BaseActivity {
         adapter.addAll(channels);
         adapter.notifyDataSetChanged();
     }
-
-
 
 
     public void onAddChannelClick(View view) {

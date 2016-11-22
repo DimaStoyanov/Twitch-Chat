@@ -14,7 +14,8 @@ import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_DARK_K
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_LIGHT_KEY;
 
-public abstract class BaseActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public abstract class BaseActivity extends AppCompatActivity
+        implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     SharedPreferences prefs;
 

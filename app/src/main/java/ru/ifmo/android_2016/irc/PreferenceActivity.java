@@ -4,8 +4,9 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.widget.Toast;
+
+import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.CACHE_KEY;
 
