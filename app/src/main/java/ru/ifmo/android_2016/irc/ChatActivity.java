@@ -44,7 +44,6 @@ import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 
-import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SHOW_TAB_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SPAM_MODE_KEY;
@@ -65,6 +64,7 @@ public class ChatActivity extends BaseActivity
     private boolean spamMode = false;
     private TextView chatTitle;
     protected FloatingActionButton fab;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,17 +102,20 @@ public class ChatActivity extends BaseActivity
 
             }
 
+
             @Override
             public void onPageSelected(int position) {
-                closeEmotes();
-                changeCheckedMenuItem(position);
-                if (chatTitle != null && viewPagerAdapter.getPageTitle(position) != null) {
-                    chatTitle.setText(viewPagerAdapter.getPageTitle(position));
+                try {
+                    closeEmotes();
+                    changeCheckedMenuItem(position);
+                    if (chatTitle != null && viewPagerAdapter.getPageTitle(position) != null) {
+                        chatTitle.setText(viewPagerAdapter.getPageTitle(position));
+                    }
+                    fab.setOnClickListener(view1 -> viewPagerAdapter.fragments.get(position).scrollToBottom());
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                fab.setOnClickListener(view1 -> {
-                    viewPagerAdapter.fragments.get(position).scrollToBottom();
-                });
-            }
+                }
 
             @Override
             public void onPageScrollStateChanged(int state) {
@@ -151,9 +154,13 @@ public class ChatActivity extends BaseActivity
             client.attachUi(this);
             onChannelChange();
         }
-        SharedPreferences prefs = getDefaultSharedPreferences(getApplicationContext());
-        findViewById(R.id.tabLayout).setVisibility(prefs.getBoolean(PreferencesConstant.SHOW_TAB_KEY, false) ? View.VISIBLE : View.GONE);
+    }
+
+    @Override
+    public void getStartPreferences() {
         spamMode = prefs.getBoolean(PreferencesConstant.SPAM_MODE_KEY, false);
+        findViewById(R.id.tabLayout).setVisibility(prefs.getBoolean(PreferencesConstant.SHOW_TAB_KEY, false) ? View.VISIBLE : View.GONE);
+
     }
 
 
@@ -376,14 +383,7 @@ public class ChatActivity extends BaseActivity
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, Menu.NONE, Menu.FIRST, "Clear type message after send")
-                .setCheckable(true)
-                .setChecked(true)
-                .setOnMenuItemClickListener(menuItem -> {
-                    menuItem.setChecked(!menuItem.isChecked());
-                    spamMode = !menuItem.isChecked();
-                    return false;
-                });
+
         menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Settings").setOnMenuItemClickListener(menuItem -> {
             startActivityForResult(new Intent(this, PreferenceActivity.class), 228);
             return false;

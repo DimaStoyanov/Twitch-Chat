@@ -1,6 +1,5 @@
 package ru.ifmo.android_2016.irc;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
@@ -16,8 +15,7 @@ import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.CACHE_KEY;
  * Start time : 4:28
  */
 
-public abstract class PreferenceActivity extends BaseActivity
-        implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class PreferenceActivity extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,7 +29,9 @@ public abstract class PreferenceActivity extends BaseActivity
         getFragmentManager().beginTransaction().replace(R.id.pref, new SettingsFragment()).commit();
     }
 
-
+    @Override
+    public void getStartPreferences() {
+    }
 
     public static class SettingsFragment extends PreferenceFragment implements Preference.OnPreferenceClickListener {
 

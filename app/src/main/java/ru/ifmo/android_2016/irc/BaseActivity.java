@@ -14,25 +14,31 @@ import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_DARK_K
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_LIGHT_KEY;
 
-public class BaseActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public abstract class BaseActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 
-//    @Override
-//    protected void onStart() {
-//        super.onStart();
-//        setThemeFromPref();
-//    }
+    SharedPreferences prefs;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        prefs = getDefaultSharedPreferences(getApplicationContext());
+        prefs.registerOnSharedPreferenceChangeListener(this);
         setThemeFromPref();
     }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        getStartPreferences();
+    }
+
+    public void getStartPreferences() {
+    }
+
 
     private void setThemeFromPref() {
         int themeID = 0;
         try {
-            SharedPreferences prefs = getDefaultSharedPreferences(getApplicationContext());
-            prefs.registerOnSharedPreferenceChangeListener(this);
             switch (prefs.getString(THEME_KEY, "")) {
                 case THEME_LIGHT_KEY:
                     switch (prefs.getString(TEXTSIZE_KEY, "")) {

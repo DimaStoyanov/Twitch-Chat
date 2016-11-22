@@ -93,6 +93,7 @@ public class NewChannelListActivity extends BaseActivity {
     }
 
 
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -118,6 +119,7 @@ public class NewChannelListActivity extends BaseActivity {
             updateChannelList();
         }
     }
+
 
     @UiThread
     private void updateChannelList() {
