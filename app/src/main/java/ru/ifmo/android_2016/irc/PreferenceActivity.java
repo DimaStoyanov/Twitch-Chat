@@ -16,7 +16,7 @@ import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.CACHE_KEY;
  * Start time : 4:28
  */
 
-public class PreferenceActivity extends BaseActivity
+public abstract class PreferenceActivity extends BaseActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     @Override
