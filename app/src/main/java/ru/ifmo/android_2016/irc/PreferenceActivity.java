@@ -1,8 +1,8 @@
 package ru.ifmo.android_2016.irc;
 
 import android.os.Bundle;
-import android.preference.Preference;
-import android.preference.PreferenceFragment;
+import android.support.v7.preference.PreferenceFragmentCompat;
+import android.support.v7.preference.Preference;
 import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 
@@ -27,24 +27,22 @@ public class PreferenceActivity extends BaseActivity {
         toolbar.setTitle("Settings");
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
 
-        getFragmentManager().beginTransaction().replace(R.id.pref, new SettingsFragment()).commit();
+        getSupportFragmentManager()
+                .beginTransaction().replace(R.id.pref, new SettingsFragment()).commit();
     }
 
     @Override
     public void getStartPreferences() {
     }
 
-    public static class SettingsFragment extends PreferenceFragment implements Preference.OnPreferenceClickListener {
+    public static class SettingsFragment extends PreferenceFragmentCompat {
 
         @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
+        public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.pref_main);
-            findPreference(CACHE_KEY).setOnPreferenceClickListener(this);
+            findPreference(CACHE_KEY).setOnPreferenceClickListener(this::onPreferenceClick);
         }
 
-
-        @Override
         public boolean onPreferenceClick(Preference preference) {
             Log.d("settings", preference.getKey());
             switch (preference.getKey()) {

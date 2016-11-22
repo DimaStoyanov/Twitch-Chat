@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <ListPreference
+<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <android.support.v7.preference.ListPreference
         android:defaultValue="Light"
         android:entries="@array/pref_theme"
         android:entryValues="@array/pref_theme"
         android:key="pref_theme"
         android:title="@string/theme" />
 
-
-    <ListPreference
+    <android.support.v7.preference.ListPreference
         android:defaultValue="Small"
         android:entries="@array/text_size"
         android:entryValues="@array/text_size"
         android:key="text_size"
         android:title="Text size" />
-    <SwitchPreference
+
+    <android.support.v7.preference.SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="pref_tab"
         android:summary="Show headers of channel in chat"
         android:title="Show tabs in chat" />
 
-    <Preference
+    <android.support.v7.preference.Preference
         android:key="clear_cache"
-        android:summary="Reset all app datas store in internal storage"
+        android:summary="Reset all app data store in internal storage"
         android:title="Clear cache" />
-    <SwitchPreference
+
+    <android.support.v7.preference.SwitchPreferenceCompat
         android:defaultValue="false"
         android:key="spam_mode"
         android:summary="Don't clear typed message after sending"
         android:title="Spam mode" />
-
-</PreferenceScreen>
+</android.support.v7.preference.PreferenceScreen>

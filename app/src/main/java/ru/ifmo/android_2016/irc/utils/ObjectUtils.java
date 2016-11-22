@@ -1,7 +1,5 @@
 package ru.ifmo.android_2016.irc.utils;
 
-import android.util.Log;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

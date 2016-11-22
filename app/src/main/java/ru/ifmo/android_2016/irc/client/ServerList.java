@@ -2,12 +2,12 @@ package ru.ifmo.android_2016.irc.client;
 
 import android.os.AsyncTask;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
 
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import ru.ifmo.android_2016.irc.utils.FileUtils;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 /**
  * Created by ghost3432 on 01.11.16.

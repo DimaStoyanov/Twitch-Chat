@@ -127,8 +127,10 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         if (adapter != null) {
             adapter.notifyItemChanged(adapter.messages.size());
         }
-        if (autoScroll) {
-            recyclerView.post(() -> recyclerView.scrollToPosition(adapter.getItemCount() - 1));
+        if (autoScroll && recyclerView != null) {
+            //noinspection ConstantConditions
+            recyclerView.scrollToPosition(adapter.getItemCount() - 1);
+//            recyclerView.post(() -> );
         }
     }
 

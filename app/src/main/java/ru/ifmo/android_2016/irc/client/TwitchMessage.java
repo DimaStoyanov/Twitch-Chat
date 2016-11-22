@@ -1,9 +1,7 @@
 package ru.ifmo.android_2016.irc.client;
 
 import android.graphics.Color;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
@@ -11,6 +9,7 @@ import com.annimon.stream.Stream;
 import java.util.List;
 import java.util.Map;
 
+import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.Splitter;
 
 /**
@@ -20,10 +19,13 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
 public final class TwitchMessage extends Message {
     private final static String TAG = TwitchMessage.class.getSimpleName();
 
-    @Nullable private List<Badge> badges;
+    @Nullable
+    private List<Badge> badges;
     private int color;
-    @Nullable private String displayName;
-    @Nullable private String id;
+    @Nullable
+    private String displayName;
+    @Nullable
+    private String id;
 
     private boolean mod;
     private boolean subscriber;

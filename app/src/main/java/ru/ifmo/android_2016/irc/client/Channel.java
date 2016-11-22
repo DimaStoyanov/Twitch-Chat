@@ -5,7 +5,6 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.util.Log;
 
 import com.annimon.stream.function.Function;
 
@@ -13,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
+import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -79,6 +79,7 @@ public final class Channel {
     }
 
     public void attachUi(Callback fragment) {
+        Log.d(TAG, "onAttach");
         if (ui == null) {
             ui = fragment;
         } else {
@@ -87,6 +88,7 @@ public final class Channel {
     }
 
     public void detachUi() {
+        Log.d(TAG, "onDetach");
         ui = null;
     }
 

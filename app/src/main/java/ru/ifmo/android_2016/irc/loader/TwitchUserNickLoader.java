@@ -2,7 +2,6 @@ package ru.ifmo.android_2016.irc.loader;
 
 import android.content.Context;
 import android.support.v4.content.AsyncTaskLoader;
-import android.util.Log;
 
 import com.facebook.stetho.urlconnection.StethoURLConnectionManager;
 
@@ -16,6 +15,7 @@ import java.net.HttpURLConnection;
 import ru.ifmo.android_2016.irc.api.TwitchApi;
 import ru.ifmo.android_2016.irc.exception.BadResponseException;
 import ru.ifmo.android_2016.irc.utils.IOUtils;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 /**
  * Created by Dima Stoyanov on 30.10.2016.

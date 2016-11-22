@@ -22,6 +22,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
+import android.util.SparseArray;
 import android.view.HapticFeedbackConstants;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -355,7 +356,7 @@ public class ChatActivity extends BaseActivity
 
     private class ViewPagerAdapter extends FragmentPagerAdapter {
         private List<Channel> channels = new ArrayList<>();
-        private List<ChatFragment> fragments = new ArrayList<>();
+        private SparseArray<ChatFragment> fragments = new SparseArray<>();
 
         ViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
@@ -365,7 +366,7 @@ public class ChatActivity extends BaseActivity
         @Override
         public Fragment getItem(int position) {
             ChatFragment fragment = ChatFragment.newInstance(id, channels.get(position).getName());
-            fragments.add(position, fragment);
+            fragments.put(position, fragment);
             return fragment;
         }
 

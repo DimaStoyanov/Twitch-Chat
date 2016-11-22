@@ -35,7 +35,7 @@ public final class FilePathConstant {
 
 
     /**
-     *  Расширение файла, хранящего информацию о эмоциях канала
+     * Расширение файла, хранящего информацию о эмоциях канала
      */
     public final String EMOTICON_INFO_EXTENSION;
 

@@ -4,7 +4,6 @@ import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
-import android.util.Log;
 
 import com.annimon.stream.Stream;
 import com.annimon.stream.function.Function;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +25,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import ru.ifmo.android_2016.irc.utils.FunctionUtils;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 /**
  * Created by ghost on 10/24/2016.

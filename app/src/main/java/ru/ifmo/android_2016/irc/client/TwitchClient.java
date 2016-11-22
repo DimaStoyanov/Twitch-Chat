@@ -7,11 +7,9 @@ import com.annimon.stream.function.Function;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotesLoaderTask;
-import ru.ifmo.android_2016.irc.utils.Splitter;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**

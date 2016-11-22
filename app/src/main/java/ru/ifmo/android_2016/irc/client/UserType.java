@@ -1,7 +1,5 @@
 package ru.ifmo.android_2016.irc.client;
 
-import java.util.IllegalFormatException;
-
 /**
  * Created by ghost3432 on 14.11.16.
  */

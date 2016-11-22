@@ -9,7 +9,6 @@ import android.os.AsyncTask;
 import android.os.IBinder;
 import android.support.annotation.UiThread;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 
 import com.annimon.stream.Stream;
 
@@ -18,6 +17,7 @@ import java.util.Map;
 
 import ru.ifmo.android_2016.irc.R;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
