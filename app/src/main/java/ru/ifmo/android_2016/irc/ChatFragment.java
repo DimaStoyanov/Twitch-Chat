@@ -212,42 +212,32 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             }
 
             void setText(int position) {
-                MessageText message = messages.get(position);
-
-                itemView.setBackgroundColor(Color.TRANSPARENT);
-
-                if (message.isMentioned()) {
-                    itemView.setBackgroundColor(getResources().getColor(R.color.mentionColor));
-                }
-                if (message.isTwitchNotify()) {
-                    itemView.setBackgroundColor(getResources().getColor(R.color.twitchNotifyColor));
-                    itemView.setText(message.getText());
-                } else {
-                    itemView.setText(message.getSpanned());
-                }
+                itemView.setMessage(messages.get(position));
             }
         }
     }
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Copy to clipboard this message").setOnMenuItemClickListener(menuItem -> {
+        menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Copy to clipboard this message")
+                .setOnMenuItemClickListener(m -> {
             DraweeTextView textView = (DraweeTextView) v;
-            ClipboardManager clipboard = (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("Copied text", textView.getText()
-                    .subSequence(textView.getText().toString().indexOf(":") + 2, textView.getText().length()));
+            ClipboardManager clipboard =
+                    (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("Copied text", textView.getMessage().getText());
             clipboard.setPrimaryClip(clip);
             return false;
         });
-        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Copy this message").setOnMenuItemClickListener(menuItem -> {
+        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Copy this message")
+                .setOnMenuItemClickListener(m -> {
             DraweeTextView textView = (DraweeTextView) v;
-            activity.typeMessage.setText(textView.getText().
-                    subSequence(textView.getText().toString().indexOf(":") + 2, textView.getText().length()).toString());
+            activity.typeMessage.setText(textView.getMessage().isColored() ? "/me " : "");
+            activity.typeMessage.append(textView.getMessage().getText());
             return false;
         });
-        menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Answer").setOnMenuItemClickListener(menuItem -> {
+        menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Answer").setOnMenuItemClickListener(m -> {
             DraweeTextView textView = (DraweeTextView) v;
-            CharSequence message = "@" + textView.getText().subSequence(0, textView.getText().toString().indexOf(":")) + ", ";
+            CharSequence message = "@" + textView.getMessage().getSender() + ", ";
             activity.typeMessage.setText(message);
             activity.typeMessage.setSelection(message.length());
             return false;

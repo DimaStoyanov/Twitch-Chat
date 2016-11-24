@@ -16,6 +16,7 @@ package ru.ifmo.android_2016.irc.drawee;/*
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
@@ -26,12 +27,17 @@ import android.widget.TextView;
 import com.facebook.drawee.drawable.ForwardingDrawable;
 import com.facebook.imagepipeline.animated.base.AnimatableDrawable;
 
+import ru.ifmo.android_2016.irc.R;
+import ru.ifmo.android_2016.irc.client.MessageText;
+
 /**
  * Like {@link com.facebook.drawee.view.DraweeView} that displays drawables  but surrounded with text.
  *
  * @author yrom
  */
 public class DraweeTextView extends TextView {
+    private MessageText msg;
+
     public DraweeTextView(Context context) {
         super(context);
     }
@@ -64,6 +70,22 @@ public class DraweeTextView extends TextView {
             mHasDraweeInText = spans.length > 0;
         }
         super.setText(text, type);
+    }
+
+    public void setMessage(MessageText message) {
+        setBackgroundColor(Color.TRANSPARENT);
+
+        if (message.isMentioned()) {
+            setBackgroundColor(getResources().getColor(R.color.mentionColor));
+        }
+        if (message.isTwitchNotify()) {
+            setBackgroundColor(getResources().getColor(R.color.twitchNotifyColor));
+            setText(message.getText());
+        } else {
+            setText(message.getSpanned());
+        }
+
+        this.msg = message;
     }
 
     @Override
@@ -139,5 +161,9 @@ public class DraweeTextView extends TextView {
             }
             image.onDetach();
         }
+    }
+
+    public MessageText getMessage() {
+        return msg;
     }
 }

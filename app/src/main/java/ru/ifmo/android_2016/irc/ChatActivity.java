@@ -113,7 +113,8 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
                     }
                     //TODO:
                     fab.setOnClickListener(view1 ->
-                            viewPagerAdapter.fragments.get(position).scrollToBottom());
+                            ((ChatFragment) viewPagerAdapter.fragments.get(position))
+                                    .scrollToBottom());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -357,7 +358,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
     private class ViewPagerAdapter extends FragmentPagerAdapter {
         private List<Channel> channels = new ArrayList<>();
-        private SparseArray<ChatFragment> fragments = new SparseArray<>();
+        private SparseArray<Fragment> fragments = new SparseArray<>();
 
         ViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
@@ -382,7 +383,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         //TODO:
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
-            ChatFragment fragment = ((ChatFragment) super.instantiateItem(container, position));
+            Fragment fragment = ((Fragment) super.instantiateItem(container, position));
             fragments.put(position, fragment);
             return fragment;
         }
