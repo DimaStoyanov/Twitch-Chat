@@ -1,5 +1,8 @@
 package ru.ifmo.android_2016.irc;
 
+import android.os.Handler;
+import android.os.Looper;
+
 import com.facebook.drawee.backends.pipeline.Fresco;
 
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
@@ -15,6 +18,11 @@ public class IRCApplication extends android.app.Application {
         old.uncaughtException(thread, throwable);
     };
 
+    private static Handler mainThread;
+
+    public static void runOnUiThread(Runnable runnable) {
+        mainThread.post(runnable);
+    }
 
     @Override
     public void onCreate() {
@@ -27,5 +35,7 @@ public class IRCApplication extends android.app.Application {
         old = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
         super.onCreate();
+
+        mainThread = new Handler(Looper.getMainLooper());
     }
 }

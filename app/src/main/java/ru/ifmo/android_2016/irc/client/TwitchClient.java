@@ -116,7 +116,7 @@ public final class TwitchClient extends Client {
         twitchMessage
                 .setColor(nickColor)
                 .setEmotes(Emote.findAllEmotes(
-                        twitchMessage.getPrivmsgText(),
+                        twitchMessage.getSplitText(),
                         twitchMessage.getPrivmsgTarget(),
                         emoteSets))
                 .setNickname(getNickname());

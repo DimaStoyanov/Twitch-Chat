@@ -1,7 +1,5 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -11,6 +9,7 @@ import com.annimon.stream.function.Function;
 import java.util.ArrayList;
 import java.util.List;
 
+import ru.ifmo.android_2016.irc.IRCApplication;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
 import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
@@ -20,12 +19,12 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
  */
 public final class Channel {
     private static final String TAG = Channel.class.getSimpleName();
-    private final Handler mainThreadHandler;
+
     private Client client;
     @NonNull
     private final String name;
     @NonNull
-    private final List<CharSequence> messages;
+    private final List<MessageText> messages;
     @Nullable
     private final Function<Message, CharSequence> postExecute;
     @Nullable
@@ -36,14 +35,14 @@ public final class Channel {
     }
 
     @SuppressWarnings("WeakerAccess")
-    Channel(@NonNull Client client, @NonNull String name,
+    Channel(@NonNull Client client,
+            @NonNull String name,
             @Nullable Function<Message, CharSequence> postExecute) {
         this.client = client;
         this.name = name;
         this.messages = new ArrayList<>(16);
         this.postExecute = postExecute;
         new BttvEmotesLoaderTask().execute(name);
-        mainThreadHandler = new Handler(Looper.getMainLooper());
     }
 
     void add(Message msg) {
@@ -51,26 +50,36 @@ public final class Channel {
     }
 
     void add(Message msg, Function<Message, CharSequence> func) {
-        if (func != null) add(func.apply(msg));
-    }
-
-    private void notifyUi() {
-        if (ui != null) mainThreadHandler.post(ui::onMessageReceived);
+        if (func != null) {
+            add(new MessageText.Builder()
+                    .setFunction(func)
+                    .setMessage((TwitchMessage) msg)
+                    .setMentionList(client.getNickname())
+                    .build());
+        }
     }
 
     void add(CharSequence msg) {
+        add(new MessageText(msg));
+    }
+
+    void add(MessageText msg) {
         synchronized (messages) {
             messages.add(msg);
         }
-        mainThreadHandler.post(() -> {
-            if (messages.size() > 300) {
+        if (messages.size() > 300) {
+            IRCApplication.runOnUiThread(() -> {
                 synchronized (messages) {
                     messages.subList(0, 99).clear();
                 }
                 if (ui != null) ui.onMessagesRemoved(0, 100);
-            }
-        });
+            });
+        }
         notifyUi();
+    }
+
+    private void notifyUi() {
+        if (ui != null) IRCApplication.runOnUiThread(ui::onMessageReceived);
     }
 
     @NonNull
@@ -93,7 +102,7 @@ public final class Channel {
     }
 
     @NonNull
-    public final List<CharSequence> getMessages() {
+    public final List<MessageText> getMessages() {
         return messages;
     }
 

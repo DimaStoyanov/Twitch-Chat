@@ -24,6 +24,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import ru.ifmo.android_2016.irc.IRCApplication;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils;
 import ru.ifmo.android_2016.irc.utils.Log;
 
@@ -268,7 +269,7 @@ public class Client {
     }
 
     protected void notifyUi() {
-        if (ui != null) ui.runOnUiThread(ui::onChannelChange);
+        if (ui != null) IRCApplication.runOnUiThread(ui::onChannelChange);
     }
 
     protected void sendToChannel(Message msg) {
@@ -341,8 +342,6 @@ public class Client {
     }
 
     public interface Callback {
-        void runOnUiThread(Runnable run);
-
         @UiThread
         void onChannelChange();
     }

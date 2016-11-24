@@ -12,8 +12,7 @@ import android.view.View;
  */
 
 @SuppressWarnings("unused")
-public class FloatingActionButtonScrollBehavior
-        extends FloatingActionButton.Behavior {
+public class FloatingActionButtonScrollBehavior extends FloatingActionButton.Behavior {
     public FloatingActionButtonScrollBehavior(Context context, AttributeSet attrs) {
         super();
     }

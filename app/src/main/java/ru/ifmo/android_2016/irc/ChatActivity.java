@@ -49,8 +49,7 @@ import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SHOW_TAB_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SPAM_MODE_KEY;
 
-public class ChatActivity extends BaseActivity
-        implements ClientService.OnConnectedListener, Client.Callback, NavigationView.OnNavigationItemSelectedListener {
+public class ChatActivity extends BaseActivity implements Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
 
     EditText typeMessage;
@@ -105,14 +104,16 @@ public class ChatActivity extends BaseActivity
 
 
             @Override
-            public void onPageSelected(int position) {
+            public void onPageSelected(final int position) {
                 try {
                     closeEmotes();
                     changeCheckedMenuItem(position);
                     if (chatTitle != null && viewPagerAdapter.getPageTitle(position) != null) {
                         chatTitle.setText(viewPagerAdapter.getPageTitle(position));
                     }
-                    fab.setOnClickListener(view1 -> viewPagerAdapter.fragments.get(position).scrollToBottom());
+                    //TODO:
+                    fab.setOnClickListener(view1 ->
+                            viewPagerAdapter.fragments.get(position).scrollToBottom());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -145,12 +146,16 @@ public class ChatActivity extends BaseActivity
             actionBar.setDisplayShowHomeEnabled(true);
             actionBar.setDisplayShowTitleEnabled(false);
         }
+
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar, R.string.open, R.string.close);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
+                R.string.open, R.string.close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
+
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
+
         if (client != null) {
             client.attachUi(this);
             onChannelChange();
@@ -158,7 +163,7 @@ public class ChatActivity extends BaseActivity
     }
 
     @Override
-    public void getStartPreferences() {
+    protected void getStartPreferences() {
         spamMode = prefs.getBoolean(PreferencesConstant.SPAM_MODE_KEY, false);
         findViewById(R.id.tabLayout).setVisibility(prefs.getBoolean(PreferencesConstant.SHOW_TAB_KEY, false) ? View.VISIBLE : View.GONE);
 
@@ -200,7 +205,7 @@ public class ChatActivity extends BaseActivity
         id = getIntent().getLongExtra(SERVER_ID, 0);
         clientSettings = ServerList.getInstance().get(id);
 
-        ClientService.startClient(this, id);
+        ClientService.startClient(this::onConnected, id);
     }
 
     public void sendMessage(String message) {
@@ -247,14 +252,12 @@ public class ChatActivity extends BaseActivity
         typeMessage.setText("");
     }
 
-    @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         viewPager.setCurrentItem(item.getItemId());
         changeCheckedMenuItem(item.getItemId());
         ((DrawerLayout) findViewById(R.id.drawer_layout)).closeDrawer(GravityCompat.START);
         return true;
     }
-
 
     private void changeCheckedMenuItem(int position) {
         Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
@@ -315,7 +318,6 @@ public class ChatActivity extends BaseActivity
         super.onDestroy();
     }
 
-    @Override
     @UiThread
     public void onConnected(final Client client) {
         ChatActivity.this.client = client;
@@ -331,9 +333,8 @@ public class ChatActivity extends BaseActivity
         viewPagerAdapter.channels.addAll(client.getChannelList());
         //Stream.of(client.getChannelList()).forEach(c -> Log.d(TAG, c.getName()));
         viewPagerAdapter.notifyDataSetChanged();
-        if (viewPagerAdapter.channels.size() > 1)
-            loadMenu();
 
+        if (viewPagerAdapter.channels.size() > 1) loadMenu();
     }
 
     public void loadMenu() {
@@ -365,9 +366,7 @@ public class ChatActivity extends BaseActivity
 
         @Override
         public Fragment getItem(int position) {
-            ChatFragment fragment = ChatFragment.newInstance(id, channels.get(position).getName());
-            fragments.put(position, fragment);
-            return fragment;
+            return ChatFragment.newInstance(id, channels.get(position).getName());
         }
 
         @Override
@@ -378,6 +377,19 @@ public class ChatActivity extends BaseActivity
         @Override
         public CharSequence getPageTitle(int position) {
             return channels.get(position).getName();
+        }
+
+        //TODO:
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            ChatFragment fragment = ((ChatFragment) super.instantiateItem(container, position));
+            fragments.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            super.destroyItem(container, position, object);
         }
     }
 

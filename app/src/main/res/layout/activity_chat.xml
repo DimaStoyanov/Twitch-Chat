@@ -71,7 +71,6 @@
             android:layout_margin="16dp"
             android:src="@drawable/fab_scroll_down"
             android:visibility="gone"
-            app:backgroundTint="@color/colorPrimary"
             app:fabSize="mini"
             app:layout_behavior=".ui.FloatingActionButtonScrollBehavior" />
 

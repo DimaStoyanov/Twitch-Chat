@@ -126,9 +126,10 @@ public class Emote implements Comparable<Emote> {
                         r.end)));
     }
 
+    @Deprecated
     public static List<Emote> findAllEmotes(String privmsgText,
-                                            String privmsgTarget,
-                                            Set<Integer> emoteSets) {
+                                     String privmsgTarget,
+                                     Set<Integer> emoteSets) {
         return findAllEmotes(Splitter.splitWithSpace(privmsgText), privmsgTarget, emoteSets);
     }
 

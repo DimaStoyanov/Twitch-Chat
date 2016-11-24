@@ -3,8 +3,8 @@ package ru.ifmo.android_2016.irc;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
@@ -22,6 +22,7 @@ import java.util.List;
 
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.ClientService;
+import ru.ifmo.android_2016.irc.client.MessageText;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
 import ru.ifmo.android_2016.irc.utils.Log;
 
@@ -34,7 +35,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     private String channelName;
     private Channel channel;
     private RecyclerView recyclerView;
-    FloatingActionButton fab;
+    private FloatingActionButton fab;
     private MessageAdapter adapter;
     private long serverId;
     private boolean autoScroll = true;
@@ -57,10 +58,12 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         if (getArguments() != null) {
             serverId = getArguments().getLong(SERVER_ID);
             channelName = getArguments().getString(CHANNEL_NAME);
         }
+
         channel = ClientService.getClient(serverId).getChannels().get(channelName);
         channel.attachUi(this);
     }
@@ -68,48 +71,22 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_chat, container, false);
-    }
+        View root = inflater.inflate(R.layout.fragment_chat, container, false);
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        this.activity = (ChatActivity) context;
-    }
-
-    @Override
-    public void onDetach() {
-        channel.detachUi();
-        super.onDetach();
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        outState.putString(CHANNEL_NAME, channelName);
-        outState.putLong(SERVER_ID, serverId);
-    }
-
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        View view = getView();
-        recyclerView = (RecyclerView) view.findViewById(R.id.messages);
+        recyclerView = (RecyclerView) root.findViewById(R.id.messages);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
         recyclerView.setAdapter(adapter = new MessageAdapter(channel.getMessages()));
         fab = activity.fab;
 
         recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-
             @Override
             public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
             }
 
             @Override
             public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
-                if (layoutManager.findLastCompletelyVisibleItemPosition()
-                        == adapter.messages.size() - 1) {
+                if (layoutManager.findLastVisibleItemPosition() == adapter.messages.size() - 1) {
                     autoScroll = true;
                     fab.hide();
                 } else {
@@ -119,6 +96,26 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         });
         recyclerView.setItemAnimator(null);
         layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+
+        return root;
+    }
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        this.activity = (ChatActivity) getActivity();
+    }
+
+    @Override
+    public void onDestroy() {
+        channel.detachUi();
+        super.onDestroy();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(CHANNEL_NAME, channelName);
+        outState.putLong(SERVER_ID, serverId);
     }
 
     @Override
@@ -150,9 +147,9 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
 
     class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.ViewHolder> {
-        final private List<CharSequence> messages;
+        final private List<MessageText> messages;
 
-        private MessageAdapter(List<CharSequence> list) {
+        private MessageAdapter(List<MessageText> list) {
             messages = list;
             //setHasStableIds(true);
         }
@@ -168,7 +165,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
         @Override
         public void onBindViewHolder(MessageAdapter.ViewHolder holder, int position) {
-            holder.itemView.setText(messages.get(position));
+            holder.setText(position);
             //holder.itemView.setBackgroundColor(Color.argb(255, 180, 0, 0));
         }
 
@@ -182,6 +179,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 //            return position;
 //        }
 
+        @SuppressWarnings("deprecation")
         class ViewHolder extends RecyclerView.ViewHolder {
             private DraweeTextView itemView;
             private float startY;
@@ -192,25 +190,41 @@ public class ChatFragment extends Fragment implements Channel.Callback {
                 this.itemView = (DraweeTextView) itemView;
                 this.itemView.setAutoLinkMask(Linkify.ALL);
                 this.itemView.setLinksClickable(true);
-                this.itemView.setOnTouchListener((view, motionEvent) -> {
-                    Log.d(TAG, motionEvent.toString());
-                    switch (motionEvent.getAction()) {
-                        case MotionEvent.ACTION_DOWN:
-                            startY = motionEvent.getY();
-                            startTime = System.currentTimeMillis();
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            if (System.currentTimeMillis() - startTime > 100 && Math.abs(motionEvent.getY() - startY) < 5) {
-                                this.itemView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-                                break;
-                            }
-                        case MotionEvent.ACTION_CANCEL:
-                        case MotionEvent.ACTION_UP:
-                            this.itemView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-                    }
-                    return false;
-                });
+//                this.itemView.setOnTouchListener((view, motionEvent) -> {
+//                    Log.d(TAG, motionEvent.toString());
+//                    switch (motionEvent.getAction()) {
+//                        case MotionEvent.ACTION_DOWN:
+//                            startY = motionEvent.getY();
+//                            startTime = System.currentTimeMillis();
+//                            break;
+//                        case MotionEvent.ACTION_MOVE:
+//                            if (System.currentTimeMillis() - startTime > 100 && Math.abs(motionEvent.getY() - startY) < 5) {
+//                                this.itemView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
+//                                break;
+//                            }
+//                        case MotionEvent.ACTION_CANCEL:
+//                        case MotionEvent.ACTION_UP:
+//                            this.itemView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
+//                    }
+//                    return false;
+//                });
                 registerForContextMenu(this.itemView);
+            }
+
+            void setText(int position) {
+                MessageText message = messages.get(position);
+
+                itemView.setBackgroundColor(Color.TRANSPARENT);
+
+                if (message.isMentioned()) {
+                    itemView.setBackgroundColor(getResources().getColor(R.color.mentionColor));
+                }
+                if (message.isTwitchNotify()) {
+                    itemView.setBackgroundColor(getResources().getColor(R.color.twitchNotifyColor));
+                    itemView.setText(message.getText());
+                } else {
+                    itemView.setText(message.getSpanned());
+                }
             }
         }
     }

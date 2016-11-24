@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.ifmo.android_2016.irc.utils.Splitter;
+
 /**
  * Created by ghost on 10/23/2016.
  */
@@ -40,6 +42,7 @@ public class Message {
 
     private static final Pattern actionPattern = Pattern.compile("\1ACTION ([^\1]+)\1");
     private boolean action = false;
+    private List<Splitter.Result> splitText = null;
 
     public Message() {
     }
@@ -232,5 +235,9 @@ public class Message {
 
     public String getPrivmsgText() {
         return trailing;
+    }
+
+    public List<Splitter.Result> getSplitText() {
+        return splitText != null ? splitText : (splitText = Splitter.splitWithSpace(trailing));
     }
 }

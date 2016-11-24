@@ -28,7 +28,7 @@
         </activity>
         <activity
             android:name=".ChatActivity"
-            android:windowSoftInputMode="stateHidden|adjustPan"></activity>
+            android:windowSoftInputMode="stateHidden|adjustPan" />
 
         <service
             android:name=".client.ClientService"
@@ -45,7 +45,6 @@
             android:label="Login"
             android:theme="@style/AppTheme.TwitchLogin" />
         <activity android:name=".ErrorActivity" />
-        <activity android:name=".BaseActivity"></activity>
     </application>
 
 </manifest>
