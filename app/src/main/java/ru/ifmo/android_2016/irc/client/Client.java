@@ -76,8 +76,7 @@ public class Client {
     };
     private boolean connected = false;
 
-    Client(ClientService clientService) {
-        this.clientService = clientService;
+    Client() {
     }
 
     void connect(ClientSettings clientSettings) {

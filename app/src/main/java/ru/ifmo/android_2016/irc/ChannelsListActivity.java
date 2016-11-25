@@ -1,11 +1,9 @@
 package ru.ifmo.android_2016.irc;
 
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.PorterDuff;
 import android.os.AsyncTask;
@@ -13,7 +11,6 @@ import android.os.Bundle;
 import android.support.annotation.UiThread;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -37,7 +34,6 @@ import android.widget.Toast;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.loader.LoadResult;
@@ -48,8 +44,6 @@ import ru.ifmo.android_2016.irc.utils.Log;
 
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
-import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
-import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_DARK_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
 import static ru.ifmo.android_2016.irc.utils.ThemeUtils.THEME_DARK;
@@ -62,10 +56,8 @@ public class ChannelsListActivity extends AppCompatActivity
         implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private LinearLayout ll;
-    private boolean updateDataFromCache = false;
     private ProgressBar pb;
     public final String TAG = ChannelsListActivity.class.getSimpleName();
-    private LocalBroadcastManager lbm;
     private Context context;
 
     @Override
@@ -85,18 +77,15 @@ public class ChannelsListActivity extends AppCompatActivity
         button.setOnClickListener(this::onTwitchLoginClick);
         context = this;
         Log.d(TAG, "On create");
-        startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
-        lbm = LocalBroadcastManager.getInstance(this);
-        lbm.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                updateChannelList();
-            }
-        }, new IntentFilter(ServerList.class.getCanonicalName()));
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
     }
 
+    @Override
+    protected void onStop() {
+        ServerList.save(IRCApplication.getFilesDirectory());
+        super.onStop();
+    }
 
     @UiThread
     private void updateChannelList() {
@@ -509,12 +498,6 @@ public class ChannelsListActivity extends AppCompatActivity
         public void onLoaderReset(Loader<LoadResult<String>> loader) {
         }
 
-    }
-
-    @Override
-    public void finish() {
-        startService(new Intent(this, ClientService.class).setAction(STOP_SERVICE));
-        super.finish();
     }
 
     @Override

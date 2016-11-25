@@ -12,6 +12,7 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -72,11 +73,14 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         if (savedInstanceState != null) {
             id = savedInstanceState.getLong("Id");
-            clientSettings = ServerList.getInstance().get(id);
-            client = ClientService.getClient(id);
         } else {
-            load();
+            id = getIntent().getLongExtra(SERVER_ID, 0);
+            ClientService.startClient(this, id, this::onConnected);
         }
+
+        clientSettings = ServerList.getInstance().get(id);
+        client = ClientService.getClient(id);
+
         initView();
 
 
@@ -156,11 +160,23 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
+    }
 
+    @Override
+    protected void onStart() {
         if (client != null) {
             client.attachUi(this);
             onChannelChange();
         }
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        if (client != null) {
+            client.detachUi();
+        }
+        super.onStop();
     }
 
     @Override
@@ -200,13 +216,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 //            Log.d("Keyboard Size", "Size: " + heightDifference);
         });
 
-    }
-
-    private void load() {
-        id = getIntent().getLongExtra(SERVER_ID, 0);
-        clientSettings = ServerList.getInstance().get(id);
-
-        ClientService.startClient(this::onConnected, id);
     }
 
     public void sendMessage(String message) {
@@ -309,14 +318,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             closeEmotes();
             return;
         }
-        ClientService.stopClient(clientSettings.getId());
         super.onBackPressed();
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (client != null) client.detachUi();
-        super.onDestroy();
     }
 
     @UiThread
@@ -400,6 +402,11 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Settings").setOnMenuItemClickListener(menuItem -> {
             startActivityForResult(new Intent(this, PreferenceActivity.class), 228);
+            return false;
+        });
+        menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Disconnect").setOnMenuItemClickListener(m -> {
+            ClientService.stopClient(id);
+            ActivityCompat.finishAffinity(this);
             return false;
         });
         return true;

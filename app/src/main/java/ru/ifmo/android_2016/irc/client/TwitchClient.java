@@ -25,11 +25,6 @@ public final class TwitchClient extends Client {
     private int nickColor = 0;
     private final Set<Integer> emoteSets = new HashSet<>();
 
-
-    TwitchClient(ClientService clientService) {
-        super(clientService);
-    }
-
     @Override
     protected void actions() throws IOException {
         capReq("twitch.tv/membership");

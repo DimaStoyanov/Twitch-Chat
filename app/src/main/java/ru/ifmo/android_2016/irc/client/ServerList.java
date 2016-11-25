@@ -1,11 +1,15 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import ru.ifmo.android_2016.irc.IRCApplication;
+import ru.ifmo.android_2016.irc.utils.BackgroundTask;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
 import ru.ifmo.android_2016.irc.utils.Log;
 
@@ -15,6 +19,8 @@ import ru.ifmo.android_2016.irc.utils.Log;
 
 public final class ServerList extends HashMap<Long, ClientSettings> {
     private static final String TAG = ServerList.class.getSimpleName();
+
+    private final static String SERVER_LIST_FILE = "/data.obj"; //TODO:
     private static ServerList instance = null;
     private AtomicLong lastId = new AtomicLong(1);
 
@@ -32,12 +38,22 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
     private ServerList() {
     }
 
+    @Nullable
     public static ServerList getInstance() {
         return instance;
     }
 
+    public static void load(Context context, final Runnable onLoadListener) {
+        final String path = context.getFilesDir() + SERVER_LIST_FILE;
+        new BackgroundTask(() -> {
+            loadFromFile(path);
+            IRCApplication.runOnUiThread(onLoadListener);
+        }).executeOnExecutor(Client.executor);
+        //TODO: костыль чтоб таск заработал пока другой таск работает
+    }
+
     @WorkerThread
-    static ServerList loadFromFile(String filename) {
+    private static ServerList loadFromFile(String filename) {
         if (instance == null) {
             Log.i(TAG, "Loading " + filename);
             instance = FileUtils.readObjectFromFile(filename);
@@ -46,12 +62,22 @@ public final class ServerList extends HashMap<Long, ClientSettings> {
         return instance;
     }
 
-    static class SaveToFile extends AsyncTask<String, Void, Void> {
+    public static void save(String filesDir) {  //TODO: разобраться с filesDir
+        new SaveToFile(filesDir + SERVER_LIST_FILE).execute();
+    }
+
+    private static class SaveToFile extends AsyncTask<Void, Void, Void> {
+        private String serverListFile;
+
+        SaveToFile(String serverListFile) {
+            this.serverListFile = serverListFile;
+        }
+
         @Override
-        protected Void doInBackground(String... strings) {
+        protected Void doInBackground(Void... params) {
             if (instance != null) {
-                Log.i(TAG, "Saving to " + strings[0]);
-                FileUtils.writeObjectToFile(strings[0], instance);
+                Log.i(TAG, "Saving to " + serverListFile);
+                FileUtils.writeObjectToFile(serverListFile, instance);
             }
             return null;
         }

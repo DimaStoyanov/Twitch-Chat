@@ -3,7 +3,6 @@ package ru.ifmo.android_2016.irc;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.UiThread;
 import android.support.design.widget.FloatingActionButton;
@@ -14,7 +13,6 @@ import android.text.util.Linkify;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -24,7 +22,6 @@ import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.MessageText;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
-import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 
@@ -65,7 +62,6 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         }
 
         channel = ClientService.getClient(serverId).getChannels().get(channelName);
-        channel.attachUi(this);
     }
 
     @Override
@@ -107,9 +103,15 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     }
 
     @Override
-    public void onDestroy() {
+    public void onStart() {
+        channel.attachUi(this);
+        super.onStart();
+    }
+
+    @Override
+    public void onStop() {
         channel.detachUi();
-        super.onDestroy();
+        super.onStop();
     }
 
     @Override
@@ -221,20 +223,20 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
         menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Copy to clipboard this message")
                 .setOnMenuItemClickListener(m -> {
-            DraweeTextView textView = (DraweeTextView) v;
-            ClipboardManager clipboard =
-                    (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("Copied text", textView.getMessage().getText());
-            clipboard.setPrimaryClip(clip);
-            return false;
-        });
+                    DraweeTextView textView = (DraweeTextView) v;
+                    ClipboardManager clipboard =
+                            (ClipboardManager) getActivity().getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("Copied text", textView.getMessage().getText());
+                    clipboard.setPrimaryClip(clip);
+                    return false;
+                });
         menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Copy this message")
                 .setOnMenuItemClickListener(m -> {
-            DraweeTextView textView = (DraweeTextView) v;
-            activity.typeMessage.setText(textView.getMessage().isColored() ? "/me " : "");
-            activity.typeMessage.append(textView.getMessage().getText());
-            return false;
-        });
+                    DraweeTextView textView = (DraweeTextView) v;
+                    activity.typeMessage.setText(textView.getMessage().isColored() ? "/me " : "");
+                    activity.typeMessage.append(textView.getMessage().getText());
+                    return false;
+                });
         menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Answer").setOnMenuItemClickListener(m -> {
             DraweeTextView textView = (DraweeTextView) v;
             CharSequence message = "@" + textView.getMessage().getSender() + ", ";

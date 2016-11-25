@@ -1,17 +1,14 @@
 package ru.ifmo.android_2016.irc;
 
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.UiThread;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
-import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -29,11 +26,13 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
@@ -42,10 +41,7 @@ import ru.ifmo.android_2016.irc.loader.ResultType;
 import ru.ifmo.android_2016.irc.loader.TwitchUserNickLoader;
 import ru.ifmo.android_2016.irc.utils.Log;
 
-import static ru.ifmo.android_2016.irc.client.ClientService.GET_SERVER_LIST;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
-import static ru.ifmo.android_2016.irc.client.ClientService.START_SERVICE;
-import static ru.ifmo.android_2016.irc.client.ClientService.STOP_SERVICE;
 
 /**
  * Created by Dima Stoyanov on 21.11.2016.
@@ -59,9 +55,7 @@ public class NewChannelListActivity extends BaseActivity {
     private ArrayAdapter<String> adapter;
     private ArrayList<ClientSettings> clientSettings;
     private ArrayList<String> channels;
-    private boolean updateDataFromCache = false;
     public final String TAG = NewChannelListActivity.class.getSimpleName();
-    private LocalBroadcastManager lbm;
     private Context context;
 
     @Override
@@ -80,35 +74,10 @@ public class NewChannelListActivity extends BaseActivity {
                 .putExtra(SERVER_ID, clientSettings.get(i).getId())));
         registerForContextMenu(listView);
         context = this;
-        startService(new Intent(this, ClientService.class).setAction(START_SERVICE));
-        lbm = LocalBroadcastManager.getInstance(this);
-        lbm.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                updateChannelList();
-            }
-        }, new IntentFilter(ServerList.class.getCanonicalName()));
+
+        ServerList.load(this, this::updateChannelList);
 
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
-    }
-
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        Log.d(TAG, "On pause");
-        updateDataFromCache = false;
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        Log.d(TAG, "On start");
-        if (!updateDataFromCache) {
-            startService(new Intent(this, ClientService.class).setAction(GET_SERVER_LIST));
-            updateDataFromCache = true;
-        }
-
     }
 
     @Override
@@ -122,15 +91,17 @@ public class NewChannelListActivity extends BaseActivity {
 
     @UiThread
     private void updateChannelList() {
-        if (ServerList.getInstance() == null)
-            return;
-        Collection<ClientSettings> data = ServerList.getInstance().values();
+        ServerList serverList = ServerList.getInstance();
+
+        if (serverList == null) return;
+
+        Collection<ClientSettings> data = serverList.values();
         clientSettings = new ArrayList<>();
         channels = new ArrayList<>();
         clientSettings.addAll(data);
-        for (ClientSettings cl : clientSettings) {
-            channels.add(cl.getName());
-        }
+        channels.addAll(Stream.of(clientSettings)
+                .map(ClientSettings::getName)
+                .collect(Collectors.toList()));
 
         Log.d(TAG, clientSettings.toString());
         Log.d(TAG, channels.toString());
@@ -373,17 +344,13 @@ public class NewChannelListActivity extends BaseActivity {
     }
 
     @Override
-    public void finish() {
-        startService(new Intent(this, ClientService.class).setAction(STOP_SERVICE));
-        super.finish();
-    }
-
-    @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
-        getMenuInflater().inflate(R.menu.channel_list_menu, menu);
+        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "#ERROR#").setOnMenuItemClickListener(menuItem -> {
+            startActivity(new Intent(this, ErrorActivity.class));
+            return false;
+        });
         return true;
     }
-
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {

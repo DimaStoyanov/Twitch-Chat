@@ -1,174 +1,137 @@
 package ru.ifmo.android_2016.irc.client;
 
 import android.annotation.SuppressLint;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.IBinder;
-import android.support.annotation.UiThread;
-import android.support.v4.content.LocalBroadcastManager;
+import android.support.annotation.MainThread;
 
 import com.annimon.stream.Stream;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import ru.ifmo.android_2016.irc.R;
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
+import ru.ifmo.android_2016.irc.utils.FunctionUtils;
 import ru.ifmo.android_2016.irc.utils.Log;
+
+import static ru.ifmo.android_2016.irc.utils.NotificationUtils.FOREGROUND_NOTIFICATION;
+import static ru.ifmo.android_2016.irc.utils.NotificationUtils.getNotification;
+import static ru.ifmo.android_2016.irc.utils.NotificationUtils.updateNotification;
 
 public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
 
     public static final String SERVER_ID = "ru.ifmo.android_2016.irc.id";
 
-    public static final String START_SERVICE = "start-service";
-    public static final String STOP_SERVICE = "stop-service";
-    public static final String GET_SERVER_LIST = "server-list";
-    private String SERVER_LIST_FILE = "/data.obj";    //TODO:
-    LocalBroadcastManager lbm;
-    ServerList serverList;
+    final static Object serverListLock = new Object();
+    static ServerList serverList;
 
     @SuppressLint("UseSparseArrays")
-    private Map<Long, Client> clients = new HashMap<>();
-    private boolean isRunning = false;
+    private static Map<Long, Client> clients = new HashMap<>();
+    private static boolean isRunning = false;
     private static ClientService instance;
-
-    public ClientService() {
-        super();
-        instance = this;
-    }
 
     @Override
     public void onCreate() {
+        Log.d(TAG, "onCreate");
+
         super.onCreate();
-        Log.i(TAG, "onCreate");
-        lbm = LocalBroadcastManager.getInstance(this);
-        SERVER_LIST_FILE = getFilesDir() + SERVER_LIST_FILE;
-        new LoadServerListTask().execute(SERVER_LIST_FILE);
+        instance = this;
+        ServerList.load(this, ClientService::onServerListLoad);
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy");
+
+        new ForceClientStopTask().execute();
+        instance = null;
+        isRunning = false;
+        super.onDestroy();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        switch (intent.getAction()) {
-            case START_SERVICE:
-                if (!isRunning) {
-                    startForeground(1, getNotification("Service is running"));
-                    new BttvEmotesLoaderTask().execute();
-                    isRunning = true;
-                }
-                break;
-
-            case STOP_SERVICE:
-                stop();
-                break;
-
-            case GET_SERVER_LIST:
-                if (serverList != null) {
-                    lbm.sendBroadcast(new Intent(ServerList.class.getCanonicalName()));
-                }
-                break;
-
-            default:
+        if (!isRunning) {
+            startForeground(FOREGROUND_NOTIFICATION, getNotification(this, ""));
+            isRunning = true;
         }
+
         return START_STICKY;
     }
 
-    public static void stopClient(Long... serverId) {
-        instance.new CloseClientTask().execute(serverId);
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
     }
 
-    public static void startClient(OnConnectedListener activity, long serverId) {
-        instance.new StartClientTask(serverId, activity).execute();
+    public static void stopClient(long serverId) {
+        new StopClientTask(serverId).execute();
     }
 
-    public static void stop() {
-        if (instance.clients.isEmpty()) {
-            instance.stopSelf();
-            instance = null;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static void forceStop() {
-        instance.new ForceServiceStopTask().execute();
-    }
-
-    @SuppressWarnings("deprecation")
-    private Notification getNotification(String text) {
-        return new Notification.Builder(this)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("IRC client")
-                .setContentText(text)
-                .getNotification();
-    }
-
-    void updateNotification(String text) {
-        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        nm.notify(1, getNotification(text));
+    public static void startClient(Context context,
+                                   long serverId,
+                                   FunctionUtils.Procedure<Client> onLoadListener) {
+        new StartClientTask(context, serverId, onLoadListener).execute();
     }
 
     public static Client getClient(long id) {
-        return instance.clients.get(id);
+        return clients.get(id);
     }
 
-    public interface OnConnectedListener {
-        @UiThread
-        void onConnected(Client client);
-    }
-
-    private class LoadServerListTask extends AsyncTask<String, Void, ServerList> {
-        @Override
-        protected ServerList doInBackground(String... strings) {
-            return ServerList.loadFromFile(strings[0]);
-        }
-
-        @Override
-        protected void onPostExecute(ServerList serverList) {
-            ClientService.this.serverList = serverList;
-            lbm.sendBroadcast(new Intent(ServerList.class.getCanonicalName()));
-            super.onPostExecute(serverList);
-        }
-    }
-
-    private class ForceServiceStopTask extends AsyncTask<Void, Void, Void> {
+    private static class ForceClientStopTask extends AsyncTask<Void, Void, Void> {
         @Override
         protected Void doInBackground(Void... voids) {
             Stream.of(clients.values()).forEach(Client::close);
             return null;
         }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            stopSelf();
-        }
     }
 
-    private class StartClientTask extends AsyncTask<Void, Void, String> {
+    private static class StartClientTask extends AsyncTask<Void, Void, String> {
+        private final Context context;
         private final long id;
-        private final OnConnectedListener listener;
+        private final FunctionUtils.Procedure<Client> listener;
 
-        public StartClientTask(long serverId, OnConnectedListener activity) {
+        StartClientTask(Context context,
+                        long serverId,
+                        FunctionUtils.Procedure<Client> onLoadListener) {
+            this.context = context;
             id = serverId;
-            listener = activity;
+            this.listener = onLoadListener;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            ensureServiceRunning(context);
+            super.onPreExecute();
         }
 
         @Override
         protected String doInBackground(Void... args) {
             if (!clients.containsKey(id)) {
                 ClientSettings clientSettings;
+                if (serverList == null) {
+                    ServerList.load(context, ClientService::onServerListLoad);
+                    synchronized (serverListLock) {
+                        try {
+                            serverListLock.wait();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 if ((clientSettings = serverList.find(id)) != null) {
                     Client client;
                     client = clientSettings.isTwitch() ?
-                            new TwitchClient(ClientService.this) :
-                            new Client(ClientService.this);
+                            new TwitchClient() :
+                            new Client();
                     clients.put(id, client);
                     client.connect(clientSettings);
+
+                    return clientSettings.getName() + " is running";
                 }
-                return clientSettings.getName() + " is running";
             } else {
                 Log.i(TAG, "Client " + id + " is already running");
             }
@@ -177,31 +140,44 @@ public class ClientService extends Service {
 
         @Override
         protected void onPostExecute(String result) {
-            updateNotification(result);
-            listener.onConnected(getClient(id));
+            updateNotification(context, result);
+            listener.call(getClient(id));
         }
     }
 
-    private class CloseClientTask extends AsyncTask<Long, Void, Void> {
+    private static class StopClientTask extends AsyncTask<Void, Void, Void> {
+        private final long id;
+
+        StopClientTask(long id) {
+            this.id = id;
+        }
+
         @Override
-        protected Void doInBackground(Long... ids) {
-            for (long id : ids) {
-                Client client = clients.remove(id);
-                if (client != null) client.close();
-            }
+        protected Void doInBackground(Void... params) {
+            Client client = clients.remove(id);
+            if (client != null) client.close();
             return null;
         }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+
+            if (instance != null && clients.isEmpty()) {
+                instance.stopSelf();
+            }
+        }
     }
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
+    private static void ensureServiceRunning(Context context) {
+        context.startService(new Intent(context, ClientService.class));
     }
 
-    @Override
-    public void onDestroy() {
-        new ServerList.SaveToFile().execute(SERVER_LIST_FILE);
-        Log.i(TAG, "onDestroy");
-        super.onDestroy();
+    @MainThread
+    private static void onServerListLoad() {
+        synchronized (serverListLock) {
+            serverList = ServerList.getInstance();
+            serverListLock.notifyAll();
+        }
     }
 }

@@ -1,6 +1,7 @@
 package ru.ifmo.android_2016.irc;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -72,7 +73,11 @@ public class EmoteScrollViewFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         scrollView = (ScrollView) getView().findViewById(R.id.emotes_scroll);
         String channel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName();
-        int columns = activity.viewPager.getWidth() / 120;
+
+        Point point = new Point();
+        getActivity().getWindowManager().getDefaultDisplay().getSize(point);
+        int columns = point.x / 120;
+
         Log.d(TAG, channel);
         Object[] keyset = getEmotesKeyset(channel);
         Log.d(TAG, "Keyset length " + keyset.length);
