@@ -16,12 +16,15 @@ package ru.ifmo.android_2016.irc.drawee;/*
 
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.support.annotation.NonNull;
+import android.support.v4.graphics.ColorUtils;
 import android.text.Spanned;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.widget.TextView;
 
 import com.facebook.drawee.drawable.ForwardingDrawable;
@@ -72,14 +75,21 @@ public class DraweeTextView extends TextView {
         super.setText(text, type);
     }
 
+    @SuppressWarnings("deprecation")
     public void setMessage(MessageText message) {
         setBackgroundColor(Color.TRANSPARENT);
 
+        TypedValue typedValue = new TypedValue();
+        Resources.Theme theme = getContext().getTheme();
+        theme.resolveAttribute(R.attr.background, typedValue, true);
+        int color = typedValue.data;
+
         if (message.isMentioned()) {
-            setBackgroundColor(getResources().getColor(R.color.mentionColor));
+            setBackgroundColor(ColorUtils.blendARGB(color, Color.RED, 0.6f));
         }
         if (message.isTwitchNotify()) {
-            setBackgroundColor(getResources().getColor(R.color.twitchNotifyColor));
+            setBackgroundColor(ColorUtils.blendARGB(color, getResources()
+                    .getColor(R.color.colorTwitch), 0.6f));
             setText(message.getText());
         } else {
             setText(message.getSpanned());

@@ -105,6 +105,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public void onStart() {
         channel.attachUi(this);
+        adapter.notifyDataSetChanged();
         super.onStart();
     }
 
@@ -168,7 +169,6 @@ public class ChatFragment extends Fragment implements Channel.Callback {
         @Override
         public void onBindViewHolder(MessageAdapter.ViewHolder holder, int position) {
             holder.setText(position);
-            //holder.itemView.setBackgroundColor(Color.argb(255, 180, 0, 0));
         }
 
         @Override
@@ -181,11 +181,8 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 //            return position;
 //        }
 
-        @SuppressWarnings("deprecation")
         class ViewHolder extends RecyclerView.ViewHolder {
             private DraweeTextView itemView;
-            private float startY;
-            private long startTime;
 
             ViewHolder(View itemView) {
                 super(itemView);

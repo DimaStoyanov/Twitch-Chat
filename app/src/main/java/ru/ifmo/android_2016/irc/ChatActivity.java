@@ -405,7 +405,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         });
         menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Disconnect").setOnMenuItemClickListener(m -> {
             ClientService.stopClient(id);
-            ActivityCompat.finishAffinity(this);
+            finish();
             return false;
         });
         return true;

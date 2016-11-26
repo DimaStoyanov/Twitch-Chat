@@ -46,8 +46,8 @@
     <style name="AppTheme.TwitchLogin">
         <item name="windowActionBar">true</item>
         <item name="windowNoTitle">false</item>
-        <item name="colorPrimary">#6441a5</item>
-        <item name="colorPrimaryDark">#6441a5</item>
+        <item name="colorPrimary">@color/colorTwitch</item>
+        <item name="colorPrimaryDark">@color/colorTwitch</item>
         <item name="android:textColorPrimary">#ffffff</item>
     </style>
 

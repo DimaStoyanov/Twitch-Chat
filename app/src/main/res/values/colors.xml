@@ -5,6 +5,5 @@
     <color name="colorAccent">@android:color/holo_blue_bright</color>
     <color name="colorNavChecked">@android:color/darker_gray</color>
 
-    <color name="twitchNotifyColor">#392e5c</color>
-    <color name="mentionColor">#33000a</color>
+    <color name="colorTwitch">#6441a5</color>
 </resources>

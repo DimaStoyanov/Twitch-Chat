@@ -67,7 +67,7 @@ public final class Channel {
         synchronized (messages) {
             messages.add(msg);
         }
-        if (messages.size() > 300) {
+        if (messages.size() > 1000) {
             IRCApplication.runOnUiThread(() -> {
                 synchronized (messages) {
                     messages.subList(0, 99).clear();
