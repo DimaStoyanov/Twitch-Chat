@@ -56,7 +56,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     EditText typeMessage;
     private long id = 0;
     private int keyboardHeight;
-    private ClientSettings clientSettings;
+//    private ClientSettings clientSettings;
     @Nullable
     Client client;
     ViewPagerAdapter viewPagerAdapter;
@@ -75,11 +75,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             id = savedInstanceState.getLong("Id");
         } else {
             id = getIntent().getLongExtra(SERVER_ID, 0);
-            ClientService.startClient(this, id, this::onConnected);
         }
 
-        clientSettings = ServerList.getInstance().get(id);
-        client = ClientService.getClient(id);
+//        clientSettings = ServerList.getInstance().get(id);
+        ClientService.startClient(this, id, this::onConnected);
 
         initView();
 
