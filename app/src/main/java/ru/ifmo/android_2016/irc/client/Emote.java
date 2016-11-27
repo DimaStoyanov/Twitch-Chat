@@ -1,5 +1,6 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -25,25 +26,42 @@ public class Emote implements Comparable<Emote> {
 
     private static Pattern pattern = Pattern.compile("([\\w\\\\()-]+):(?:\\d+-\\d+)(?:,\\d+-\\d+)*");
     private static Pattern range = Pattern.compile("(\\d+)-(\\d+)");
+
     private final String emoteUrl;
+    private String emoteId;
     private final int begin;
     private final int end;
+    private Type type;
 
-    private Emote(String emoteId, int begin, int end) {
-        this.emoteUrl = emoteId;
+    private Emote(String emoteUrl,
+                  String emoteId,
+                  int begin,
+                  int end,
+                  Type type) {
+        this.emoteUrl = emoteUrl;
+        this.emoteId = emoteId;
         this.begin = begin;
         this.end = end;
+        this.type = type;
     }
 
     private static Emote getTwitchEmote(String emoteId, int begin, int end) {
-        return new Emote(TwitchApi.getEmoteUrl(emoteId), begin, end);
+        return new Emote(
+                TwitchApi.getEmoteUrl(emoteId),
+                emoteId,
+                begin,
+                end,
+                Type.TWITCH);
     }
 
     private static Emote getBttvEmote(String emoteCode, String channel, int begin, int end) {
+        String emoteId = BttvEmotes.getEmoteByCode(emoteCode, channel);
         return new Emote(
-                BttvEmotes.getEmoteUrl(BttvEmotes.getEmoteByCode(emoteCode, channel)),
+                BttvEmotes.getEmoteUrl(emoteId),
+                emoteId,
                 begin,
-                end);
+                end,
+                Type.BTTV);
     }
 
     @Override
@@ -128,8 +146,8 @@ public class Emote implements Comparable<Emote> {
 
     @Deprecated
     public static List<Emote> findAllEmotes(String privmsgText,
-                                     String privmsgTarget,
-                                     Set<Integer> emoteSets) {
+                                            String privmsgTarget,
+                                            Set<Integer> emoteSets) {
         return findAllEmotes(Splitter.splitWithSpace(privmsgText), privmsgTarget, emoteSets);
     }
 
@@ -155,5 +173,31 @@ public class Emote implements Comparable<Emote> {
                         TwitchEmotes.getEmoteByCode(r.word),
                         r.begin,
                         r.end)));
+    }
+
+    public String getId() {
+        return emoteId;
+    }
+
+    public Type getType() {
+        return type;
+    }
+
+    public enum Type {
+        TWITCH,
+        BTTV,;
+
+        public String getDirectory() {
+            switch (this) {
+                case TWITCH:
+                    return "twitch";
+
+                case BTTV:
+                    return "bttv";
+
+                default:
+                    return "other_emotes";
+            }
+        }
     }
 }
