@@ -6,6 +6,7 @@ import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.Space;
@@ -24,6 +25,9 @@ import com.facebook.drawee.drawable.ScalingUtils;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.facebook.imagepipeline.image.ImageInfo;
+
+import java.util.Collections;
+import java.util.List;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
 import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
@@ -72,6 +76,7 @@ public class EmoteScrollViewFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         scrollView = (ScrollView) getView().findViewById(R.id.emotes_scroll);
+        //TODO: при открытой клаве при повороте падает на client == null
         String channel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName();
 
         Point point = new Point();
@@ -79,28 +84,28 @@ public class EmoteScrollViewFragment extends Fragment {
         int columns = point.x / 120;
 
         Log.d(TAG, channel);
-        Object[] keyset = getEmotesKeyset(channel);
-        Log.d(TAG, "Keyset length " + keyset.length);
+        List<String> keyset = getEmotes(channel);
+        Log.d(TAG, "Keyset length " + keyset.size());
         LinearLayout emotesLl = new LinearLayout(activity);
         emotesLl.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         emotesLl.setOrientation(LinearLayout.VERTICAL);
         int i = 0;
-        while (i < keyset.length) {
+        while (i < keyset.size()) {
             LinearLayout row = new LinearLayout(activity);
             row.setOrientation(LinearLayout.HORIZONTAL);
             int j = 0;
-            while (i < keyset.length && j++ < columns) {
+            while (i < keyset.size() && j++ < columns) {
                 SimpleDraweeView emote = new SimpleDraweeView(activity);
                 LinearLayout.LayoutParams emoteParams = new LinearLayout.LayoutParams(100, 100);
                 emoteParams.setMargins(10, 10, 10, 10);
                 emoteParams.weight = 1;
                 emote.setLayoutParams(emoteParams);
                 emote.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_INSIDE);
-                emote.setOnClickListener(new OnEmoteClickListener((String) keyset[i]));
+                emote.setOnClickListener(new OnEmoteClickListener(keyset.get(i)));
                 emote.setHapticFeedbackEnabled(true);
-                emote.setOnTouchListener(new OnEmoteTouchListener((String) keyset[i], emote));
+                emote.setOnTouchListener(new OnEmoteTouchListener(keyset.get(i), emote));
                 DraweeController draweeController = Fresco.newDraweeControllerBuilder()
-                        .setUri(getImageUri((String) keyset[i++], channel))
+                        .setUri(getImageUri(keyset.get(i++), channel))
                         .setControllerListener(new BaseControllerListener<ImageInfo>() {
                             @Override
                             public void onFinalImageSet(String id, @javax.annotation.Nullable ImageInfo imageInfo, @javax.annotation.Nullable Animatable animatable) {
@@ -128,14 +133,15 @@ public class EmoteScrollViewFragment extends Fragment {
         scrollView.addView(emotesLl);
     }
 
-    private Object[] getEmotesKeyset(String channel) {
+    @NonNull
+    private List<String> getEmotes(String channel) {
         switch (currentEmotes) {
             case "twitch":
-                return TwitchEmotes.getGlobalEmotesList().toArray();
+                return TwitchEmotes.getGlobalEmotesList();
             case "bttv":
-                return BttvEmotes.getChannelEmotesKey(channel);
+                return BttvEmotes.getEmotes(channel);
             default:
-                return null;
+                return Collections.emptyList();
         }
     }
 

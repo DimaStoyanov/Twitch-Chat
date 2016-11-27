@@ -9,6 +9,7 @@ import android.os.IBinder;
 import android.support.annotation.MainThread;
 
 import com.annimon.stream.Stream;
+import com.annimon.stream.function.Consumer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -73,7 +74,7 @@ public class ClientService extends Service {
 
     public static void startClient(Context context,
                                    long serverId,
-                                   FunctionUtils.Procedure<Client> onLoadListener) {
+                                   Consumer<Client> onLoadListener) {
         new StartClientTask(context, serverId, onLoadListener).execute();
     }
 
@@ -92,11 +93,11 @@ public class ClientService extends Service {
     private static class StartClientTask extends AsyncTask<Void, Void, String> {
         private final Context context;
         private final long id;
-        private final FunctionUtils.Procedure<Client> listener;
+        private final Consumer<Client> listener;
 
         StartClientTask(Context context,
                         long serverId,
-                        FunctionUtils.Procedure<Client> onLoadListener) {
+                        Consumer<Client> onLoadListener) {
             this.context = context;
             id = serverId;
             this.listener = onLoadListener;
@@ -141,7 +142,7 @@ public class ClientService extends Service {
         @Override
         protected void onPostExecute(String result) {
             updateNotification(context, result);
-            listener.call(getClient(id));
+            listener.accept(getClient(id));
         }
     }
 

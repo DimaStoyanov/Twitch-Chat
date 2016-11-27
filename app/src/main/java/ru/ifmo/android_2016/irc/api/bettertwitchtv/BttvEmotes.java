@@ -1,6 +1,14 @@
 package ru.ifmo.android_2016.irc.api.bettertwitchtv;
 
+import android.support.annotation.IntRange;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -8,42 +16,51 @@ import java.util.Map;
  */
 
 public class BttvEmotes {
-    private static final String DEFAULT_SIZE = "2x";
-    private static Map<String, String> globalEmotes = null;
+    @NonNull
+    private final static Map<String, String> globalEmotes = new HashMap<>();
+    @NonNull
     private final static Map<String, Map<String, String>> channelEmotes = new HashMap<>();
+    @Nullable
     private static String EMOTE_URL_TEMPLATE;
+
+    @SuppressWarnings("unchecked")
+    private final static List<Map<String, String>> urlCache = Arrays.asList(new HashMap[3]);
+
+    static {
+        for (int i : new int[]{0, 1, 2}) urlCache.set(i, new HashMap<>());
+    }
 
     private BttvEmotes() {
     }
 
+    @NonNull
     static Map<String, String> getGlobalEmotes() {
         return globalEmotes;
     }
 
-    static Object[] getGlobalEmotesKey() {
-        return globalEmotes.keySet().toArray();
-    }
+    public static List<String> getEmotes(String channel) {
+        List<String> wut = new ArrayList<>();
 
-    public static Object[] getChannelEmotesKey(String channel) {
-        if (getChannelEmotes(channel) == null) return getGlobalEmotesKey();
-        Object[] chkeys = getChannelEmotes(channel).keySet().toArray();
-        Object[] glkeys = getGlobalEmotesKey();
-        Object[] keys = new Object[chkeys.length + glkeys.length];
-        System.arraycopy(chkeys, 0, keys, 0, chkeys.length);
-        System.arraycopy(glkeys, 0, keys, chkeys.length, glkeys.length);
-        return keys;
+        wut.addAll(getChannelEmotes(channel).keySet());
+        wut.addAll(getGlobalEmotes().keySet());
+
+        return wut;
     }
 
     public static String getEmoteUrlByCode(String code, String channel) {
-        return getEmoteUrl(getEmoteByCode(code, channel), "3x");
+        return getEmoteUrl(getEmoteByCode(code, channel), 3);
     }
 
-    static void setGlobalEmotes(Map<String, String> globalEmotes) {
-        BttvEmotes.globalEmotes = globalEmotes;
+    static void setGlobalEmotes(@NonNull Map<String, String> globalEmotes) {
+        BttvEmotes.globalEmotes.clear();
+        BttvEmotes.globalEmotes.putAll(globalEmotes);
     }
 
+    @NonNull
     static Map<String, String> getChannelEmotes(String channel) {
-        return channelEmotes.get(channel);
+        Map<String, String> result = channelEmotes.get(channel);
+        if (result == null) return Collections.emptyMap();
+        return result;
     }
 
     static void setChannelEmotes(String channel, Map<String, String> channelEmotes) {
@@ -58,20 +75,25 @@ public class BttvEmotes {
      * Возвращает URL ссылку на изобренрие emoticon с заданным id заданного размера.
      *
      * @param id   Номер картинки
-     * @param size Размер картинки. Один из {1x, 2x, 3x}
+     * @param size Размер картинки. Один из {1, 2, 3}
      * @return URL ссылка на картинку
      */
-    public static String getEmoteUrl(String id, String size) {
+    @SuppressWarnings("WeakerAccess")
+    public static String getEmoteUrl(String id, @IntRange(from = 1, to = 3) int size) {
+        if (urlCache.get(size - 1).containsKey(id)) return urlCache.get(size - 1).get(id);
+
         if (EMOTE_URL_TEMPLATE != null) {
-            return "https:" + EMOTE_URL_TEMPLATE
+            String url = "https:" + EMOTE_URL_TEMPLATE
                     .replace("{{id}}", id)
-                    .replace("{{image}}", size);
+                    .replace("{{image}}", size + "x");
+            urlCache.get(size - 1).put(id, url);
+            return url;
         }
         throw null; //TODO: Я не знаю, нужно ли здесь кидать эксепшн или просто вернуть нулл
     }
 
     public static String getEmoteUrl(String id) {
-        return getEmoteUrl(id, DEFAULT_SIZE);
+        return getEmoteUrl(id, 2);
     }
 
     public static boolean isEmote(String code, String channel) {
@@ -79,14 +101,14 @@ public class BttvEmotes {
 
         Map<String, String> channelEmotes = BttvEmotes.channelEmotes.get(channel);
 
-        return (globalEmotes != null && globalEmotes.containsKey(code)) ||
+        return (!globalEmotes.isEmpty() && globalEmotes.containsKey(code)) ||
                 (channelEmotes != null && channelEmotes.containsKey(code));
     }
 
     public static String getEmoteByCode(String code, String channel) {
         if (code == null) return null;
 
-        if (globalEmotes != null) {
+        if (!globalEmotes.isEmpty()) {
             if (globalEmotes.containsKey(code)) return globalEmotes.get(code);
         }
 

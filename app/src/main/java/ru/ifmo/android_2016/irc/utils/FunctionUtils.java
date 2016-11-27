@@ -1,5 +1,6 @@
 package ru.ifmo.android_2016.irc.utils;
 
+import com.annimon.stream.function.Consumer;
 import com.annimon.stream.function.Function;
 import com.annimon.stream.function.FunctionalInterface;
 
@@ -23,7 +24,7 @@ public class FunctionUtils {
     }
 
     public static Runnable catchExceptions(final RunnableWithException<Exception> runnable) {
-        return catchExceptions(runnable, (e) -> {
+        return catchExceptions(runnable, e -> {
             e.printStackTrace();
             return null;
         });
@@ -40,13 +41,8 @@ public class FunctionUtils {
     }
 
     @FunctionalInterface
-    public interface Procedure<P> {
-        void call(P param);
-    }
-
-    @FunctionalInterface
-    public interface ProcedureWithException<E extends Exception, P> {
-        void call(P param) throws E;
+    public interface ConsumerWithException<E extends Exception, T> {
+        void accept(T param) throws E;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -57,11 +53,11 @@ public class FunctionUtils {
             this.func = func;
         }
 
-        public WithException doOp(ProcedureWithException<E, HttpURLConnection> procedure) {
+        public WithException doOp(ConsumerWithException<E, HttpURLConnection> procedure) {
             return new WithException(() -> {
                 HttpURLConnection connection = func.call();
                 try {
-                    procedure.call(connection);
+                    procedure.accept(connection);
                 } finally {
                     if (connection != null) {
                         connection.disconnect();
@@ -77,13 +73,13 @@ public class FunctionUtils {
                 this.runnable = runnable;
             }
 
-            public WithException catchWith(Class<E> exception, Procedure<Exception> catcher) {
+            public WithException catchWith(Class<E> exception, Consumer<Exception> catcher) {
                 return new WithException(() -> {
                     try {
                         this.run();
                     } catch (Exception x) {
                         if (exception.isInstance(x)) {
-                            catcher.call(x);
+                            catcher.accept(x);
                         } else {
                             throw x;
                         }
@@ -91,7 +87,7 @@ public class FunctionUtils {
                 });
             }
 
-            public Runnable catchException(Procedure<Exception> handler) {
+            public Runnable catchException(Consumer<Exception> handler) {
                 return () -> {
                     try {
                         run();

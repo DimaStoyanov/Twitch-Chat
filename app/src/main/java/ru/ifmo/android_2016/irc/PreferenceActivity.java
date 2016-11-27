@@ -1,8 +1,8 @@
 package ru.ifmo.android_2016.irc;
 
 import android.os.Bundle;
-import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.preference.Preference;
+import android.support.v7.preference.PreferenceFragmentCompat;
 import android.support.v7.widget.Toolbar;
 import android.widget.Toast;
 

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,12 +26,11 @@ public class BttvEmotesLoaderTask extends AsyncTask<String, Void, Void> {
 
     @Override
     protected Void doInBackground(String... params) {
-        if (BttvEmotes.getGlobalEmotes() == null) {
+        if (BttvEmotes.getGlobalEmotes().isEmpty()) {
             BttvEmotes.setGlobalEmotes(load(BetterTwitchTvApi::getBttvGlobalEmoticons));
         }
         for (String channel : params) {
-            Map<String, String> channelEmotes = BttvEmotes.getChannelEmotes(channel);
-            if (channelEmotes == null) {
+            if (BttvEmotes.getChannelEmotes(channel).isEmpty()) {
                 BttvEmotes.setChannelEmotes(channel,
                         load(() -> BetterTwitchTvApi.getBttvChannelEmoticons(channel)));
             }
@@ -102,7 +102,7 @@ public class BttvEmotesLoaderTask extends AsyncTask<String, Void, Void> {
             if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                 result.ref = readJson(httpURLConnection.getInputStream());
             } else {
-                result.ref = null;
+                result.ref = Collections.emptyMap();
             }
         }).catchWith(IOException.class, (e) -> {
             e.printStackTrace();
