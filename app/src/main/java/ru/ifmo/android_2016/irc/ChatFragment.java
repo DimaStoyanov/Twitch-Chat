@@ -21,7 +21,9 @@ import java.util.List;
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.MessageText;
+import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 import ru.ifmo.android_2016.irc.drawee.DraweeTextView;
+import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 
@@ -38,6 +40,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     private boolean autoScroll = true;
     private LinearLayoutManager layoutManager;
     private ChatActivity activity;
+    private float textSize = 14;
 
     public ChatFragment() {
         // Required empty public constructor
@@ -55,7 +58,6 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         if (getArguments() != null) {
             serverId = getArguments().getLong(SERVER_ID);
             channelName = getArguments().getString(CHANNEL_NAME);
@@ -67,8 +69,9 @@ public class ChatFragment extends Fragment implements Channel.Callback {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.d(TAG, "On create view");
         View root = inflater.inflate(R.layout.fragment_chat, container, false);
-
+        textSize = Float.parseFloat(activity.prefs.getString(PreferencesConstant.TEXT_SIZE_KEY, "14"));
         recyclerView = (RecyclerView) root.findViewById(R.id.messages);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -187,8 +190,9 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             ViewHolder(View itemView) {
                 super(itemView);
                 this.itemView = (DraweeTextView) itemView;
-                this.itemView.setAutoLinkMask(Linkify.ALL);
+                this.itemView.setAutoLinkMask(Linkify.WEB_URLS);
                 this.itemView.setLinksClickable(true);
+                this.itemView.setTextSize(textSize);
 //                this.itemView.setOnTouchListener((view, motionEvent) -> {
 //                    Log.d(TAG, motionEvent.toString());
 //                    switch (motionEvent.getAction()) {

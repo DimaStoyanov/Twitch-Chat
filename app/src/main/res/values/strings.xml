@@ -29,7 +29,6 @@
     <string name="username_status">Username status</string>
     <string name="open">open</string>
     <string name="close">close</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="twitch_chat">Twitch Chat</string>
     <string name="emotes">emotes</string>
@@ -45,10 +44,40 @@
     </string-array>
 
     <string-array name="text_size">
-        <item>Small</item>
-        <item>Medium</item>
-        <item>Large</item>
+        <item>12</item>
+        <item>14</item>
+        <item>16</item>
+        <item>18</item>
+        <item>20</item>
     </string-array>
+
+    <string-array name="frequency_entries">
+        <item>Always</item>
+        <item>1 Day</item>
+        <item>3 Days</item>
+        <item>7 Days</item>
+        <item>14 Days</item>
+        <item>Month</item>
+        <item>Never</item>
+    </string-array>
+
+    <string-array name="frequency_values">
+        <item>0</item>
+        <item>1</item>
+        <item>3</item>
+        <item>7</item>
+        <item>14</item>
+        <item>30</item>
+        <item>100500</item>
+    </string-array>
+
+
+    <string-array name="emotes_storage">
+        <item>Internal storage</item>
+        <item>External storage</item>
+    </string-array>
+
+    <string name="title_activity_twitch_stream">TwitchStreamActivity</string>
 
 
 </resources>

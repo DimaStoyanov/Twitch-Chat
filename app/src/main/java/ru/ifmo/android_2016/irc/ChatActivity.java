@@ -3,6 +3,7 @@ package ru.ifmo.android_2016.irc;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -12,7 +13,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -41,14 +41,13 @@ import java.util.List;
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.Client;
 import ru.ifmo.android_2016.irc.client.ClientService;
-import ru.ifmo.android_2016.irc.client.ClientSettings;
-import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SHOW_TAB_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SPAM_MODE_KEY;
+import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.TEXT_SIZE_KEY;
 
 public class ChatActivity extends BaseActivity implements Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
@@ -56,7 +55,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     EditText typeMessage;
     private long id = 0;
     private int keyboardHeight;
-//    private ClientSettings clientSettings;
+    //    private ClientSettings clientSettings;
     @Nullable
     Client client;
     ViewPagerAdapter viewPagerAdapter;
@@ -70,13 +69,12 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        Log.d(TAG, "On create");
         if (savedInstanceState != null) {
             id = savedInstanceState.getLong("Id");
         } else {
             id = getIntent().getLongExtra(SERVER_ID, 0);
         }
-
 //        clientSettings = ServerList.getInstance().get(id);
         ClientService.startClient(this, id, this::onConnected);
 
@@ -179,10 +177,9 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     }
 
     @Override
-    protected void getStartPreferences() {
+    public void getStartPreferences() {
         spamMode = prefs.getBoolean(PreferencesConstant.SPAM_MODE_KEY, false);
         findViewById(R.id.tabLayout).setVisibility(prefs.getBoolean(PreferencesConstant.SHOW_TAB_KEY, false) ? View.VISIBLE : View.GONE);
-
     }
 
 
@@ -198,7 +195,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     private void setObserverListener() {
         // Determine keyboard height
         LinearLayout ll = (LinearLayout) findViewById(R.id.root_view);
-        keyboardHeight = 550;
+        Point point = new Point();
+        getWindowManager().getDefaultDisplay().getSize(point);
+        int defaultHeight = point.y / 3;
+        keyboardHeight = defaultHeight;
         ll.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             Rect r = new Rect();
             ll.getWindowVisibleDisplayFrame(r);
@@ -209,7 +209,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             if (resourceId > 0) {
                 heightDifference -= getResources().getDimensionPixelSize(resourceId);
             }
-            if (heightDifference > 400) {
+            if (heightDifference > defaultHeight) {
                 keyboardHeight = heightDifference;
             }
 //            Log.d("Keyboard Size", "Size: " + heightDifference);
@@ -242,7 +242,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             return;
         }
         emotesViewPager.setAdapter(new EmotesViewPagerAdapter(getSupportFragmentManager()));
-//            getTheme().
         emotesViewPager.setVisibility(View.VISIBLE);
         emotesViewPager.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
 
@@ -286,6 +285,9 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             case SPAM_MODE_KEY:
                 spamMode = sharedPreferences.getBoolean(s, false);
                 break;
+            case TEXT_SIZE_KEY:
+                recreate();
+                break;
         }
     }
 
@@ -298,7 +300,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         @Override
         public Fragment getItem(int position) {
-            return EmoteScrollViewFragment.newInstance(position == 0 ? "twitch" : "bttv");
+            return EmoteScrollViewFragment.newInstance(position == 0 ? "bttv" : "twitch");
         }
 
         @Override

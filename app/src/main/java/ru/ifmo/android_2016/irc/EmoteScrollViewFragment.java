@@ -39,7 +39,7 @@ public class EmoteScrollViewFragment extends Fragment {
     String currentEmotes;
     ChatActivity activity;
     ScrollView scrollView;
-
+    Handler emotesHandler;
     final String TAG = EmoteScrollViewFragment.class.getSimpleName();
     final static String EMOTE_LIST = "emote_list";
 
@@ -62,6 +62,7 @@ public class EmoteScrollViewFragment extends Fragment {
         if (getArguments() != null) {
             currentEmotes = getArguments().getString(EMOTE_LIST);
         }
+        emotesHandler = new Handler();
 
     }
 
@@ -77,13 +78,35 @@ public class EmoteScrollViewFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
         scrollView = (ScrollView) getView().findViewById(R.id.emotes_scroll);
         //TODO: при открытой клаве при повороте падает на client == null
-        String channel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName();
 
         Point point = new Point();
         getActivity().getWindowManager().getDefaultDisplay().getSize(point);
-        int columns = point.x / 120;
+        Log.d(TAG, point.x + " " + point.y);
+        int emoteDimension = point.y / 12;
+        int margin = emoteDimension / 10;
+        int columns = point.x / (emoteDimension + (margin << 1));
 
-        Log.d(TAG, channel);
+
+        showEmotes(columns, emoteDimension, margin);
+
+    }
+
+
+    private void showEmotes(int columns, int emoteDimension, int margin) {
+        if (activity.client == null || getEmotes(activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName()).size() == 0) {
+            emotesHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    if (getEmotes(activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName()).size() == 0)
+                        emotesHandler.postDelayed(this, 1000);
+                    else {
+                        emotesHandler.removeCallbacks(this);
+                        showEmotes(columns, emoteDimension, margin);
+                    }
+                }
+            }, 100);
+        }
+        String channel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName();
         List<String> keyset = getEmotes(channel);
         Log.d(TAG, "Keyset length " + keyset.size());
         LinearLayout emotesLl = new LinearLayout(activity);
@@ -96,8 +119,8 @@ public class EmoteScrollViewFragment extends Fragment {
             int j = 0;
             while (i < keyset.size() && j++ < columns) {
                 SimpleDraweeView emote = new SimpleDraweeView(activity);
-                LinearLayout.LayoutParams emoteParams = new LinearLayout.LayoutParams(100, 100);
-                emoteParams.setMargins(10, 10, 10, 10);
+                LinearLayout.LayoutParams emoteParams = new LinearLayout.LayoutParams(emoteDimension, emoteDimension);
+                emoteParams.setMargins(margin, margin, margin, margin);
                 emoteParams.weight = 1;
                 emote.setLayoutParams(emoteParams);
                 emote.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_INSIDE);
@@ -120,10 +143,11 @@ public class EmoteScrollViewFragment extends Fragment {
                 row.addView(emote);
             }
             // Symmetry for last row (if emotes in last row less than at all columns)
-            while (j++ < columns) {
+            while (j < columns) {
+                j++;
                 Space space = new Space(activity);
-                LinearLayout.LayoutParams spaceParams = new LinearLayout.LayoutParams(100, 100);
-                spaceParams.setMargins(10, 10, 10, 10);
+                LinearLayout.LayoutParams spaceParams = new LinearLayout.LayoutParams(emoteDimension, emoteDimension);
+                spaceParams.setMargins(margin, margin, margin, margin);
                 spaceParams.weight = 1;
                 space.setLayoutParams(spaceParams);
                 row.addView(space);

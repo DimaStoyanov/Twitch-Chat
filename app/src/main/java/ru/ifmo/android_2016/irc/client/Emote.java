@@ -1,6 +1,5 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
@@ -45,6 +44,7 @@ public class Emote implements Comparable<Emote> {
         this.type = type;
     }
 
+
     private static Emote getTwitchEmote(String emoteId, int begin, int end) {
         return new Emote(
                 TwitchApi.getEmoteUrl(emoteId),
@@ -63,6 +63,7 @@ public class Emote implements Comparable<Emote> {
                 end,
                 Type.BTTV);
     }
+
 
     @Override
     public int compareTo(@NonNull Emote o) {
@@ -200,4 +201,6 @@ public class Emote implements Comparable<Emote> {
             }
         }
     }
+
+
 }
