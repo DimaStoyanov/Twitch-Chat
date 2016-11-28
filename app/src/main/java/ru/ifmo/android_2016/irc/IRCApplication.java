@@ -9,6 +9,7 @@ import com.facebook.drawee.backends.pipeline.Fresco;
 import java.util.Calendar;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
+import ru.ifmo.android_2016.irc.api.twitch.TwitchBadges;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
@@ -66,5 +67,7 @@ public class IRCApplication extends android.app.Application {
         mainThread = new Handler(Looper.getMainLooper());
 
         super.onCreate();
+
+        new TwitchBadges.BadgesLoaderTask().execute();
     }
 }

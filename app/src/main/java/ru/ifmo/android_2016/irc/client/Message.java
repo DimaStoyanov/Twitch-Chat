@@ -20,7 +20,7 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
 public class Message {
     private static final String TAG = Message.class.getSimpleName();
 
-    public Date date;
+    public final long time;
 
     @Nullable
     String optPrefix;
@@ -45,6 +45,7 @@ public class Message {
     private List<Splitter.Result> splitText = null;
 
     public Message() {
+        time = System.currentTimeMillis();
     }
 
     public static Message fromString(String rawMessage) {
@@ -112,6 +113,10 @@ public class Message {
 
     public void setPrivmsgText(String privmsgText) {
         this.trailing = privmsgText;
+    }
+
+    public long getTime() {
+        return time;
     }
 
     private static class Prefix {

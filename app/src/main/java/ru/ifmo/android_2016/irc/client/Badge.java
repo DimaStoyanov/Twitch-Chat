@@ -5,12 +5,14 @@ import com.annimon.stream.Stream;
 
 import java.util.List;
 
+import ru.ifmo.android_2016.irc.api.twitch.TwitchBadges;
+
 /**
  * Created by ghost on 11/12/2016.
  */
 
 @SuppressWarnings("WeakerAccess")
-public class Badge {
+public final class Badge {
     private final String version;
     private final Type name;
 
@@ -31,6 +33,15 @@ public class Badge {
 
     public Type getName() {
         return name;
+    }
+
+    @Override
+    public String toString() {
+        return getName().name().toLowerCase() + "/" + version;
+    }
+
+    public String getUrl() {
+        return TwitchBadges.getBadgeUrl(toString());
     }
 
     public static List<Badge> parseBadges(String badges) {

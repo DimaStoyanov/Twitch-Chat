@@ -1,6 +1,7 @@
 package ru.ifmo.android_2016.irc.api.bettertwitchtv;
 
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.util.JsonReader;
 
 import java.io.IOException;
@@ -93,8 +94,9 @@ public class BttvEmotesLoaderTask extends AsyncTask<String, Void, Void> {
     }
 
     @SuppressWarnings({"Convert2MethodRef", "CodeBlock2Expr"})
+    @NonNull
     private Map<String, String> load(CallableWithException<IOException, HttpURLConnection> callable) {
-        final Reference<Map<String, String>> result = new Reference<>();
+        final Reference<Map<String, String>> result = new Reference<>(Collections.emptyMap());
 
         tryWith(callable).doOp((httpURLConnection) -> {
             httpURLConnection.connect();
@@ -107,6 +109,7 @@ public class BttvEmotesLoaderTask extends AsyncTask<String, Void, Void> {
         }).catchWith(IOException.class, (e) -> {
             e.printStackTrace();
         }).runUnchecked();
+
         return result.ref;
     }
 }

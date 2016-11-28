@@ -81,6 +81,12 @@ public class NewChannelListActivity extends BaseActivity {
     }
 
     @Override
+    protected void onStop() {
+        ServerList.save(IRCApplication.getFilesDirectory());
+        super.onStop();
+    }
+
+    @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         super.onSharedPreferenceChanged(sharedPreferences, s);
         if (s.equals(PreferencesConstant.CACHE_KEY)) {

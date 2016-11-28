@@ -4,11 +4,18 @@ import android.graphics.Typeface;
 import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.support.v4.graphics.ColorUtils;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import ru.ifmo.android_2016.irc.api.twitch.TwitchBadges;
+import ru.ifmo.android_2016.irc.client.Badge;
 import ru.ifmo.android_2016.irc.client.Emote;
 import ru.ifmo.android_2016.irc.client.Message;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
@@ -28,6 +35,12 @@ public final class TextUtils {
     public static SpannableStringBuilder buildTextDraweeView(TwitchMessage msg) {
         SpannableStringBuilder nickNBadges = new SpannableStringBuilder();
 
+        SpannableStringBuilder time = new SpannableStringBuilder()
+                .append(new SimpleDateFormat("hh:mm:ss").format(new Date(msg.getTime())))
+                .append(' ');
+        time.setSpan(new RelativeSizeSpan(0.65f), 0, time.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        nickNBadges.append(buildBadges(msg));
         nickNBadges.append(msg.getNickname());
         nickNBadges.append(msg.getAction() ? " " : ": ");
 
@@ -36,12 +49,29 @@ public final class TextUtils {
         if (color != 0) {
             float[] hsl = new float[3];
             ColorUtils.colorToHSL(color, hsl);
-            hsl[2] = (float) (180. / 256.);
+            hsl[2] = (float) (180. / 256.); //TODO: это подходит только для черной темы
             color = ColorUtils.HSLToColor(hsl);
+
             nickNBadges.setSpan(new ForegroundColorSpan(color), 0, nickNBadges.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
-        return nickNBadges.append(buildMessageTextWithEmotes(msg, color));
+        return time.append(nickNBadges.append(buildMessageTextWithEmotes(msg, color)));
+    }
+
+    private static SpannableStringBuilder buildBadges(TwitchMessage msg) {
+        SpannableStringBuilder badges = new SpannableStringBuilder();
+        if (msg.getBadges() != null) {
+            for (Badge badge : msg.getBadges()) {
+                SpannableStringBuilder b = new SpannableStringBuilder().append("  ");
+                b.setSpan(
+                        new DraweeSpan.Builder(badge.getUrl()).setLayout(50, 50).build(),
+                        0,
+                        1,
+                        Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                badges.append(b);
+            }
+        }
+        return badges;
     }
 
     @NonNull
