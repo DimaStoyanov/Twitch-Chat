@@ -81,7 +81,9 @@ public class BttvEmotes {
     @SuppressWarnings("WeakerAccess")
     public static String getEmoteUrl(String id, @IntRange(from = 1, to = 3) int size) {
         if (urlCache.get(size - 1).containsKey(id)) return urlCache.get(size - 1).get(id);
-
+        if (id == null) {
+            throw new RuntimeException("Incorrect emote id");
+        }
         if (EMOTE_URL_TEMPLATE != null) {
             String url = "https:" + EMOTE_URL_TEMPLATE
                     .replace("{{id}}", id)

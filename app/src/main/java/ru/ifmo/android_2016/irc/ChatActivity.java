@@ -242,9 +242,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             return;
         }
         emotesViewPager.setAdapter(new EmotesViewPagerAdapter(getSupportFragmentManager()));
-        emotesViewPager.setVisibility(View.VISIBLE);
         emotesViewPager.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
-
+        emotesViewPager.setVisibility(View.VISIBLE);
+        emotesViewPager.setCurrentItem(1);
+        emotesViewPager.setOffscreenPageLimit(3);
     }
 
 
@@ -293,6 +294,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
     class EmotesViewPagerAdapter extends ViewPagerAdapter {
 
+        private final String[] type = new String[]{"recent", "bttv", "twitch"};
 
         EmotesViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
@@ -300,12 +302,12 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         @Override
         public Fragment getItem(int position) {
-            return EmoteScrollViewFragment.newInstance(position == 0 ? "bttv" : "twitch");
+            return EmoteScrollViewFragment.newInstance(type[position]);
         }
 
         @Override
         public int getCount() {
-            return 2;
+            return type.length;
         }
     }
 
@@ -408,6 +410,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Disconnect").setOnMenuItemClickListener(m -> {
             ClientService.stopClient(id);
             finish();
+            return false;
+        });
+        menu.add(0, 3, Menu.CATEGORY_CONTAINER, "#ERROR#").setOnMenuItemClickListener(menuItem -> {
+            startActivity(new Intent(this, ErrorActivity.class));
             return false;
         });
         return true;

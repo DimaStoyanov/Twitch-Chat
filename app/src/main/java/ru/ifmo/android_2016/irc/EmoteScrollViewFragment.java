@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Point;
 import android.graphics.drawable.Animatable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.NonNull;
@@ -26,11 +27,15 @@ import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.facebook.imagepipeline.image.ImageInfo;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
 import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
+import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.utils.Log;
 
 
@@ -39,7 +44,7 @@ public class EmoteScrollViewFragment extends Fragment {
     String currentEmotes;
     ChatActivity activity;
     ScrollView scrollView;
-    Handler emotesHandler;
+    Channel currentChannel;
     final String TAG = EmoteScrollViewFragment.class.getSimpleName();
     final static String EMOTE_LIST = "emote_list";
 
@@ -62,7 +67,6 @@ public class EmoteScrollViewFragment extends Fragment {
         if (getArguments() != null) {
             currentEmotes = getArguments().getString(EMOTE_LIST);
         }
-        emotesHandler = new Handler();
 
     }
 
@@ -79,56 +83,56 @@ public class EmoteScrollViewFragment extends Fragment {
         scrollView = (ScrollView) getView().findViewById(R.id.emotes_scroll);
         //TODO: при открытой клаве при повороте падает на client == null
 
+        Handler handler = new Handler();
+        handler.post(new Runnable() {
+                         @Override
+                         public void run() {
+                             if (activity.client == null)
+                                 handler.postDelayed(this, 500);
+                             else {
+                                 currentChannel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem());
+                                 handler.removeCallbacks(this);
+                                 showEmotes();
+                             }
+                         }
+                     }
+        );
+    }
+
+
+    private void showEmotes() {
         Point point = new Point();
         getActivity().getWindowManager().getDefaultDisplay().getSize(point);
         Log.d(TAG, point.x + " " + point.y);
         int emoteDimension = point.y / 12;
         int margin = emoteDimension / 10;
         int columns = point.x / (emoteDimension + (margin << 1));
-
-
-        showEmotes(columns, emoteDimension, margin);
-
-    }
-
-
-    private void showEmotes(int columns, int emoteDimension, int margin) {
-        if (activity.client == null || getEmotes(activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName()).size() == 0) {
-            emotesHandler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    if (getEmotes(activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName()).size() == 0)
-                        emotesHandler.postDelayed(this, 1000);
-                    else {
-                        emotesHandler.removeCallbacks(this);
-                        showEmotes(columns, emoteDimension, margin);
-                    }
-                }
-            }, 100);
-        }
-        String channel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName();
-        List<String> keyset = getEmotes(channel);
-        Log.d(TAG, "Keyset length " + keyset.size());
+        List<String> keySet = getEmotes(currentChannel.getName());
+        if (keySet.isEmpty())
+            keySet.add("Kappa"); // Чтоб если не загрузились смайлы твича, там была хотя бы каппа для теста
+        Log.d(TAG, "Keyset length " + keySet.size());
+        Log.d(TAG, keySet.toString());
         LinearLayout emotesLl = new LinearLayout(activity);
         emotesLl.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         emotesLl.setOrientation(LinearLayout.VERTICAL);
+        scrollView.removeAllViews();
         int i = 0;
-        while (i < keyset.size()) {
+        while (i < keySet.size()) {
             LinearLayout row = new LinearLayout(activity);
             row.setOrientation(LinearLayout.HORIZONTAL);
             int j = 0;
-            while (i < keyset.size() && j++ < columns) {
+            while (i < keySet.size() && j++ < columns) {
                 SimpleDraweeView emote = new SimpleDraweeView(activity);
                 LinearLayout.LayoutParams emoteParams = new LinearLayout.LayoutParams(emoteDimension, emoteDimension);
                 emoteParams.setMargins(margin, margin, margin, margin);
                 emoteParams.weight = 1;
                 emote.setLayoutParams(emoteParams);
                 emote.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_INSIDE);
-                emote.setOnClickListener(new OnEmoteClickListener(keyset.get(i)));
+                emote.setOnClickListener(new OnEmoteClickListener(keySet.get(i)));
                 emote.setHapticFeedbackEnabled(true);
-                emote.setOnTouchListener(new OnEmoteTouchListener(keyset.get(i), emote));
+                emote.setOnTouchListener(new OnEmoteTouchListener(keySet.get(i), emote));
                 DraweeController draweeController = Fresco.newDraweeControllerBuilder()
-                        .setUri(getImageUri(keyset.get(i++), channel))
+                        .setUri(getImageUri(keySet.get(i++), currentChannel.getName()))
                         .setControllerListener(new BaseControllerListener<ImageInfo>() {
                             @Override
                             public void onFinalImageSet(String id, @javax.annotation.Nullable ImageInfo imageInfo, @javax.annotation.Nullable Animatable animatable) {
@@ -164,6 +168,18 @@ public class EmoteScrollViewFragment extends Fragment {
                 return TwitchEmotes.getGlobalEmotesList();
             case "bttv":
                 return BttvEmotes.getEmotes(channel);
+            case "recent":
+                try {
+                    List<String> result = new AsyncTask<Void, Void, List<String>>() {
+                        @Override
+                        protected List<String> doInBackground(Void... voids) {
+                            return currentChannel.getLastEmotes(getActivity());
+                        }
+                    }.executeOnExecutor(Executors.newFixedThreadPool(10)).get();
+                    return result == null ? new ArrayList<>() : result;
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
             default:
                 return Collections.emptyList();
         }
@@ -174,11 +190,17 @@ public class EmoteScrollViewFragment extends Fragment {
             case "twitch":
                 return Uri.parse(TwitchEmotes.getEmoteUrlByCode(code));
             case "bttv":
-                return Uri.parse(BttvEmotes.getEmoteUrlByCode(String.valueOf(code), channel));
+                return Uri.parse(BttvEmotes.getEmoteUrlByCode(code, channel));
+            case "recent":
+                if (BttvEmotes.isEmote(code, channel)) {
+                    return Uri.parse(BttvEmotes.getEmoteUrlByCode(code, channel));
+                }
+                return Uri.parse(TwitchEmotes.getEmoteUrlByCode(code));
             default:
                 return null;
         }
     }
+
 
     private class OnEmoteClickListener implements View.OnClickListener {
         private final String code;
@@ -192,6 +214,16 @@ public class EmoteScrollViewFragment extends Fragment {
         public void onClick(View view) {
             view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
             activity.typeMessage.append(code + " ");
+
+            new AsyncTask<Void, Void, Void>() {
+
+                @Override
+                protected Void doInBackground(Void... voids) {
+                    currentChannel.addLastEmote(code, getActivity());
+                    return null;
+
+                }
+            }.executeOnExecutor(Executors.newFixedThreadPool(10));
         }
     }
 
@@ -251,6 +283,12 @@ public class EmoteScrollViewFragment extends Fragment {
     public void onAttach(Context context) {
         super.onAttach(context);
         activity = (ChatActivity) context;
+    }
+
+    @Override
+    public void onPause() {
+        if (currentChannel != null) currentChannel.writeEmotesToStorage(getActivity());
+        super.onPause();
     }
 
     @Override

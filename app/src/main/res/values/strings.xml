@@ -38,6 +38,7 @@
     <!--Settings-->
 
     <string name="theme">Theme</string>
+
     <string-array name="pref_theme">
         <item>Light</item>
         <item>Dark</item>
@@ -51,33 +52,6 @@
         <item>20</item>
     </string-array>
 
-    <string-array name="frequency_entries">
-        <item>Always</item>
-        <item>1 Day</item>
-        <item>3 Days</item>
-        <item>7 Days</item>
-        <item>14 Days</item>
-        <item>Month</item>
-        <item>Never</item>
-    </string-array>
-
-    <string-array name="frequency_values">
-        <item>0</item>
-        <item>1</item>
-        <item>3</item>
-        <item>7</item>
-        <item>14</item>
-        <item>30</item>
-        <item>100500</item>
-    </string-array>
-
-
-    <string-array name="emotes_storage">
-        <item>Internal storage</item>
-        <item>External storage</item>
-    </string-array>
-
     <string name="title_activity_twitch_stream">TwitchStreamActivity</string>
-
 
 </resources>
