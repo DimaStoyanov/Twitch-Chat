@@ -63,6 +63,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     private boolean spamMode = false;
     private TextView chatTitle;
     protected FloatingActionButton fab;
+    private int lastPosition = 0;
 
 
     @Override
@@ -105,6 +106,8 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
             @Override
             public void onPageSelected(final int position) {
+                lastPosition = position;
+
                 try {
                     closeEmotes();
                     changeCheckedMenuItem(position);
@@ -220,9 +223,16 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     }
 
     @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        lastPosition = savedInstanceState.getInt("Last position");
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putLong("Id", id);
+        outState.putInt("Last position", lastPosition);
     }
 
     public void onEmotesShowClick(View view) {
@@ -325,6 +335,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     public void onConnected(@NonNull final Client client) {
         ChatActivity.this.client = client;
         client.attachUi(this);
+        viewPager.setCurrentItem(lastPosition);
     }
 
     @Override

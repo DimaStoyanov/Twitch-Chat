@@ -1,4 +1,4 @@
-package ru.ifmo.android_2016.irc.api.twitch;
+package ru.ifmo.android_2016.irc.api.twitch.emotes;
 
 import android.annotation.SuppressLint;
 import android.os.AsyncTask;
@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import ru.ifmo.android_2016.irc.api.TwitchApi;
+import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotes;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils.Reference;
 
 import static ru.ifmo.android_2016.irc.utils.FunctionUtils.tryWith;
@@ -28,21 +29,17 @@ import static ru.ifmo.android_2016.irc.utils.FunctionUtils.tryWith;
  * Created by ghost on 11/17/2016.
  */
 
-public class TwitchEmotesLoaderTask extends AsyncTask<Integer, Void, Void> {
+public class TwitchEmotesLoader extends AsyncTask<Integer, Void, Void> {
     @Override
     protected Void doInBackground(Integer... params) {
         Set<Integer> needToLoad = new HashSet<>(Arrays.asList(params));
         needToLoad.removeAll(TwitchEmotes.getLoadedSets());
 
         if (needToLoad.size() > 0) {
-            String sets = Stream.of(needToLoad)
-                    .map(i -> Integer.toString(i))
-                    .collect(Collectors.joining(","));
-
             final Reference<Map<Integer, Map<String, String>>> result =
                     new Reference<>(Collections.emptyMap());
 
-            tryWith(() -> TwitchApi.getEmoticonImages(sets)).doOp(httpURLConnection -> {
+            tryWith(() -> TwitchApi.getEmoticonImages(needToLoad)).doOp(httpURLConnection -> {
                 httpURLConnection.connect();
 
                 if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {

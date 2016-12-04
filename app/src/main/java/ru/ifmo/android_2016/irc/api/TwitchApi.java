@@ -3,15 +3,18 @@ package ru.ifmo.android_2016.irc.api;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Stream;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Set;
 
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.BASE_CHAT_URI;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.BASE_URI;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.CLIENT_ID;
-import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.EMOTICON_MEDIUM;
+import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.EMOTE_MEDIUM;
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.EMOTICON_URI;
 
 /**
@@ -22,6 +25,10 @@ import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.EMOTICON_URI;
 
 public class TwitchApi {
 
+    private static Uri.Builder getBaseUriBuilder() {
+        return BASE_URI.buildUpon()
+                .appendQueryParameter("client_id", CLIENT_ID);
+    }
 
     /**
      * @return Возвращает {@link HttpURLConnection} для выполнения запроса для получения общий эмоций.
@@ -87,16 +94,19 @@ public class TwitchApi {
     }
 
     public static String getEmoteUrl(String id) {
-        return getEmoteUrl(id, EMOTICON_MEDIUM);
+        return getEmoteUrl(id, EMOTE_MEDIUM);
     }
 
 
-    public static HttpURLConnection getEmoticonImages(String sets) throws IOException {
-        Uri uri = BASE_URI.buildUpon()
+    public static HttpURLConnection getEmoticonImages(Set<Integer> set) throws IOException {
+        String sets = Stream.of(set)
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+
+        Uri uri = getBaseUriBuilder()
                 .appendPath("chat")
                 .appendPath("emoticon_images")
                 .appendQueryParameter("emotesets", sets)
-                .appendQueryParameter("client_id", CLIENT_ID)
                 .build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }

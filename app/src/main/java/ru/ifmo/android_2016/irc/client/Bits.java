@@ -29,7 +29,7 @@ public class Bits {
     private final int beginText;
     private final int endText;
 
-    public Bits(String bits, int begin, int end) {
+    private Bits(String bits, int begin, int end) {
         try {
             bits = bits.replace("cheer", "");
             this.bits = Integer.parseInt(bits);
@@ -42,19 +42,19 @@ public class Bits {
         }
     }
 
-    public static List<Bits> parse(String bits, String message) {
-        if (bits == null) return null;
+    public static List<Bits> parse(String bitsCount, String message) {
+        if (bitsCount == null) return null;
         if (message == null) return null;
 
         List<Bits> result = new ArrayList<>();
         Matcher matcher = pattern.matcher(message);
         while (matcher.find()) {
-            Bits bitss = new Bits(
+            Bits bits = new Bits(
                     matcher.group(),
                     matcher.start(),
                     matcher.end());
-            Log.d(TAG, bitss.toString());
-            result.add(bitss);
+            Log.d(TAG, bits.toString());
+            result.add(bits);
         }
         return result;
     }
@@ -90,7 +90,17 @@ public class Bits {
     }
 
     public int getColor() {
-        return Color.parseColor(getColorString());
+        if (bits >= 10000) {
+            return Color.RED;
+        } else if (bits >= 5000) {
+            return Color.BLUE;
+        } else if (bits >= 1000) {
+            return Color.GREEN;
+        } else if (bits >= 100) {
+            return 0xFF800080;
+        } else {
+            return Color.GRAY;
+        }
     }
 
     public int getImageBegin() {

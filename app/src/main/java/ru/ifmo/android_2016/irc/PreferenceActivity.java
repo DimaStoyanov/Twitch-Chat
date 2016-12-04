@@ -49,7 +49,7 @@ public class PreferenceActivity extends BaseActivity {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.pref_main);
-            findPreference(CLEAR_LOGIN_KEY).setOnPreferenceClickListener(this::onPreferenceClick);
+//            findPreference(CLEAR_LOGIN_KEY).setOnPreferenceClickListener(this::onPreferenceClick);
         }
 
 

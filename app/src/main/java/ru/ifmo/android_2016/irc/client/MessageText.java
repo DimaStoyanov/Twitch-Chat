@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -114,7 +115,7 @@ public final class MessageText {
             String sender = msg.getNickname();
             String text = msg.getPrivmsgText();
 
-            Spanned spanned = null;
+            Spanned spanned;
             if (function != null) {
                 spanned = function.apply((TwitchMessage) msg);
             } else {

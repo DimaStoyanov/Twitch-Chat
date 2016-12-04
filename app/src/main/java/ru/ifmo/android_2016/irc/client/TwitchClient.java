@@ -8,7 +8,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotesLoaderTask;
+import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotesExtension;
+import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotesLoader;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -121,10 +122,7 @@ public final class TwitchClient extends Client {
         }
         twitchMessage
                 .setColor(nickColor)
-//                .setEmotes(Emote.findAllEmotes(
-//                        twitchMessage.getSplitText(),
-//                        twitchMessage.getPrivmsgTarget(),
-//                        emoteSets))
+                .applyExtension(new TwitchEmotesExtension(getEmoteSets()))
                 .setNickname(getNickname());
 
         return true;
@@ -150,7 +148,7 @@ public final class TwitchClient extends Client {
         nickColor = userState.getColor();
         displayName = userState.getDisplayName();
         emoteSets.addAll(Arrays.asList(userState.getEmoteSets()));
-        new TwitchEmotesLoaderTask().execute(userState.getEmoteSets());
+        new TwitchEmotesLoader().execute(userState.getEmoteSets());
     }
 
     private void updateUserstate(TwitchMessage userState) {

@@ -34,8 +34,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
-import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
+import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotes;
 import ru.ifmo.android_2016.irc.client.Channel;
+import ru.ifmo.android_2016.irc.constant.TwitchApiConstant;
 import ru.ifmo.android_2016.irc.utils.Log;
 
 
@@ -89,7 +90,7 @@ public class EmoteScrollViewFragment extends Fragment {
                              if (activity.client == null)
                                  handler.postDelayed(this, 500);
                              else {
-                                 currentChannel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem());
+                                 currentChannel = activity.getChannels().get(activity.viewPager.getCurrentItem());
                                  handler.removeCallbacks(this);
                                  showEmotes();
                              }
@@ -187,14 +188,14 @@ public class EmoteScrollViewFragment extends Fragment {
     private Uri getImageUri(String code, String channel) {
         switch (currentEmotes) {
             case "twitch":
-                return Uri.parse(TwitchEmotes.getEmoteUrlByCode(code));
+                return Uri.parse(TwitchEmotes.getEmoteUrl(code, TwitchApiConstant.EMOTE_LARGE));
             case "bttv":
                 return Uri.parse(BttvEmotes.getEmoteUrlByCode(code, channel));
             case "recent":
                 if (BttvEmotes.isEmote(code, channel)) {
                     return Uri.parse(BttvEmotes.getEmoteUrlByCode(code, channel));
                 }
-                return Uri.parse(TwitchEmotes.getEmoteUrlByCode(code));
+                return Uri.parse(TwitchEmotes.getEmoteUrl(code, TwitchApiConstant.EMOTE_LARGE));
             default:
                 return null;
         }

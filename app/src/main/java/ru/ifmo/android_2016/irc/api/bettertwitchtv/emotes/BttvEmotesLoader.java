@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils.CallableWithException;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils.Reference;
 
@@ -27,7 +26,7 @@ import static ru.ifmo.android_2016.irc.utils.FunctionUtils.tryWith;
  */
 
 public class BttvEmotesLoader extends AsyncTask<Void, Void, Void> {
-    //    private static final String TAG = BetterTwitchTvApi.BttvEmotesLoader.class.getSimpleName();
+//    private static final String TAG = BttvEmotesLoader.class.getSimpleName();
     private final boolean forceGlobalReload;
     @Nullable
     private final String channel;

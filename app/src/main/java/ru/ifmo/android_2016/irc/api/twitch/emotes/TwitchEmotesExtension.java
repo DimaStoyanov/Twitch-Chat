@@ -8,7 +8,6 @@ import com.annimon.stream.Stream;
 import java.util.List;
 import java.util.Set;
 
-import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
 import ru.ifmo.android_2016.irc.client.Badge;
 import ru.ifmo.android_2016.irc.client.Emote;
 import ru.ifmo.android_2016.irc.client.MessageExtension;
@@ -49,8 +48,8 @@ public final class TwitchEmotesExtension implements MessageExtension {
         return Stream.of(message.getSplitText())
                 .filter(r -> TwitchEmotes.isEmote(r.word, emoteSets))
                 .map(r -> Emote.newEmote(
+                        TwitchEmotes.getEmoteUrl(r.word),
                         r.word,
-                        TwitchEmotes.getEmoteUrlByCode(r.word),
                         r.begin,
                         r.end,
                         Emote.Type.TWITCH))

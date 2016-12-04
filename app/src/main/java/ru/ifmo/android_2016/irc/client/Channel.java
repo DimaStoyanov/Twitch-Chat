@@ -6,8 +6,6 @@ import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
 import android.support.annotation.WorkerThread;
 
-import com.annimon.stream.function.Function;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,7 +19,6 @@ import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvMessageExtension;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotesLoader;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesExtension;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesLoader;
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
 import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
@@ -83,11 +80,11 @@ public final class Channel {
         new TwitchBadgesLoader(name, channelBadges::putAll).execute();
     }
 
-    <T extends Message> void add(T msg) {
+    void add(Message msg) {
         add(msg, textFunction);
     }
 
-    <T extends Message> void add(T msg, TextFunction func) {
+    void add(Message msg, TextFunction func) {
         if (func != null) {
             add(new MessageText.Builder(msg)
                     .setFunction(func)
@@ -173,10 +170,6 @@ public final class Channel {
         nicknamePattern = Pattern.compile(nick, Pattern.CASE_INSENSITIVE);
     }
 
-    Map<String, String> getBadges() {
-        return channelBadges;
-    }
-
     @Override
     public int hashCode() {
         //TODO: сделать норм хеш функцию. или нет
@@ -232,6 +225,4 @@ public final class Channel {
             e.printStackTrace();
         }
     }
-
-
 }

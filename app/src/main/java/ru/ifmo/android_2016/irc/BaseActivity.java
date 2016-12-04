@@ -5,6 +5,8 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
+import ru.ifmo.android_2016.irc.ui.span.ChangeableForegroundColorSpan;
+
 import static android.preference.PreferenceManager.getDefaultSharedPreferences;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_DARK_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.THEME_KEY;
@@ -40,9 +42,11 @@ public abstract class BaseActivity extends AppCompatActivity {
         try {
             switch (prefs.getString(THEME_KEY, "")) {
                 case THEME_LIGHT_KEY:
+                    ChangeableForegroundColorSpan.setLightness(80.f / 256);
                     themeID = R.style.AppTheme;
                     break;
                 case THEME_DARK_KEY:
+                    ChangeableForegroundColorSpan.setLightness(180.f / 256);
                     themeID = R.style.AppTheme_Dark;
             }
             setTheme(themeID);

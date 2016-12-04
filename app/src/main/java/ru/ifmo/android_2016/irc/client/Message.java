@@ -285,7 +285,8 @@ public class Message {
         return Splitter::getEmptyIterator;
     }
 
-    public void applyExtension(MessageExtension extension) {
+    public Message applyExtension(MessageExtension extension) {
         //nothing
+        return this;
     }
 }

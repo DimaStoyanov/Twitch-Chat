@@ -72,7 +72,7 @@
             android:src="@drawable/fab_scroll_down"
             android:visibility="gone"
             app:fabSize="mini"
-            app:layout_behavior=".ui.FloatingActionButtonScrollBehavior" />
+            app:layout_behavior=".ui.behavior.FloatingActionButtonScrollBehavior" />
 
     </android.support.design.widget.CoordinatorLayout>
 

@@ -1,4 +1,4 @@
-package ru.ifmo.android_2016.irc.ui;
+package ru.ifmo.android_2016.irc.ui.behavior;
 
 import android.content.Context;
 import android.support.design.widget.CoordinatorLayout;

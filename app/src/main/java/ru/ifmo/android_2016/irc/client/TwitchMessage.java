@@ -212,7 +212,7 @@ public final class TwitchMessage extends Message {
     }
 
     @Override
-    public void applyExtension(MessageExtension extension) {
+    public TwitchMessage applyExtension(MessageExtension extension) {
         super.applyExtension(extension);
         doIfNotNull(extension.setBadges(this), badges -> this.badges = badges);
         doIfNotNull(extension.addBadges(this), badges -> {
@@ -230,6 +230,8 @@ public final class TwitchMessage extends Message {
                 this.emotes = emotes;
             }
         });
+
+        return this;
     }
 
     public List<Bits> getBits() {
