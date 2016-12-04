@@ -1,11 +1,18 @@
 package ru.ifmo.android_2016.irc.client;
 
-import com.annimon.stream.Collectors;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.SpannableString;
+import android.text.Spanned;
+
 import com.annimon.stream.Stream;
-import com.annimon.stream.function.Function;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
+
+import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
  * Created by ghost on 11/24/2016.
@@ -20,9 +27,10 @@ public final class MessageText {
     private final boolean colored;
     private final boolean mentioned;
     private final boolean twitchNotify;
+    private final boolean whisper;
 
     MessageText(CharSequence text) {
-        this(text, null, null, false, false, false);
+        this(text, null, null, false, false, false, false);
     }
 
     private MessageText(CharSequence message,
@@ -30,13 +38,14 @@ public final class MessageText {
                         String text,
                         boolean colored,
                         boolean mentioned,
-                        boolean twitchNotify) {
+                        boolean twitchNotify, boolean whisper) {
         this.spanned = message;
         this.sender = sender;
         this.text = text;
         this.colored = colored;
         this.mentioned = mentioned;
         this.twitchNotify = twitchNotify;
+        this.whisper = whisper;
     }
 
     public CharSequence getText() {
@@ -63,44 +72,62 @@ public final class MessageText {
         return twitchNotify;
     }
 
-    static class Builder {
-        TwitchMessage msg;
-        Function<Message, CharSequence> function;
-        List<String> mentionList = new ArrayList<>();
+    final static class Builder {
+        @NonNull
+        private Message msg;
+        @Nullable
+        private TextUtils.TextFunction function;
+        @NonNull
+        private List<Pattern> highlightList = new ArrayList<>();
+        @Nullable
+        private TwitchMessage userState;
+        @NonNull
+        private List<MessageExtension> extensionList = new ArrayList<>();
 
-        Builder setMessage(TwitchMessage msg) {
+        Builder(@NonNull Message msg) {
             this.msg = msg;
-            return this;
         }
 
-        Builder setFunction(Function<Message, CharSequence> function) {
+        Builder setFunction(@Nullable TextUtils.TextFunction function) {
             this.function = function;
             return this;
         }
 
-        Builder setMentionList(String... mentionList) {
-            this.mentionList.clear();
-            return addMentionList(mentionList);
+        Builder addHighlights(Pattern... highlight) {
+            Collections.addAll(this.highlightList, highlight);
+            return this;
         }
 
-        Builder addMentionList(String... mentionList) {
-            this.mentionList.addAll(Stream.of(mentionList).map(String::toLowerCase)
-                    .collect(Collectors.toList()));
+        Builder setUserState(@NonNull TwitchMessage userState) {
+            this.userState = userState;
+            return this;
+        }
+
+        Builder addExtensions(MessageExtension... extensions) {
+            Collections.addAll(this.extensionList, extensions);
             return this;
         }
 
         MessageText build() {
-            CharSequence spanned = function.apply(msg);
+            applyExtensions();
+
             String sender = msg.getNickname();
             String text = msg.getPrivmsgText();
-            boolean colored = msg.getAction();
+
+            Spanned spanned = null;
+            if (function != null) {
+                spanned = function.apply((TwitchMessage) msg);
+            } else {
+                spanned = new SpannableString(text);
+            }
+            boolean colored = msg.isAction();
             boolean twitchNotify = false;
+            boolean whisper = false;
             if (sender != null) {
                 twitchNotify = sender.toLowerCase().equals("twitchnotify");
             }
-            boolean mentioned = Stream.of(msg.getSplitText())
-                    .map(r -> r.word.toLowerCase())
-                    .filter(w -> mentionList.contains(w))
+            boolean mentioned = Stream.of(highlightList)
+                    .filter(p -> p.matcher(text).find())
                     .count() > 0;
 
             return new MessageText(
@@ -109,8 +136,14 @@ public final class MessageText {
                     text,
                     colored,
                     mentioned,
-                    twitchNotify
-            );
+                    twitchNotify,
+                    whisper);
+        }
+
+        private void applyExtensions() {
+            for (MessageExtension extension : extensionList) {
+                msg.applyExtension(extension);
+            }
         }
     }
 }

@@ -75,9 +75,13 @@ public class NewChannelListActivity extends BaseActivity {
         registerForContextMenu(listView);
         context = this;
 
-        ServerList.load(this, this::updateChannelList);
-
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+    }
+
+    @Override
+    protected void onStart() {
+        ServerList.load(this, this::updateChannelList);
+        super.onStart();
     }
 
     @Override

@@ -1,11 +1,16 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.graphics.Color;
+
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.Splitter;
 
 /**
@@ -13,23 +18,45 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
  */
 
 public class Bits {
-    private static final Pattern pattern = Pattern.compile("cheer\\d+");
+    private static final Pattern pattern = Pattern.compile("\\bcheer\\d+\\b");
     private static final String TAG = Bits.class.getSimpleName();
+
     private final int bits;
     private final String BITS_URL_TEMPLATE =
             "https://static-cdn.jtvnw.net/bits/{{theme}}/{{type}}/{{color}}/{{size}}";
-    private final int begin_text;
-    private final int end_text;
-    private final int begin_image;
-    private final int end_image;
+    private final int beginImage;
+    private final int endImage;
+    private final int beginText;
+    private final int endText;
 
     public Bits(String bits, int begin, int end) {
-        bits = bits.replace("cheer", "");
-        this.bits = Integer.parseInt(bits);
-        this.begin_image = begin;
-        this.end_image = end - bits.length();
-        this.begin_text = this.end_image + 1;
-        this.end_text = this.end_image;
+        try {
+            bits = bits.replace("cheer", "");
+            this.bits = Integer.parseInt(bits);
+            this.beginImage = begin;
+            this.endImage = end - bits.length();
+            this.beginText = this.endImage;
+            this.endText = end;
+        } catch (NumberFormatException x) {
+            throw new ParserException(x);
+        }
+    }
+
+    public static List<Bits> parse(String bits, String message) {
+        if (bits == null) return null;
+        if (message == null) return null;
+
+        List<Bits> result = new ArrayList<>();
+        Matcher matcher = pattern.matcher(message);
+        while (matcher.find()) {
+            Bits bitss = new Bits(
+                    matcher.group(),
+                    matcher.start(),
+                    matcher.end());
+            Log.d(TAG, bitss.toString());
+            result.add(bitss);
+        }
+        return result;
     }
 
     public static List<Bits> parse(String bits, List<Splitter.Result> message) {
@@ -42,13 +69,13 @@ public class Bits {
 
     public String getBitsUrl() {
         return BITS_URL_TEMPLATE
-                .replace("{{theme}}", "DARK")
-                .replace("{{type}}", "static")
-                .replace("{{color}}", getColor())
-                .replace("{{size}}", "3");
+                .replace("{{theme}}", "dark")
+                .replace("{{type}}", "animated")
+                .replace("{{color}}", getColorString())
+                .replace("{{size}}", "2");
     }
 
-    private String getColor() {
+    private String getColorString() {
         if (bits >= 10000) {
             return "red";
         } else if (bits >= 5000) {
@@ -60,5 +87,30 @@ public class Bits {
         } else {
             return "gray";
         }
+    }
+
+    public int getColor() {
+        return Color.parseColor(getColorString());
+    }
+
+    public int getImageBegin() {
+        return beginImage;
+    }
+
+    public int getImageEnd() {
+        return endImage;
+    }
+
+    public int getNumberBegin() {
+        return beginText;
+    }
+
+    public int getNumberEnd() {
+        return endText;
+    }
+
+    @Override
+    public String toString() {
+        return bits + " " + beginImage + ":" + endImage + "/" + beginText + ":" + endText;
     }
 }

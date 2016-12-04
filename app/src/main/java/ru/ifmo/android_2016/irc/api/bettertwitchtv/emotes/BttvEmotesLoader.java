@@ -1,8 +1,11 @@
-package ru.ifmo.android_2016.irc.api.bettertwitchtv;
+package ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes;
 
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.JsonReader;
+
+import com.annimon.stream.function.Consumer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ru.ifmo.android_2016.irc.api.BetterTwitchTvApi;
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils.CallableWithException;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils.Reference;
 
@@ -22,19 +26,44 @@ import static ru.ifmo.android_2016.irc.utils.FunctionUtils.tryWith;
  * Created by ghost on 11/16/2016.
  */
 
-public class BttvEmotesLoaderTask extends AsyncTask<String, Void, Void> {
-//    private static final String TAG = BetterTwitchTvApi.BttvEmotesLoaderTask.class.getSimpleName();
+public class BttvEmotesLoader extends AsyncTask<Void, Void, Void> {
+    //    private static final String TAG = BetterTwitchTvApi.BttvEmotesLoader.class.getSimpleName();
+    private final boolean forceGlobalReload;
+    @Nullable
+    private final String channel;
+    @Nullable
+    private final Consumer<Map<String, String>> onLoad;
+
+    public BttvEmotesLoader() {
+        this(false, null, null);
+    }
+
+    public BttvEmotesLoader(boolean forceGlobalReload) {
+        this(forceGlobalReload, null, null);
+    }
+
+    public BttvEmotesLoader(@Nullable String channel,
+                            @Nullable Consumer<Map<String, String>> onLoad) {
+        this(false, channel, onLoad);
+    }
+
+    public BttvEmotesLoader(boolean forceGlobalReload,
+                            @Nullable String channel,
+                            @Nullable Consumer<Map<String, String>> onLoad) {
+        this.forceGlobalReload = forceGlobalReload;
+        this.channel = channel;
+        this.onLoad = onLoad;
+    }
 
     @Override
-    protected Void doInBackground(String... params) {
-        if (BttvEmotes.getGlobalEmotes().isEmpty()) {
+    protected Void doInBackground(Void... params) {
+        if (BttvEmotes.getGlobalEmotes().isEmpty() || forceGlobalReload) {
             BttvEmotes.setGlobalEmotes(load(BetterTwitchTvApi::getBttvGlobalEmoticons));
         }
-        for (String channel : params) {
-            if (BttvEmotes.getChannelEmotes(channel).isEmpty()) {
-                BttvEmotes.setChannelEmotes(channel,
-                        load(() -> BetterTwitchTvApi.getBttvChannelEmoticons(channel)));
-            }
+        if (channel != null && onLoad != null) {
+            Map<String, String> map = load(() -> BetterTwitchTvApi.getBttvChannelEmoticons(channel));
+            onLoad.accept(map);
+            BttvEmotes.setChannelEmotes(channel, map);
         }
         return null;
     }

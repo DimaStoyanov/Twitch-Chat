@@ -61,7 +61,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             channelName = getArguments().getString(CHANNEL_NAME);
         }
 
-        channel = ClientService.getClient(serverId).getChannels().get(channelName);
+        channel = ClientService.getClient(serverId).getChannel(channelName);
     }
 
     @Override
@@ -187,31 +187,16 @@ public class ChatFragment extends Fragment implements Channel.Callback {
             ViewHolder(View itemView) {
                 super(itemView);
                 this.itemView = (DraweeTextView) itemView;
-                this.itemView.setAutoLinkMask(Linkify.ALL);
+                this.itemView.setAutoLinkMask(Linkify.WEB_URLS);
                 this.itemView.setLinksClickable(true);
-//                this.itemView.setOnTouchListener((view, motionEvent) -> {
-//                    Log.d(TAG, motionEvent.toString());
-//                    switch (motionEvent.getAction()) {
-//                        case MotionEvent.ACTION_DOWN:
-//                            startY = motionEvent.getY();
-//                            startTime = System.currentTimeMillis();
-//                            break;
-//                        case MotionEvent.ACTION_MOVE:
-//                            if (System.currentTimeMillis() - startTime > 100 && Math.abs(motionEvent.getY() - startY) < 5) {
-//                                this.itemView.setBackgroundColor(getResources().getColor(android.R.color.darker_gray));
-//                                break;
-//                            }
-//                        case MotionEvent.ACTION_CANCEL:
-//                        case MotionEvent.ACTION_UP:
-//                            this.itemView.setBackgroundColor(getResources().getColor(android.R.color.transparent));
-//                    }
-//                    return false;
-//                });
                 registerForContextMenu(this.itemView);
             }
 
             void setText(int position) {
                 itemView.setMessage(messages.get(position));
+                //TODO: может есть более правильный способ подограть размер вьюшки под картинки?
+                itemView.setVisibility(View.GONE);
+                itemView.setVisibility(View.VISIBLE);
             }
         }
     }

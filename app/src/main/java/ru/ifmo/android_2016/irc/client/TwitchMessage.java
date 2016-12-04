@@ -12,6 +12,8 @@ import java.util.Map;
 import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.Splitter;
 
+import static ru.ifmo.android_2016.irc.utils.FunctionUtils.doIfNotNull;
+
 /**
  * Created by ghost on 10/29/2016.
  */
@@ -21,7 +23,8 @@ public final class TwitchMessage extends Message {
 
     @Nullable
     private List<Badge> badges;
-    private int color;
+    @Nullable
+    private Integer color;
     @Nullable
     private String displayName;
     @Nullable
@@ -30,22 +33,25 @@ public final class TwitchMessage extends Message {
     private boolean mod;
     private boolean subscriber;
     private boolean turbo;
-    private String roomId;
-    private String userId;
+    private int roomId;
+    private int userId;
     private boolean r9k;
     private boolean subsOnly;
     private int slow;
     private Notice msgId;
     private int msgParamMonths;
+    @Nullable
     private String systemMsg;
+    @Nullable
     private String login;
+    @Nullable
     private List<Emote> emotes;
+    @Nullable
     private UserType userType;
     private List<Bits> bits;
     private String broadcasterLang;
     private Integer[] emoteSets;
     private Ban ban;
-    private List<Splitter.Result> splitResult;
 
     TwitchMessage() {
     }
@@ -57,12 +63,8 @@ public final class TwitchMessage extends Message {
     @Override
     protected TwitchMessage parse(String rawMessage) {
         super.parse(rawMessage);
-        if (getTrailing() != null) {
-            splitResult = Splitter.splitWithSpace(getTrailing());
-        }
         if (optPrefix != null) {
-            addToMessage(Stream.of(optPrefix)
-                    .flatMap(s -> Stream.of(s.split(";")))
+            addToMessage(Stream.of(optPrefix.split(";"))
                     .map(s -> s.split("="))
                     .filter(l -> l.length > 1)
                     .collect(Collectors.toMap(l -> l[0], l -> l[1])));
@@ -71,37 +73,37 @@ public final class TwitchMessage extends Message {
     }
 
     private void addToMessage(Map<String, String> map) {
-        badges = Badge.parseBadges(map.get("badges"));
-        color = parseColor(map.get("color"));
+        badges = Badge.parse(map.get("badges"));
+        color = parseColor(map.get("color"), null);
         displayName = map.get("display-name");
 
-        emotes = Emote.parse(map.get("emotes"), splitResult, getPrivmsgTarget());
+        emotes = Emote.parse(map.get("emotes"));
 
         id = map.get("id");
-        mod = parseBool(map.get("mod"));
-        subscriber = parseBool(map.get("subscriber"));
-        turbo = parseBool(map.get("turbo"));
-        roomId = map.get("room-id");
-        userId = map.get("user-id");
+        mod = parseBool(map.get("mod"), false);
+        subscriber = parseBool(map.get("subscriber"), false);
+        turbo = parseBool(map.get("turbo"), false);
+        roomId = parseNumber(map.get("room-id"), -1);
+        userId = parseNumber(map.get("user-id"), -1);
         userType = UserType.parse(map.get("user-type"));
-        bits = Bits.parse(map.get("bits"), splitResult);
+        bits = Bits.parse(map.get("bits"), getTrailing());
 
         emoteSets = parseEmoteSets(map.get("emote-sets"));
 
         broadcasterLang = map.get("broadcaster-lang");
-        r9k = parseBool(map.get("r9k"));
-        subsOnly = parseBool(map.get("subs-only"));
-        slow = parseNumber(map.get("slow"));
+        r9k = parseBool(map.get("r9k"), false);
+        subsOnly = parseBool(map.get("subs-only"), false);
+        slow = parseNumber(map.get("slow"), -1);
 
         msgId = Notice.parse(map.get("msg-id"));
-        msgParamMonths = parseNumber(map.get("msg-param-months"));
+        msgParamMonths = parseNumber(map.get("msg-param-months"), -1);
         systemMsg = parseMessage(map.get("system-msg"));
         login = map.get("login");
 
         ban = Ban.parse(parseMessage(map.get("ban-reason")), map.get("ban-duration"));
     }
 
-    private static Integer[] parseEmoteSets(String emoteSets) {
+    private static Integer[] parseEmoteSets(@Nullable String emoteSets) {
         if (emoteSets == null) return null;
         try {
             return Stream.of(emoteSets.split(",")).map(Integer::parseInt).toArray(Integer[]::new);
@@ -110,9 +112,10 @@ public final class TwitchMessage extends Message {
         }
     }
 
-    private static int parseColor(String color) {
+    private static Integer parseColor(@Nullable String color,
+                                      @Nullable Integer defaultValue) {
         if (color == null) {
-            return 0;
+            return defaultValue;
         }
         try {
             return Color.parseColor(color);
@@ -121,9 +124,9 @@ public final class TwitchMessage extends Message {
         }
     }
 
-    public static int parseNumber(String number) {
+    public static int parseNumber(String number, int defaultValue) {
         if (number == null) {
-            return 0;
+            return defaultValue;
         }
         try {
             return Integer.parseInt(number);
@@ -139,24 +142,32 @@ public final class TwitchMessage extends Message {
         return result;
     }
 
-    private static boolean parseBool(String value) {
+    private static boolean parseBool(String value, boolean defaultValue) {
         if (value == null) {
-            return false;
+            return defaultValue;
         }
         switch (value) {
             case "false":
             case "0":
                 return false;
+
             case "true":
             case "1":
                 return true;
+
             default:
                 throw new ParserException("can't parse bool " + value);
         }
     }
 
+    @Nullable
     public String getDisplayName() {
         return displayName;
+    }
+
+    public TwitchMessage setDisplayName(@Nullable String displayName) {
+        this.displayName = displayName;
+        return this;
     }
 
     @Override
@@ -168,13 +179,9 @@ public final class TwitchMessage extends Message {
         return emotes;
     }
 
-    public int getColor() {
+    @Nullable
+    public Integer getColor() {
         return color;
-    }
-
-    public TwitchMessage setDisplayName(String displayName) {
-        this.displayName = displayName;
-        return this;
     }
 
     public TwitchMessage setColor(int color) {
@@ -182,6 +189,7 @@ public final class TwitchMessage extends Message {
         return this;
     }
 
+    @Nullable
     public List<Badge> getBadges() {
         return badges;
     }
@@ -197,6 +205,35 @@ public final class TwitchMessage extends Message {
 
     public Integer[] getEmoteSets() {
         return emoteSets;
+    }
+
+    public int getRoomId() {
+        return roomId;
+    }
+
+    @Override
+    public void applyExtension(MessageExtension extension) {
+        super.applyExtension(extension);
+        doIfNotNull(extension.setBadges(this), badges -> this.badges = badges);
+        doIfNotNull(extension.addBadges(this), badges -> {
+            if (this.badges != null) {
+                this.badges.addAll(badges);
+            } else {
+                this.badges = badges;
+            }
+        });
+        doIfNotNull(extension.setEmotes(this), emotes -> this.emotes = emotes);
+        doIfNotNull(extension.addEmotes(this), emotes -> {
+            if (this.emotes != null) {
+                this.emotes.addAll(emotes);
+            } else {
+                this.emotes = emotes;
+            }
+        });
+    }
+
+    public List<Bits> getBits() {
+        return bits;
     }
 }
 

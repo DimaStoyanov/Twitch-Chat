@@ -29,7 +29,7 @@ import com.facebook.imagepipeline.image.ImageInfo;
 import java.util.Collections;
 import java.util.List;
 
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
 import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
 import ru.ifmo.android_2016.irc.utils.Log;
 
@@ -76,8 +76,8 @@ public class EmoteScrollViewFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         scrollView = (ScrollView) getView().findViewById(R.id.emotes_scroll);
-        //TODO: при открытой клаве при повороте падает на client == null
-        String channel = activity.client.getChannelList().get(activity.viewPager.getCurrentItem()).getName();
+
+        String channel = activity.getChannels().get(activity.viewPager.getCurrentItem()).getName();
 
         Point point = new Point();
         getActivity().getWindowManager().getDefaultDisplay().getSize(point);

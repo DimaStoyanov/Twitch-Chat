@@ -143,6 +143,9 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
                 ((AnimatableDrawable) drawable).start();
             }
             mDrawable = drawable;
+            if (mAttachedView != null) {
+                mAttachedView.invalidate();
+            }
         }
     }
 

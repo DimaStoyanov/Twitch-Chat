@@ -12,22 +12,21 @@ import java.net.HttpURLConnection;
  */
 
 public class FunctionUtils {
-    public static Runnable catchExceptions(final RunnableWithException<Exception> runnable,
-                                           Function<Exception, Void> exceptionHandler) {
+    public static Runnable catchExceptions(final RunnableWithException<? extends Exception> runnable,
+                                           Consumer<Exception> exceptionHandler) {
         return () -> {
             try {
                 runnable.run();
             } catch (Exception e) {
-                exceptionHandler.apply(e);
+                if (exceptionHandler != null) {
+                    exceptionHandler.accept(e);
+                }
             }
         };
     }
 
-    public static Runnable catchExceptions(final RunnableWithException<Exception> runnable) {
-        return catchExceptions(runnable, e -> {
-            e.printStackTrace();
-            return null;
-        });
+    public static Runnable lolExceptions(final RunnableWithException<? extends Exception> runnable) {
+        return catchExceptions(runnable, FunctionUtils::throwChecked);
     }
 
     @FunctionalInterface
@@ -92,7 +91,7 @@ public class FunctionUtils {
                     try {
                         run();
                     } catch (Exception x) {
-                        x.printStackTrace();
+                        handler.accept(x);
                     }
                 };
             }
@@ -106,7 +105,7 @@ public class FunctionUtils {
                 try {
                     run();
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throwChecked(e);
                 }
             }
         }
@@ -126,6 +125,26 @@ public class FunctionUtils {
 
         public Reference(T ref) {
             this.ref = ref;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> void uncheckedThrow(Object what) throws T {
+        throw (T) what;
+    }
+
+    @SuppressWarnings("RedundantTypeArguments")
+    public static void throwChecked(Throwable throwable) {
+        FunctionUtils.<RuntimeException>uncheckedThrow(throwable);
+    }
+
+    public static void lol(RunnableWithException<? extends Exception> r) {
+        lolExceptions(r).run();
+    }
+
+    public static <T> void doIfNotNull(T object, Consumer<T> action) {
+        if (object != null) {
+            action.accept(object);
         }
     }
 }

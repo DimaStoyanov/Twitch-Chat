@@ -14,7 +14,6 @@ import com.annimon.stream.function.Consumer;
 import java.util.HashMap;
 import java.util.Map;
 
-import ru.ifmo.android_2016.irc.utils.FunctionUtils;
 import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.utils.NotificationUtils.FOREGROUND_NOTIFICATION;
@@ -126,8 +125,8 @@ public class ClientService extends Service {
                 if ((clientSettings = serverList.find(id)) != null) {
                     Client client;
                     client = clientSettings.isTwitch() ?
-                            new TwitchClient() :
-                            new Client();
+                            new TwitchClient(context) :
+                            new Client(context);
                     clients.put(id, client);
                     client.connect(clientSettings);
 

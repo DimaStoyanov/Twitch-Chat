@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 
 import static ru.ifmo.android_2016.irc.constant.TwitchApiConstant.BASE_CHAT_URI;
@@ -97,6 +98,16 @@ public class TwitchApi {
                 .appendQueryParameter("emotesets", sets)
                 .appendQueryParameter("client_id", CLIENT_ID)
                 .build();
+        return (HttpURLConnection) new URL(uri.toString()).openConnection();
+    }
+
+    public static HttpURLConnection getChannel(String channel) throws IOException {
+        Uri uri = BASE_URI.buildUpon()
+                .appendPath("channels")
+                .appendPath(channel)
+                .appendQueryParameter("client_id", CLIENT_ID)
+                .build();
+
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }
 }

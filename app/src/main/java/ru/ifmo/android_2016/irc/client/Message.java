@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -106,6 +105,7 @@ public class Message {
                 .setTrailing(message);
     }
 
+    @Nullable
     public String getJoinChannel() {
         if (params.size() > 0) return params.get(0);
         return null;
@@ -144,7 +144,8 @@ public class Message {
                 "(?:@([^ ]+) )?" +  //opt-prefix
                         "(?::([^ ]+) )?" +  //prefix
                         "([\\w]+)" + //command
-                        "(?:(?: ([^: ][^ ]*))*(?: :(.*))?)?"); //params / trailing
+                        "(?: ((?:[^: ][^ ]*)(?: (?:[^: ][^ ]*))*))?" + //params
+                        "(?:(?: :(.*))?)?"); //trailing
 
         static {
             map.put("opt-prefix", 1);
@@ -168,7 +169,7 @@ public class Message {
         return nickname;
     }
 
-    public boolean getAction() {
+    public boolean isAction() {
         return action;
     }
 
@@ -217,11 +218,46 @@ public class Message {
         return this;
     }
 
+    @Nullable
+    public String getServerName() {
+        return serverName;
+    }
+
+    @Nullable
+    public String getUsername() {
+        return username;
+    }
+
+    @Nullable
+    public String getHostname() {
+        return hostname;
+    }
+
+    public final boolean isPrivmsg() {
+        return getCommand().equals("PRIVMSG");
+    }
+
+    public final boolean isJoin() {
+        return getCommand().equals("JOIN");
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (optPrefix != null) {
-            sb.append(optPrefix).append(' ');
+            sb.append('@').append(optPrefix).append(' ');
+        }
+        if (serverName != null) {
+            sb.append(':').append(serverName).append(' ');
+        } else if (nickname != null) {
+            sb.append(':').append(nickname);
+            if (hostname != null) {
+                if (username != null) {
+                    sb.append('!').append(username);
+                }
+                sb.append('@').append(hostname);
+            }
+            sb.append(' ');
         }
         sb.append(command).append(' ');
         for (String param : params) {
@@ -242,7 +278,14 @@ public class Message {
         return trailing;
     }
 
-    public List<Splitter.Result> getSplitText() {
-        return splitText != null ? splitText : (splitText = Splitter.splitWithSpace(trailing));
+    public Iterable<Splitter.Result> getSplitText() {
+        if (trailing != null) {
+            return Splitter.iteratorSplit(trailing);
+        }
+        return Splitter::getEmptyIterator;
+    }
+
+    public void applyExtension(MessageExtension extension) {
+        //nothing
     }
 }

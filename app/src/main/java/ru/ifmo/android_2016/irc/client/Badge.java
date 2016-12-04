@@ -1,11 +1,16 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.api.twitch.TwitchBadges;
+import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadges;
 
 /**
  * Created by ghost on 11/12/2016.
@@ -13,66 +18,44 @@ import ru.ifmo.android_2016.irc.api.twitch.TwitchBadges;
 
 @SuppressWarnings("WeakerAccess")
 public final class Badge {
-    private final String version;
-    private final Type name;
+    private final static Pattern pattern = Pattern.compile("\\w+/\\w+");
 
-    Badge(String badge) {
-        String[] p = badge.split("/");
-        if (p.length == 2) {
-            name = Type.parse(p[0]);
-            version = p[1];
-        } else {
+    @NonNull
+    private final String badge;
+    @Nullable
+    private String url;
+
+    Badge(@NonNull String badge) {
+        this(badge, null);
+    }
+
+    Badge(@NonNull String badge, @Nullable String url) {
+        this.badge = badge;
+        if (!pattern.matcher(badge).matches()) {
             throw new ParserException("Badge can't be parsed: " + badge);
         }
+
+        this.url = url;
     }
 
-    @SuppressWarnings("unused")
-    public String getVersion() {
-        return version;
-    }
-
-    public Type getName() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return getName().name().toLowerCase() + "/" + version;
-    }
-
-    public String getUrl() {
-        return TwitchBadges.getBadgeUrl(toString());
-    }
-
-    public static List<Badge> parseBadges(String badges) {
+    public static List<Badge> parse(String badges) {
         return badges == null ? null : Stream.of(badges.split(","))
                 .map(Badge::new)
                 .collect(Collectors.toList());
     }
 
-    @SuppressWarnings("unused")
-    public enum Type {
-        UNKNOWN,
+    @Override
+    public String toString() {
+        return badge;
+    }
 
-        ADMIN,
-        BITS,
-        BROADCASTER,
-        GLOBAL_MOD,
-        MODERATOR,
-        PREMIUM,
-        STAFF,
-        SUBSCRIBER,
-        TURBO,
-        WARCRAFT,
+    public String getUrl() {
+        if (url != null) return url;
+        return TwitchBadges.getBadgeUrl(toString());
+    }
 
-        BTTV_BOT,;
-
-        static Type parse(String type) {
-            try {
-                return Enum.valueOf(Type.class, type.toUpperCase());
-            } catch (IllegalArgumentException x) {
-                return UNKNOWN;
-            }
-        }
+    public Badge setUrl(@Nullable String url) {
+        this.url = url;
+        return this;
     }
 }

@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import static ru.ifmo.android_2016.irc.utils.TextUtils.removePunct;
+
 /**
  * Created by ghost on 11/11/2016.
  */
@@ -30,7 +32,7 @@ public class BetterTwitchTvApi {
     public static HttpURLConnection getBttvChannelEmoticons(String channelName) throws IOException {
         Uri uri = API_URI.buildUpon()
                 .appendPath("channels")
-                .appendPath(channelName.replace("#", ""))
+                .appendPath(removePunct(channelName))
                 .build();
         return (HttpURLConnection) new URL(uri.toString()).openConnection();
     }

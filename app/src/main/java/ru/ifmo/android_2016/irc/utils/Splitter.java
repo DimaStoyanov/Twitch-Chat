@@ -1,16 +1,28 @@
 package ru.ifmo.android_2016.irc.utils;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by ghost on 11/12/2016.
  */
 
 public class Splitter {
-    public List<String> words = new ArrayList<>();
-    public List<Integer> begin = new ArrayList<>();
-    public List<Integer> end = new ArrayList<>();
+    private final static Pattern wordPattern = Pattern.compile("\\w+");
+    private final static Iterator emptyIterator = new Iterator() {
+        @Override
+        public boolean hasNext() {
+            return false;
+        }
+
+        @Override
+        public Object next() {
+            return null;
+        }
+    };
 
     public static List<Result> splitWithSpace(String trailing) {
         StringBuilder sb = new StringBuilder();
@@ -30,6 +42,27 @@ public class Splitter {
         result.add(new Result(sb.toString(), b, trailing.length() - 1));
         //Log.d(TAG, sb.toString() + " " + b + " " + (trailing.length() - 1));
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Iterator<T> getEmptyIterator() {
+        return (Iterator<T>) emptyIterator;
+    }
+
+    public static Iterable<Result> iteratorSplit(final String string) {
+        return () -> new Iterator<Result>() {
+            Matcher matcher = wordPattern.matcher(string);
+
+            @Override
+            public boolean hasNext() {
+                return matcher.find();
+            }
+
+            @Override
+            public Result next() {
+                return new Result(matcher.group(), matcher.start(), matcher.end());
+            }
+        };
     }
 
     public static class Result {

@@ -1,8 +1,7 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.content.Context;
 import android.support.annotation.WorkerThread;
-
-import com.annimon.stream.function.Function;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -25,14 +24,19 @@ public final class TwitchClient extends Client {
     private int nickColor = 0;
     private final Set<Integer> emoteSets = new HashSet<>();
 
+    TwitchClient(Context context) {
+        super(context);
+    }
+
     @Override
-    protected void actions() throws IOException {
+    protected void preLoopActions() throws IOException {
+        //TODO: remove these TEST lines
+        sendToChannel(parse("@bits=0;display-name=cheer_test :jtv PRIVMSG Status :cheer1 cheer10 cheer100 cheer1000 cheer5000 cheer10000"));
+        //TEST
         capReq("twitch.tv/membership");
         capReq("twitch.tv/commands");
         capReq("twitch.tv/tags");
-        pass(clientSettings.password);
-        enterNick(clientSettings.nicks);
-        joinChannels(clientSettings.channels);
+        super.preLoopActions();
     }
 
     private void capReq(String s) {
@@ -46,25 +50,29 @@ public final class TwitchClient extends Client {
 
     @Override
     protected void doCommand(Message msg) {
+        doCommand((TwitchMessage) msg);
+    }
+
+    protected void doCommand(TwitchMessage msg) {
         switch (msg.getCommand()) {
             case "WHISPER":
-                sendToChannel(msg, (m) -> TextUtils.buildWhisper((TwitchMessage) m));
+                sendBroadcast(msg, TextUtils::buildWhisper);
                 break;
 
             case "GLOBALUSERSTATE":
-                updateGlobalUserstate((TwitchMessage) msg);
+                updateGlobalUserstate(msg);
                 break;
 
             case "USERSTATE":
-                updateUserstate((TwitchMessage) msg);
+                updateUserstate(msg);
                 break;
 
             case "CLEARCHAT":
-                sendToChannel(msg, (m) -> TextUtils.buildBanText((TwitchMessage) m));
+                sendToChannel(msg, TextUtils::buildBanText);
                 break;
 
             case "NOTICE":
-                sendToChannel(msg, (m) -> TextUtils.buildNotice((TwitchMessage) m));
+                sendToChannel(msg, TextUtils::buildNotice);
                 break;
 
             default:
@@ -75,13 +83,14 @@ public final class TwitchClient extends Client {
     @Override
     protected void sendToChannel(Message msg) {
         if (channels.containsKey(msg.getPrivmsgTarget())) {
-            channels.get(msg.getPrivmsgTarget()).add(msg,
-                    (m) -> TextUtils.buildTextDraweeView((TwitchMessage) m));
+            Channel channel = channels.get(msg.getPrivmsgTarget());
+            channel.add(msg, TextUtils::buildMessage);
         }
     }
 
     @Override
-    protected void sendToChannel(Message msg, Function<Message, CharSequence> function) {
+    protected <T extends Message> void sendToChannel(T msg,
+                                                     TextUtils.TextFunction function) {
         if (getOriginalNickname().equals(msg.getPrivmsgTarget())) {
             statusChannel.add(msg, function);
         }
@@ -105,15 +114,17 @@ public final class TwitchClient extends Client {
             if (message.startsWith("/me ")) {
                 twitchMessage.setAction(true);
                 twitchMessage.setPrivmsgText(message.substring(4));
+            } else if (message.startsWith("/w ")) {
+
             }
             return false;
         }
         twitchMessage
                 .setColor(nickColor)
-                .setEmotes(Emote.findAllEmotes(
-                        twitchMessage.getSplitText(),
-                        twitchMessage.getPrivmsgTarget(),
-                        emoteSets))
+//                .setEmotes(Emote.findAllEmotes(
+//                        twitchMessage.getSplitText(),
+//                        twitchMessage.getPrivmsgTarget(),
+//                        emoteSets))
                 .setNickname(getNickname());
 
         return true;
@@ -127,7 +138,7 @@ public final class TwitchClient extends Client {
 
     @Override
     public String getNickname() {
-        return displayName;
+        return displayName == null ? getOriginalNickname() : displayName;
     }
 
     public String getOriginalNickname() {
@@ -135,15 +146,19 @@ public final class TwitchClient extends Client {
     }
 
     private void updateGlobalUserstate(TwitchMessage userState) {
-//        globalUserState = userState;
-        updateUserstate(userState); //TODO:
-    }
-
-    private void updateUserstate(TwitchMessage userState) {
         //TODO:
         nickColor = userState.getColor();
         displayName = userState.getDisplayName();
         emoteSets.addAll(Arrays.asList(userState.getEmoteSets()));
         new TwitchEmotesLoaderTask().execute(userState.getEmoteSets());
+    }
+
+    private void updateUserstate(TwitchMessage userState) {
+        updateGlobalUserstate(userState);
+        getChannel(userState.getPrivmsgTarget()).setUserState(userState);
+    }
+
+    public Set<Integer> getEmoteSets() {
+        return emoteSets;
     }
 }

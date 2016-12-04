@@ -1,21 +1,15 @@
 package ru.ifmo.android_2016.irc.client;
 
-import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.annimon.stream.Stream;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.ifmo.android_2016.irc.api.TwitchApi;
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotes;
-import ru.ifmo.android_2016.irc.api.twitch.TwitchEmotes;
-import ru.ifmo.android_2016.irc.utils.Splitter;
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
 
 /**
  * Created by ghost on 11/12/2016.
@@ -28,7 +22,7 @@ public class Emote implements Comparable<Emote> {
     private static Pattern range = Pattern.compile("(\\d+)-(\\d+)");
 
     private final String emoteUrl;
-    private String emoteId;
+    private final String emoteId;
     private final int begin;
     private final int end;
     private Type type;
@@ -43,6 +37,14 @@ public class Emote implements Comparable<Emote> {
         this.begin = begin;
         this.end = end;
         this.type = type;
+    }
+
+    public static Emote newEmote(String emoteUrl,
+                                 String emoteId,
+                                 int begin,
+                                 int end,
+                                 Type type) {
+        return new Emote(emoteUrl, emoteId, begin, end, type);
     }
 
     private static Emote getTwitchEmote(String emoteId, int begin, int end) {
@@ -81,17 +83,13 @@ public class Emote implements Comparable<Emote> {
         return end;
     }
 
-    public int getLength() {
-        return end - begin + 1;
-    }
-
     @Override
     public String toString() {
         return "[" + getBegin() + "-" + getEnd() + "]:" + getEmoteUrl();
     }
 
     @Nullable
-    static List<Emote> parse(String emotes, List<Splitter.Result> splitResult, String channel) {
+    static List<Emote> parse(String emotes) {
         List<Emote> result = new ArrayList<>(4);
 
         if (emotes != null) {
@@ -109,7 +107,7 @@ public class Emote implements Comparable<Emote> {
                                 result.add(Emote.getTwitchEmote(
                                         eId,
                                         Integer.parseInt(matcher1.group(1)),
-                                        Integer.parseInt(matcher1.group(2))));
+                                        Integer.parseInt(matcher1.group(2)) + 1));
                             }
                         }
                     } else {
@@ -121,58 +119,11 @@ public class Emote implements Comparable<Emote> {
             }
         }
 
-        /* BetterTTV */
-        if (splitResult != null) {
-            parseBttvEmotes(result, splitResult, channel);
-        }
-
         if (result.size() > 0) {
             return result;
         } else {
             return null;
         }
-    }
-
-    private static void parseBttvEmotes(final List<Emote> result, List<Splitter.Result> splitResult,
-                                        final String channel) {
-        Stream.of(splitResult)
-                .filter(r -> BttvEmotes.isEmote(r.word, channel))
-                .forEach(r -> result.add(Emote.getBttvEmote(
-                        r.word,
-                        channel,
-                        r.begin,
-                        r.end)));
-    }
-
-    @Deprecated
-    public static List<Emote> findAllEmotes(String privmsgText,
-                                            String privmsgTarget,
-                                            Set<Integer> emoteSets) {
-        return findAllEmotes(Splitter.splitWithSpace(privmsgText), privmsgTarget, emoteSets);
-    }
-
-    public static List<Emote> findAllEmotes(List<Splitter.Result> text,
-                                            String target,
-                                            Set<Integer> emoteSets) {
-        List<Emote> emotes = new ArrayList<>();
-        if (text != null) {
-            parseBttvEmotes(emotes, text, target);
-            parseTwitchEmotes(emotes, text, emoteSets);
-        }
-
-        if (emotes.size() > 0) return emotes;
-        return null;
-    }
-
-    private static void parseTwitchEmotes(List<Emote> result,
-                                          List<Splitter.Result> text,
-                                          Set<Integer> emoteSets) {
-        Stream.of(text)
-                .filter(r -> TwitchEmotes.isEmote(r.word, emoteSets))
-                .forEach(r -> result.add(Emote.getTwitchEmote(
-                        TwitchEmotes.getEmoteByCode(r.word),
-                        r.begin,
-                        r.end)));
     }
 
     public String getId() {

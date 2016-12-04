@@ -42,7 +42,7 @@ public final class ErrorActivity extends AppCompatActivity {
 
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append(throwable.toString());
+        stringBuilder.append(throwable.getMessage()).append('\n');
 
         Stream.of(throwable.getStackTrace())
                 .map(StackTraceElement::toString)

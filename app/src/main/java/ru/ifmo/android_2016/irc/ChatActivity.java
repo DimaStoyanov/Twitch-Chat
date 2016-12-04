@@ -12,7 +12,6 @@ import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -41,8 +40,6 @@ import java.util.List;
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.client.Client;
 import ru.ifmo.android_2016.irc.client.ClientService;
-import ru.ifmo.android_2016.irc.client.ClientSettings;
-import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
 import ru.ifmo.android_2016.irc.utils.Log;
 
@@ -56,10 +53,9 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     EditText typeMessage;
     private long id = 0;
     private int keyboardHeight;
-//    private ClientSettings clientSettings;
     @Nullable
     Client client;
-    ViewPagerAdapter viewPagerAdapter;
+    ChatFragmentPagerAdapter viewPagerAdapter;
     ViewPager viewPager, emotesViewPager;
     Toolbar toolbar;
     private boolean spamMode = false;
@@ -77,7 +73,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             id = getIntent().getLongExtra(SERVER_ID, 0);
         }
 
-//        clientSettings = ServerList.getInstance().get(id);
         ClientService.startClient(this, id, this::onConnected);
 
         initView();
@@ -98,7 +93,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             if (!spamMode) typeMessage.setText("");
         });
 
-        viewPager.setAdapter(viewPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager()));
+        viewPager.setAdapter(viewPagerAdapter = new ChatFragmentPagerAdapter(getSupportFragmentManager()));
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
             public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
@@ -165,7 +160,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     protected void onStart() {
         if (client != null) {
             client.attachUi(this);
-            onChannelChange();
         }
         super.onStart();
     }
@@ -218,8 +212,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     }
 
     public void sendMessage(String message) {
-        viewPagerAdapter.channels.get(viewPager.getCurrentItem())
-                .send(message);
+        getChannels().get(viewPager.getCurrentItem()).send(message);
     }
 
     @Override
@@ -237,7 +230,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             closeEmotes();
             return;
         }
-        if (client == null || client.getChannelList() == null) {
+        if (client == null || getChannels() == null) {
             Toast.makeText(this, "Client loading, please wait", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -289,7 +282,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         }
     }
 
-    class EmotesViewPagerAdapter extends ViewPagerAdapter {
+    class EmotesViewPagerAdapter extends FragmentPagerAdapter {
 
 
         EmotesViewPagerAdapter(FragmentManager supportFragmentManager) {
@@ -321,35 +314,46 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     }
 
     @UiThread
-    public void onConnected(final Client client) {
+    public void onConnected(@NonNull final Client client) {
         ChatActivity.this.client = client;
         client.attachUi(this);
-        onChannelChange();
     }
 
     @Override
     @UiThread
     public void onChannelChange() {
-        Log.d(TAG, "onChannelChange");
-        viewPagerAdapter.channels.clear();
-        viewPagerAdapter.channels.addAll(client.getChannelList());
-        //Stream.of(client.getChannelList()).forEach(c -> Log.d(TAG, c.getName()));
+        getChannels().clear();
+        if (client != null) {
+            getChannels().addAll(client.getChannelList());
+        }
         viewPagerAdapter.notifyDataSetChanged();
 
-        if (viewPagerAdapter.channels.size() > 1) loadMenu();
+        if (getChannels().size() > 1) loadMenu();
+    }
+
+    @Override
+    @UiThread
+    public void onChannelJoined(Channel channel) {
+        viewPagerAdapter.add(channel);
+
+        if (getChannels().size() > 1) loadMenu();
     }
 
     public void loadMenu() {
         Menu menu = ((NavigationView) findViewById(R.id.nav_view)).getMenu();
         menu.removeGroup(0);
-        List<Channel> channels = client.getChannelList();
+        List<Channel> channels = getChannels();
         for (int i = 0; i < channels.size(); i++) {
             menu.add(0, i, Menu.CATEGORY_CONTAINER, getChannelName(channels.get(i)))
                     .setIcon(i == 0 ? android.R.drawable.ic_dialog_info : android.R.drawable.stat_notify_chat)
                     .setCheckable(true);
         }
-        viewPager.setCurrentItem(1);
-        menu.getItem(1).setChecked(true);
+//        viewPager.setCurrentItem(1);
+//        menu.getItem(1).setChecked(true);
+    }
+
+    public List<Channel> getChannels() {
+        return viewPagerAdapter.getChannels();
     }
 
     private String getChannelName(Channel channel) {
@@ -357,14 +361,13 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         return name.charAt(0) == '#' ? Character.toUpperCase(name.charAt(1)) + name.substring(2) : name;
     }
 
-    private class ViewPagerAdapter extends FragmentPagerAdapter {
+    private final class ChatFragmentPagerAdapter extends FragmentPagerAdapter {
         private List<Channel> channels = new ArrayList<>();
         private SparseArray<Fragment> fragments = new SparseArray<>();
 
-        ViewPagerAdapter(FragmentManager supportFragmentManager) {
+        ChatFragmentPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
         }
-
 
         @Override
         public Fragment getItem(int position) {
@@ -381,7 +384,12 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             return channels.get(position).getName();
         }
 
-        //TODO:
+        @Override
+        public long getItemId(int position) {
+            return channels.get(position).hashCode();
+        }
+
+        //TODO: спарс может заменить как нить?
         @Override
         public Object instantiateItem(ViewGroup container, int position) {
             Fragment fragment = ((Fragment) super.instantiateItem(container, position));
@@ -393,17 +401,31 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         public void destroyItem(ViewGroup container, int position, Object object) {
             super.destroyItem(container, position, object);
         }
+
+        public void add(Channel channel) {
+            channels.add(channel);
+            notifyDataSetChanged();
+        }
+
+        public void add(int position, Channel channel) {
+            channels.add(position, channel);
+            notifyDataSetChanged();
+        }
+
+        public List<Channel> getChannels() {
+            return channels;
+        }
     }
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-
-        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Settings").setOnMenuItemClickListener(menuItem -> {
+        menu.add(Menu.NONE, 1, Menu.CATEGORY_CONTAINER, "Settings").setOnMenuItemClickListener(m -> {
+            //TODO: 228? 1337!
             startActivityForResult(new Intent(this, PreferenceActivity.class), 228);
             return false;
         });
-        menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Disconnect").setOnMenuItemClickListener(m -> {
+        menu.add(Menu.NONE, 2, Menu.CATEGORY_CONTAINER, "Disconnect").setOnMenuItemClickListener(m -> {
             ClientService.stopClient(id);
             finish();
             return false;

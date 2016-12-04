@@ -8,8 +8,8 @@ import com.facebook.drawee.backends.pipeline.Fresco;
 
 import java.util.Calendar;
 
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
-import ru.ifmo.android_2016.irc.api.twitch.TwitchBadges;
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotesLoader;
+import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesLoader;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
@@ -20,6 +20,10 @@ import ru.ifmo.android_2016.irc.utils.FileUtils;
 
 public class IRCApplication extends android.app.Application {
     private Thread.UncaughtExceptionHandler old;
+    private static Handler mainThread;
+    private static LocalBroadcastManager localBroadcastManager;
+    private static String filesDir;
+    private static String cacheDir;
 
     private Thread.UncaughtExceptionHandler uncaughtExceptionHandler = (thread, throwable) -> {
         ServerList.save(filesDir);
@@ -31,12 +35,6 @@ public class IRCApplication extends android.app.Application {
 
         old.uncaughtException(thread, throwable);
     };
-
-    private static Handler mainThread;
-    private static LocalBroadcastManager localBroadcastManager;
-    private static String filesDir;
-
-    private static String cacheDir;
 
     public static void runOnUiThread(Runnable runnable) {
         mainThread.post(runnable);
@@ -52,22 +50,21 @@ public class IRCApplication extends android.app.Application {
 
     @Override
     public void onCreate() {
+        super.onCreate();
+
         Fresco.initialize(this);
         localBroadcastManager = LocalBroadcastManager.getInstance(this);
         filesDir = getFilesDir().toString();
         cacheDir = getCacheDir().toString();
-        new BttvEmotesLoaderTask().execute();
 
         DraweeSpan.dp = getResources().getDisplayMetrics().density / 2;
 
-        //TODO: Uncaught Exceptions on the screen
         old = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);
 
         mainThread = new Handler(Looper.getMainLooper());
 
-        super.onCreate();
-
-        new TwitchBadges.BadgesLoaderTask().execute();
+        new TwitchBadgesLoader().execute();
+        new BttvEmotesLoader().execute();
     }
 }

@@ -1,4 +1,4 @@
-package ru.ifmo.android_2016.irc.api.bettertwitchtv;
+package ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes;
 
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
@@ -34,7 +34,7 @@ public class BttvEmotes {
     }
 
     @NonNull
-    static Map<String, String> getGlobalEmotes() {
+    public static Map<String, String> getGlobalEmotes() {
         return globalEmotes;
     }
 
