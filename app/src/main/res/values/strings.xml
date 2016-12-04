@@ -29,7 +29,6 @@
     <string name="username_status">Username status</string>
     <string name="open">open</string>
     <string name="close">close</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="twitch_chat">Twitch Chat</string>
     <string name="emotes">emotes</string>
@@ -39,16 +38,20 @@
     <!--Settings-->
 
     <string name="theme">Theme</string>
+
     <string-array name="pref_theme">
         <item>Light</item>
         <item>Dark</item>
     </string-array>
 
     <string-array name="text_size">
-        <item>Small</item>
-        <item>Medium</item>
-        <item>Large</item>
+        <item>12</item>
+        <item>14</item>
+        <item>16</item>
+        <item>18</item>
+        <item>20</item>
     </string-array>
 
+    <string name="title_activity_twitch_stream">TwitchStreamActivity</string>
 
 </resources>

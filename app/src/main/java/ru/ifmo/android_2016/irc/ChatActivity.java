@@ -3,6 +3,7 @@ package ru.ifmo.android_2016.irc;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -46,6 +47,7 @@ import ru.ifmo.android_2016.irc.utils.Log;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SHOW_TAB_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SPAM_MODE_KEY;
+import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.TEXT_SIZE_KEY;
 
 public class ChatActivity extends BaseActivity implements Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
@@ -173,10 +175,9 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     }
 
     @Override
-    protected void getStartPreferences() {
+    public void getStartPreferences() {
         spamMode = prefs.getBoolean(PreferencesConstant.SPAM_MODE_KEY, false);
         findViewById(R.id.tabLayout).setVisibility(prefs.getBoolean(PreferencesConstant.SHOW_TAB_KEY, false) ? View.VISIBLE : View.GONE);
-
     }
 
 
@@ -192,7 +193,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     private void setObserverListener() {
         // Determine keyboard height
         LinearLayout ll = (LinearLayout) findViewById(R.id.root_view);
-        keyboardHeight = 550;
+        Point point = new Point();
+        getWindowManager().getDefaultDisplay().getSize(point);
+        int defaultHeight = point.y / 3;
+        keyboardHeight = defaultHeight;
         ll.getViewTreeObserver().addOnGlobalLayoutListener(() -> {
             Rect r = new Rect();
             ll.getWindowVisibleDisplayFrame(r);
@@ -203,7 +207,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             if (resourceId > 0) {
                 heightDifference -= getResources().getDimensionPixelSize(resourceId);
             }
-            if (heightDifference > 400) {
+            if (heightDifference > defaultHeight) {
                 keyboardHeight = heightDifference;
             }
 //            Log.d("Keyboard Size", "Size: " + heightDifference);
@@ -235,10 +239,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             return;
         }
         emotesViewPager.setAdapter(new EmotesViewPagerAdapter(getSupportFragmentManager()));
-//            getTheme().
-        emotesViewPager.setVisibility(View.VISIBLE);
         emotesViewPager.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
-
+        emotesViewPager.setVisibility(View.VISIBLE);
+        emotesViewPager.setCurrentItem(1);
+        emotesViewPager.setOffscreenPageLimit(3);
     }
 
 
@@ -279,11 +283,15 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             case SPAM_MODE_KEY:
                 spamMode = sharedPreferences.getBoolean(s, false);
                 break;
+            case TEXT_SIZE_KEY:
+                recreate();
+                break;
         }
     }
 
     class EmotesViewPagerAdapter extends FragmentPagerAdapter {
 
+        private final String[] type = new String[]{"recent", "bttv", "twitch"};
 
         EmotesViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
@@ -291,12 +299,12 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         @Override
         public Fragment getItem(int position) {
-            return EmoteScrollViewFragment.newInstance(position == 0 ? "twitch" : "bttv");
+            return EmoteScrollViewFragment.newInstance(type[position]);
         }
 
         @Override
         public int getCount() {
-            return 2;
+            return type.length;
         }
     }
 
@@ -428,6 +436,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         menu.add(Menu.NONE, 2, Menu.CATEGORY_CONTAINER, "Disconnect").setOnMenuItemClickListener(m -> {
             ClientService.stopClient(id);
             finish();
+            return false;
+        });
+        menu.add(0, 3, Menu.CATEGORY_CONTAINER, "#ERROR#").setOnMenuItemClickListener(menuItem -> {
+            startActivity(new Intent(this, ErrorActivity.class));
             return false;
         });
         return true;

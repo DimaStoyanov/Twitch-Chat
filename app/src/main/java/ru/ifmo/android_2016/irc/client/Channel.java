@@ -1,9 +1,15 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.annotation.WorkerThread;
 
+import com.annimon.stream.function.Function;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +21,9 @@ import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvMessageExtension;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotesLoader;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesExtension;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesLoader;
+import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvEmotesLoaderTask;
+import ru.ifmo.android_2016.irc.utils.FileUtils;
+import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 import ru.ifmo.android_2016.irc.utils.TextUtils.TextFunction;
 
@@ -47,6 +56,8 @@ public final class Channel {
             Pattern.compile("waffIe", Pattern.CASE_INSENSITIVE),
             Pattern.compile("waffle", Pattern.CASE_INSENSITIVE),
     };
+    @Nullable
+    private List<String> lastEmotes = null;
 
     Channel(@NonNull Client client, @NonNull String name) {
         this(client, name, TextUtils::buildDefaultText);
@@ -171,4 +182,56 @@ public final class Channel {
         //TODO: сделать норм хеш функцию. или нет
         return super.hashCode();
     }
+
+
+    /**
+     * Methods to store last emotes order
+     */
+
+    // WARNING! This method shouldn't call in UI Thread, write loader in your own class
+    @WorkerThread
+    public void addLastEmote(String id, Context context) {
+        if (lastEmotes == null) {
+            lastEmotes = getLastEmotes(context);
+            lastEmotes = lastEmotes == null ? new ArrayList<>() : lastEmotes;
+        }
+        if (lastEmotes.contains(id))
+            lastEmotes.remove(id);
+        lastEmotes.add(0, id);
+    }
+
+    // WARNING! This method shouldn't call in UI Thread, write loader in your own class
+    @WorkerThread
+    @Nullable
+    public List<String> getLastEmotes(Context context) {
+        if (lastEmotes == null) {
+            File file = new File(context.getFilesDir(), name + ".obj");
+            if (!file.isFile())
+                return new ArrayList<>();
+            return lastEmotes = FileUtils.readObjectFromFile(file.getAbsolutePath());
+        }
+        return lastEmotes;
+    }
+
+
+    // WARNING! This method shouldn't call in UI Thread, write loader in your own class
+    @WorkerThread
+    public void writeEmotesToStorage(Context context) {
+        try {
+            File file = new File(context.getFilesDir(), name + ".obj");
+            if (file.isFile() && !file.delete()) {
+                Log.e(TAG, "Can't rewrite file");
+                return;
+            }
+            if (!file.createNewFile()) {
+                Log.e(TAG, "Can't create new file");
+                return;
+            }
+            FileUtils.writeObjectToFile(file.getAbsolutePath(), lastEmotes);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }

@@ -93,7 +93,7 @@ public class NewChannelListActivity extends BaseActivity {
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String s) {
         super.onSharedPreferenceChanged(sharedPreferences, s);
-        if (s.equals(PreferencesConstant.CACHE_KEY)) {
+        if (s.equals(PreferencesConstant.CLEAR_LOGIN_KEY)) {
             updateChannelList();
         }
     }
@@ -367,8 +367,7 @@ public class NewChannelListActivity extends BaseActivity {
         if (v.getId() == R.id.list_veiw) {
             AdapterView.AdapterContextMenuInfo acmi = (AdapterView.AdapterContextMenuInfo) menuInfo;
 
-            ListView lv = (ListView) v;
-            menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Run").setOnMenuItemClickListener(menuItem -> {
+            menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Connect").setOnMenuItemClickListener(menuItem -> {
                 startActivity(new Intent(context, ChatActivity.class)
                         .putExtra(SERVER_ID, clientSettings.get(acmi.position).getId()));
                 return false;

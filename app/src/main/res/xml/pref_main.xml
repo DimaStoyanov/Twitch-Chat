@@ -1,33 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
-    <android.support.v7.preference.ListPreference
-        android:defaultValue="Light"
-        android:entries="@array/pref_theme"
-        android:entryValues="@array/pref_theme"
-        android:key="pref_theme"
-        android:title="@string/theme" />
 
-    <android.support.v7.preference.ListPreference
-        android:defaultValue="Small"
-        android:entries="@array/text_size"
-        android:entryValues="@array/text_size"
-        android:key="text_size"
-        android:title="Text size" />
 
-    <android.support.v7.preference.SwitchPreferenceCompat
-        android:defaultValue="false"
-        android:key="pref_tab"
-        android:summary="Show headers of channel in chat"
-        android:title="Show tabs in chat" />
+    <android.support.v7.preference.PreferenceCategory android:title="Design">
+        <android.support.v7.preference.ListPreference
+            android:defaultValue="Light"
+            android:entries="@array/pref_theme"
+            android:entryValues="@array/pref_theme"
+            android:key="pref_theme"
+            android:title="@string/theme" />
 
-    <android.support.v7.preference.Preference
-        android:key="clear_cache"
-        android:summary="Reset all app data store in internal storage"
-        android:title="Clear cache" />
+        <android.support.v7.preference.ListPreference
+            android:defaultValue="14"
+            android:entries="@array/text_size"
+            android:entryValues="@array/text_size"
+            android:key="text_size"
+            android:summary="Define size of every text message in chat"
+            android:title="Text size in chat" />
 
-    <android.support.v7.preference.SwitchPreferenceCompat
-        android:defaultValue="false"
-        android:key="spam_mode"
-        android:summary="Don't clear typed message after sending"
-        android:title="Spam mode" />
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="pref_tab"
+            android:summary="Show headers of channel in chat"
+            android:title="Show tabs in chat" />
+
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="pref_time"
+            android:title="Show time in chat messages" />
+
+
+    </android.support.v7.preference.PreferenceCategory>
+    <android.support.v7.preference.PreferenceCategory android:title="Chat mechanics">
+        <android.support.v7.preference.Preference
+            android:key="clear_data"
+            android:summary="Reset channel list and clear all passwords"
+            android:title="Clear login data" />
+
+        <android.support.v7.preference.SwitchPreferenceCompat
+            android:defaultValue="false"
+            android:key="spam_mode"
+            android:summary="Don't clear typed message after sending"
+            android:title="Spam mode" />
+
+    </android.support.v7.preference.PreferenceCategory>
+
+    <android.support.v7.preference.PreferenceCategory android:title="Emotes">
+        <android.support.v7.preference.Preference
+            android:key="clear_emotes"
+            android:summary="Clear emotes cache"
+            android:title="This option can also help to update all emotes" />
+    </android.support.v7.preference.PreferenceCategory>
+
 </android.support.v7.preference.PreferenceScreen>
