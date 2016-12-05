@@ -1,13 +1,12 @@
 package ru.ifmo.android_2016.irc.utils;
 
 import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.UiThread;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 
-import ru.ifmo.android_2016.irc.NewChannelListActivity;
 import ru.ifmo.android_2016.irc.R;
 
 /**
@@ -16,30 +15,58 @@ import ru.ifmo.android_2016.irc.R;
 
 public class NotificationUtils {
     public static final int FOREGROUND_NOTIFICATION = 1;
-    public static final int MENTION_NOTIFICATION = 2;
+    public static final int HIGHLIGHT_NOTIFICATION = 2;
+
+    private static NotificationManagerCompat notificationManager = null;
+    private static long[] vibrationPattern = new long[]{50, 50, 50, 50, 50, 50, 50, 50, 50, 50};
 
     private NotificationUtils() {
     }
 
-    @SuppressWarnings("deprecation")
-    @UiThread
-    public static Notification getNotification(Context context, String text) {
-        return new Notification.Builder(context)
+    private static NotificationManagerCompat getNotificationManager(Context context) {
+        if (notificationManager == null) {
+            notificationManager = NotificationManagerCompat.from(context);
+        }
+        return notificationManager;
+    }
+
+    public static Notification getNotification(Context context, String title, String text) {
+        return new NotificationCompat.Builder(context)
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle("IRC client")
+                .setContentTitle(title)
                 .setContentText(text)
+                .setVibrate(vibrationPattern)
+                .build();
+    }
+
+    public static Notification getNotification(Context context,
+                                               String title,
+                                               String text,
+                                               Intent onClick) {
+        return new NotificationCompat.Builder(context)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setVibrate(vibrationPattern)
                 .setContentIntent(PendingIntent.getActivity(
                         context,
                         0,
-                        new Intent(context, NewChannelListActivity.class),
-                        PendingIntent.FLAG_UPDATE_CURRENT))
-                .getNotification();
+                        onClick,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                ))
+                .build();
     }
 
-    public static void updateNotification(Context context, String text) {
-        NotificationManager nm = (NotificationManager)
-                context.getSystemService(Context.NOTIFICATION_SERVICE);
+    public static NotificationCompat.Builder getNotificationBuilder(Context context) {
+        return new NotificationCompat.Builder(context)
+                .setSmallIcon(R.mipmap.ic_launcher);
+    }
 
-        nm.notify(1, getNotification(context, text));
+    public static void sendNotification(Context context,
+                                        int notificationId,
+                                        Notification notification) {
+        getNotificationManager(context);
+
+        notificationManager.notify(notificationId, notification);
     }
 }

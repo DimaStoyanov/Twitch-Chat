@@ -11,19 +11,17 @@ import android.text.style.ForegroundColorSpan;
 
 public final class ChangeableForegroundColorSpan extends ForegroundColorSpan {
     private static float lightness = 180.f / 256;
-    private static boolean changed = true;
 
     private boolean toColor = true;
     private int correctedColor = 0;
 
     private Integer getCorrectedColor(int color) {
-        if (changed) {
-            float[] hls = new float[3];
-            ColorUtils.colorToHSL(color, hls);
-            hls[2] = lightness;
-            changed = false;
-            this.correctedColor = ColorUtils.HSLToColor(hls);
-        }
+        float[] hls = new float[3];
+        ColorUtils.colorToHSL(color, hls);
+
+        hls[2] = lightness;
+
+        this.correctedColor = ColorUtils.HSLToColor(hls);
         return this.correctedColor;
     }
 
@@ -64,20 +62,20 @@ public final class ChangeableForegroundColorSpan extends ForegroundColorSpan {
         super(in);
     }
 
-    public static final Creator<ChangeableForegroundColorSpan> CREATOR = new Creator<ChangeableForegroundColorSpan>() {
-        @Override
-        public ChangeableForegroundColorSpan createFromParcel(Parcel source) {
-            return new ChangeableForegroundColorSpan(source);
-        }
+    public static final Creator<ChangeableForegroundColorSpan> CREATOR =
+            new Creator<ChangeableForegroundColorSpan>() {
+                @Override
+                public ChangeableForegroundColorSpan createFromParcel(Parcel source) {
+                    return new ChangeableForegroundColorSpan(source);
+                }
 
-        @Override
-        public ChangeableForegroundColorSpan[] newArray(int size) {
-            return new ChangeableForegroundColorSpan[size];
-        }
-    };
+                @Override
+                public ChangeableForegroundColorSpan[] newArray(int size) {
+                    return new ChangeableForegroundColorSpan[size];
+                }
+            };
 
     public static void setLightness(float lightness) {
         ChangeableForegroundColorSpan.lightness = lightness;
-        changed = true;
     }
 }

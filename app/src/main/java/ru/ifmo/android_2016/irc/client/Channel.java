@@ -1,6 +1,8 @@
 package ru.ifmo.android_2016.irc.client;
 
+import android.app.Notification;
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import ru.ifmo.android_2016.irc.ChatActivity;
 import ru.ifmo.android_2016.irc.IRCApplication;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvMessageExtension;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotesLoader;
@@ -21,8 +24,11 @@ import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesExtension;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesLoader;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
 import ru.ifmo.android_2016.irc.utils.Log;
+import ru.ifmo.android_2016.irc.utils.NotificationUtils;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 import ru.ifmo.android_2016.irc.utils.TextUtils.TextFunction;
+
+import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 
 /**
  * Created by ghost on 11/12/2016.
@@ -68,6 +74,7 @@ public final class Channel {
         this.name = name;
         this.messages = new ArrayList<>(16);
         this.textFunction = textFunction;
+
         loadExtensions(name);
 
         if (client.getNickname() != null) {
@@ -76,20 +83,30 @@ public final class Channel {
     }
 
     private void loadExtensions(@NonNull String name) {
-        new BttvEmotesLoader(name, channelEmotes::putAll).execute();
-        new TwitchBadgesLoader(name, channelBadges::putAll).execute();
+        new BttvEmotesLoader(name, channelEmotes::putAll).executeOnExecutor(Client.executor);
+        new TwitchBadgesLoader(name, channelBadges::putAll).executeOnExecutor(Client.executor);
     }
 
-    void add(Message msg) {
+    void add(IRCMessage msg) {
         add(msg, textFunction);
     }
 
-    void add(Message msg, TextFunction func) {
+    void add(IRCMessage msg, TextFunction func) {
         if (func != null) {
             add(new MessageText.Builder(msg)
                     .setFunction(func)
                     .addHighlights(nicknamePattern)
                     .addHighlights(raffleListLul)
+                    .setNotificationListener(text -> {
+                        Notification notification = NotificationUtils
+                                .getNotification(getContext(), getName(), String.valueOf(text),
+                                        new Intent(getContext(), ChatActivity.class)
+                                                .putExtra(SERVER_ID, client.getId()));
+
+                        NotificationUtils.sendNotification(getContext(),
+                                NotificationUtils.HIGHLIGHT_NOTIFICATION,
+                                notification);
+                    })
                     .addExtensions(new TwitchBadgesExtension(channelBadges))
                     .addExtensions(new BttvMessageExtension(channelEmotes))
                     .build());
@@ -148,7 +165,7 @@ public final class Channel {
     }
 
     public void send(@NonNull String message) {
-        final Message msg = new TwitchMessage()
+        final IRCMessage msg = new TwitchMessage()
                 .setPrivmsg(getName(), message);
 
         client.post(() -> client.sendMessage(msg));
@@ -176,6 +193,9 @@ public final class Channel {
         return super.hashCode();
     }
 
+    public Context getContext() {
+        return client.getContext();
+    }
 
     /**
      * Methods to store last emotes order
@@ -188,8 +208,9 @@ public final class Channel {
             lastEmotes = getLastEmotes(context);
             lastEmotes = lastEmotes == null ? new ArrayList<>() : lastEmotes;
         }
-        if (lastEmotes.contains(id))
+        if (lastEmotes.contains(id)) {
             lastEmotes.remove(id);
+        }
         lastEmotes.add(0, id);
     }
 

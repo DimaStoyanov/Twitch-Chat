@@ -10,6 +10,7 @@ import java.util.Calendar;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotesLoader;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesLoader;
+import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotesLoader;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
@@ -65,6 +66,7 @@ public class IRCApplication extends android.app.Application {
         mainThread = new Handler(Looper.getMainLooper());
 
         new TwitchBadgesLoader().execute();
+        new TwitchEmotesLoader().execute(0);
         new BttvEmotesLoader().execute();
     }
 }

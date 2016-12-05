@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +48,7 @@ public class Client {
     protected Socket socket;
     protected BufferedReader in;
     protected PrintWriter out;
-    protected final BlockingQueue<Message> messageQueue = new LinkedBlockingQueue<>();
+    protected final BlockingQueue<IRCMessage> messageQueue = new LinkedBlockingQueue<>();
     protected final BlockingQueue<Runnable> requestQueue = new LinkedBlockingQueue<>();
     protected Map<String, Channel> channels = new android.support.v4.util.ArrayMap<>();
     @Nullable
@@ -187,7 +186,7 @@ public class Client {
             preLoopActions();
 
             executor.execute(FunctionUtils.catchExceptions(
-                    this::responseFetcher,
+                    this::responseHandler,
                     interruptedExceptionHandler));
 
             executor.execute(FunctionUtils.catchExceptions(
@@ -217,14 +216,14 @@ public class Client {
     }
 
     @WorkerThread
-    protected void responseFetcher() throws IOException, InterruptedException {
+    protected void responseHandler() throws IOException, InterruptedException {
         Thread thisThread = Thread.currentThread();
         responseFetcherThread = thisThread;
         while (socket.isConnected() && !thisThread.isInterrupted()) {
             String s = read();
             if (s != null) {
 //                Log.d(TAG, s);
-                Message parsed = parse(s);
+                IRCMessage parsed = parse(s);
                 if (parsed != null) messageQueue.put(parsed);
             }
         }
@@ -250,7 +249,7 @@ public class Client {
         }
     }
 
-    protected Message parse(String s) {
+    protected IRCMessage parse(String s) {
         try {
             return getMessageFromString(s);
         } catch (ParserException x) {
@@ -261,11 +260,11 @@ public class Client {
         }
     }
 
-    protected Message getMessageFromString(String s) {
-        return Message.fromString(s);
+    protected IRCMessage getMessageFromString(String s) {
+        return IRCMessage.fromString(s);
     }
 
-    protected void doCommand(Message msg) {
+    protected void doCommand(IRCMessage msg) {
         switch (msg.getCommand()) {
             case "PING":
                 pong();
@@ -293,7 +292,9 @@ public class Client {
     }
 
     protected void notifyUiJoined(final Channel channel) {
-        if (ui != null) IRCApplication.runOnUiThread(() -> ui.onChannelJoined(channel));
+        if (ui != null) IRCApplication.runOnUiThread(() -> {
+            if (ui != null) ui.onChannelJoined(channel);
+        });
     }
 
     protected void checkResponse(@NonNull String expectedResponse) throws IOException {
@@ -324,7 +325,7 @@ public class Client {
         }
     }
 
-    protected void sendBroadcast(Message message,
+    protected void sendBroadcast(IRCMessage message,
                                  TextUtils.TextFunction function) {
         for (Channel channel : channels.values()) {
             channel.add(message, function);
@@ -339,14 +340,14 @@ public class Client {
         statusChannel.add(msg, color);
     }
 
-    protected <T extends Message> void sendToChannel(T msg) {
+    protected <T extends IRCMessage> void sendToChannel(T msg) {
         if (channels.containsKey(msg.getPrivmsgTarget())) {
             channels.get(msg.getPrivmsgTarget()).add(msg);
         }
     }
 
-    protected <T extends Message> void sendToChannel(T msg,
-                                                     TextUtils.TextFunction func) {
+    protected <T extends IRCMessage> void sendToChannel(T msg,
+                                                        TextUtils.TextFunction func) {
         if (channels.containsKey(msg.getPrivmsgTarget())) {
             channels.get(msg.getPrivmsgTarget()).add(msg, func);
         }
@@ -368,13 +369,17 @@ public class Client {
     }
 
     @WorkerThread
-    public void sendMessage(Message message) {
+    public void sendMessage(IRCMessage message) {
         send(message.toString());
         messageQueue.offer(message);
     }
 
     public void post(Runnable runnable) {
         requestQueue.offer(runnable);
+    }
+
+    public long getId() {
+        return clientSettings.getId();
     }
 
     public interface Callback {

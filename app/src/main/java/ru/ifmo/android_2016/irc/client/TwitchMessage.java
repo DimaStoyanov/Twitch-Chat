@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import ru.ifmo.android_2016.irc.utils.Log;
-import ru.ifmo.android_2016.irc.utils.Splitter;
 
 import static ru.ifmo.android_2016.irc.utils.FunctionUtils.doIfNotNull;
 
@@ -18,7 +17,7 @@ import static ru.ifmo.android_2016.irc.utils.FunctionUtils.doIfNotNull;
  * Created by ghost on 10/29/2016.
  */
 
-public final class TwitchMessage extends Message {
+public final class TwitchMessage extends IRCMessage {
     private final static String TAG = TwitchMessage.class.getSimpleName();
 
     @Nullable
@@ -63,8 +62,8 @@ public final class TwitchMessage extends Message {
     @Override
     protected TwitchMessage parse(String rawMessage) {
         super.parse(rawMessage);
-        if (optPrefix != null) {
-            addToMessage(Stream.of(optPrefix.split(";"))
+        if (tags != null) {
+            addToMessage(Stream.of(tags.split(";"))
                     .map(s -> s.split("="))
                     .filter(l -> l.length > 1)
                     .collect(Collectors.toMap(l -> l[0], l -> l[1])));

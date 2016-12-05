@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.Splitter;
 
 /**
@@ -53,7 +52,6 @@ public class Bits {
                     matcher.group(),
                     matcher.start(),
                     matcher.end());
-            Log.d(TAG, bits.toString());
             result.add(bits);
         }
         return result;

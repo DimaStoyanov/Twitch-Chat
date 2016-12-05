@@ -16,13 +16,13 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
  * Created by ghost on 10/23/2016.
  */
 
-public class Message {
-    private static final String TAG = Message.class.getSimpleName();
+public class IRCMessage {
+    private static final String TAG = IRCMessage.class.getSimpleName();
 
     public final long time;
 
     @Nullable
-    String optPrefix;
+    protected String tags;
     @NonNull
     private String command = "@NOT_SET";
     @NonNull
@@ -41,20 +41,19 @@ public class Message {
 
     private static final Pattern actionPattern = Pattern.compile("\1ACTION ([^\1]+)\1");
     private boolean action = false;
-    private List<Splitter.Result> splitText = null;
 
-    public Message() {
+    public IRCMessage() {
         time = System.currentTimeMillis();
     }
 
-    public static Message fromString(String rawMessage) {
-        return new Message().parse(rawMessage);
+    public static IRCMessage fromString(String rawMessage) {
+        return new IRCMessage().parse(rawMessage);
     }
 
-    protected Message parse(String rawMessage) {
+    protected IRCMessage parse(String rawMessage) {
         Matcher matcher = MessagePattern.matcher(rawMessage);
         if (matcher.matches()) {
-            optPrefix = MessagePattern.group(matcher, "opt-prefix");
+            tags = MessagePattern.group(matcher, "tags");
             Prefix.parse(this, MessagePattern.group(matcher, "prefix"));
             command = MessagePattern.group(matcher, "command");
             String param = MessagePattern.group(matcher, "params");
@@ -80,9 +79,8 @@ public class Message {
                 text = trailing;
             }
             return text;
-        } else {
-            return null;
         }
+        return null;
     }
 
     public String getTrailing() {
@@ -98,8 +96,8 @@ public class Message {
         return command;
     }
 
-    public Message setPrivmsg(String name, String message) {
-        return Message.this
+    public IRCMessage setPrivmsg(String name, String message) {
+        return IRCMessage.this
                 .setCommand("PRIVMSG")
                 .setParams(Collections.singletonList(name))
                 .setTrailing(message);
@@ -123,7 +121,7 @@ public class Message {
         private static final Pattern pattern =
                 Pattern.compile("([\\w.-]+)|(?:([\\w_]+)(?:(?:!([\\w]+))?@([\\w.-]+))?)");
 
-        private static boolean parse(Message message, String s) {
+        private static boolean parse(IRCMessage message, String s) {
             if (s != null) {
                 Matcher matcher = pattern.matcher(s);
                 if (matcher.matches()) {
@@ -141,14 +139,14 @@ public class Message {
     private static class MessagePattern {
         private final static HashMap<String, Integer> map = new HashMap<>();
         private final static Pattern message = Pattern.compile(
-                "(?:@([^ ]+) )?" +  //opt-prefix
+                "(?:@([^ ]+) )?" +  //tags
                         "(?::([^ ]+) )?" +  //prefix
                         "([\\w]+)" + //command
                         "(?: ((?:[^: ][^ ]*)(?: (?:[^: ][^ ]*))*))?" + //params
                         "(?:(?: :(.*))?)?"); //trailing
 
         static {
-            map.put("opt-prefix", 1);
+            map.put("tags", 1);
             map.put("prefix", 2);
             map.put("command", 3);
             map.put("params", 4);
@@ -173,47 +171,47 @@ public class Message {
         return action;
     }
 
-    public Message setOptPrefix(String optPrefix) {
-        this.optPrefix = optPrefix;
+    public IRCMessage setTags(String tags) {
+        this.tags = tags;
         return this;
     }
 
-    public Message setCommand(String command) {
+    public IRCMessage setCommand(String command) {
         this.command = command;
         return this;
     }
 
-    public Message setParams(List<String> params) {
+    public IRCMessage setParams(List<String> params) {
         this.params = params;
         return this;
     }
 
-    public Message setTrailing(String trailing) {
+    public IRCMessage setTrailing(String trailing) {
         this.trailing = trailing;
         return this;
     }
 
-    public Message setServerName(String serverName) {
+    public IRCMessage setServerName(String serverName) {
         this.serverName = serverName;
         return this;
     }
 
-    public Message setNickname(String nickname) {
+    public IRCMessage setNickname(String nickname) {
         this.nickname = nickname;
         return this;
     }
 
-    public Message setUsername(String username) {
+    public IRCMessage setUsername(String username) {
         this.username = username;
         return this;
     }
 
-    public Message setHostname(String hostname) {
+    public IRCMessage setHostname(String hostname) {
         this.hostname = hostname;
         return this;
     }
 
-    public Message setAction(boolean action) {
+    public IRCMessage setAction(boolean action) {
         this.action = action;
         return this;
     }
@@ -244,8 +242,8 @@ public class Message {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if (optPrefix != null) {
-            sb.append('@').append(optPrefix).append(' ');
+        if (tags != null) {
+            sb.append('@').append(tags).append(' ');
         }
         if (serverName != null) {
             sb.append(':').append(serverName).append(' ');
@@ -285,7 +283,7 @@ public class Message {
         return Splitter::getEmptyIterator;
     }
 
-    public Message applyExtension(MessageExtension extension) {
+    public IRCMessage applyExtension(MessageExtension extension) {
         //nothing
         return this;
     }

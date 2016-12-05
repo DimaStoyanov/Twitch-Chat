@@ -3,16 +3,15 @@ package ru.ifmo.android_2016.irc.client;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.SpannableString;
-import android.text.Spanned;
 
 import com.annimon.stream.Stream;
+import com.annimon.stream.function.Consumer;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -75,7 +74,7 @@ public final class MessageText {
 
     final static class Builder {
         @NonNull
-        private Message msg;
+        private IRCMessage msg;
         @Nullable
         private TextUtils.TextFunction function;
         @NonNull
@@ -84,8 +83,9 @@ public final class MessageText {
         private TwitchMessage userState;
         @NonNull
         private List<MessageExtension> extensionList = new ArrayList<>();
+        private Consumer<CharSequence> notificationListener;
 
-        Builder(@NonNull Message msg) {
+        Builder(@NonNull IRCMessage msg) {
             this.msg = msg;
         }
 
@@ -109,13 +109,18 @@ public final class MessageText {
             return this;
         }
 
+        Builder setNotificationListener(Consumer<CharSequence> listener) {
+            this.notificationListener = listener;
+            return this;
+        }
+
         MessageText build() {
             applyExtensions();
 
             String sender = msg.getNickname();
             String text = msg.getPrivmsgText();
 
-            Spanned spanned;
+            CharSequence spanned;
             if (function != null) {
                 spanned = function.apply((TwitchMessage) msg);
             } else {
@@ -130,6 +135,12 @@ public final class MessageText {
             boolean mentioned = Stream.of(highlightList)
                     .filter(p -> p.matcher(text).find())
                     .count() > 0;
+
+            if (mentioned) {
+                if (notificationListener != null) {
+                    notificationListener.accept(TextUtils.buildNotificationText(msg));
+                }
+            }
 
             return new MessageText(
                     spanned,

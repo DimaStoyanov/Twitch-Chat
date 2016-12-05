@@ -14,7 +14,7 @@ import java.util.Date;
 import ru.ifmo.android_2016.irc.client.Badge;
 import ru.ifmo.android_2016.irc.client.Bits;
 import ru.ifmo.android_2016.irc.client.Emote;
-import ru.ifmo.android_2016.irc.client.Message;
+import ru.ifmo.android_2016.irc.client.IRCMessage;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 import ru.ifmo.android_2016.irc.drawee.DraweeSpan;
 import ru.ifmo.android_2016.irc.ui.span.ChangeableForegroundColorSpan;
@@ -94,7 +94,10 @@ public final class TextUtils {
         SpannableStringBuilder messageText = new SpannableStringBuilder();
         messageText.append(msg.getTrailing());
         if (msg.isAction()) {
-            messageText.setSpan(new ChangeableForegroundColorSpan(msg.getColor()), 0, messageText.length(),
+            messageText.setSpan(
+                    new ChangeableForegroundColorSpan(msg.getColor()),
+                    0,
+                    messageText.length(),
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         }
         if (msg.getEmotes() != null) {
@@ -132,9 +135,16 @@ public final class TextUtils {
     }
 
     @WorkerThread
-    public static SpannableStringBuilder buildDefaultText(Message msg) {
+    public static SpannableStringBuilder buildDefaultText(IRCMessage msg) {
         return new SpannableStringBuilder().append("<").append(msg.getNickname()).append("> ")
                 .append(msg.getTrailing());
+    }
+
+    public static SpannableStringBuilder buildNotificationText(IRCMessage msg) {
+        return new SpannableStringBuilder()
+                .append(msg.getNickname())
+                .append(msg.isAction() ? " " : ": ")
+                .append(msg.getPrivmsgText());
     }
 
     @WorkerThread
@@ -170,9 +180,5 @@ public final class TextUtils {
                 spannableStringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
         return spannableStringBuilder.append(buildMessageTextWithSomeShit(msg));
-    }
-
-    public static String removePunct(String string) {
-        return string.replaceFirst("^\\p{Punct}", "");
     }
 }

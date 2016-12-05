@@ -45,12 +45,12 @@ public final class TwitchClient extends Client {
     }
 
     @Override
-    protected Message getMessageFromString(String s) {
+    protected IRCMessage getMessageFromString(String s) {
         return TwitchMessage.fromString(s);
     }
 
     @Override
-    protected void doCommand(Message msg) {
+    protected void doCommand(IRCMessage msg) {
         doCommand((TwitchMessage) msg);
     }
 
@@ -82,7 +82,7 @@ public final class TwitchClient extends Client {
     }
 
     @Override
-    protected void sendToChannel(Message msg) {
+    protected void sendToChannel(IRCMessage msg) {
         if (channels.containsKey(msg.getPrivmsgTarget())) {
             Channel channel = channels.get(msg.getPrivmsgTarget());
             channel.add(msg, TextUtils::buildMessage);
@@ -90,8 +90,8 @@ public final class TwitchClient extends Client {
     }
 
     @Override
-    protected <T extends Message> void sendToChannel(T msg,
-                                                     TextUtils.TextFunction function) {
+    protected <T extends IRCMessage> void sendToChannel(T msg,
+                                                        TextUtils.TextFunction function) {
         if (getOriginalNickname().equals(msg.getPrivmsgTarget())) {
             statusChannel.add(msg, function);
         }
@@ -102,7 +102,7 @@ public final class TwitchClient extends Client {
 
     @Override
     @WorkerThread
-    public void sendMessage(Message message) {
+    public void sendMessage(IRCMessage message) {
         TwitchMessage twitchMessage = (TwitchMessage) message;
         send(message.toString());
 

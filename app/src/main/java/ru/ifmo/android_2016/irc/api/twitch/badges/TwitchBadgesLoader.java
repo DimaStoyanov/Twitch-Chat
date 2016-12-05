@@ -1,7 +1,6 @@
 package ru.ifmo.android_2016.irc.api.twitch.badges;
 
 import android.os.AsyncTask;
-import android.support.annotation.IntRange;
 import android.support.annotation.Nullable;
 import android.util.JsonReader;
 
@@ -28,7 +27,6 @@ import static ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadges.NEW_API_GL
 import static ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadges.badges;
 import static ru.ifmo.android_2016.irc.utils.FunctionUtils.throwChecked;
 import static ru.ifmo.android_2016.irc.utils.FunctionUtils.tryWith;
-import static ru.ifmo.android_2016.irc.utils.TextUtils.removePunct;
 
 /**
  * Created by ghost on 12/2/2016.
@@ -78,7 +76,7 @@ public class TwitchBadgesLoader extends AsyncTask<Void, Void, Map<String, String
 
     private int getChannelId(String channel) {
         final FunctionUtils.Reference<Integer> ref = new FunctionUtils.Reference<>(-1);
-        tryWith(() -> TwitchApi.getChannel(removePunct(channel))).doOp(connection -> {
+        tryWith(() -> TwitchApi.getChannel(channel.substring(1))).doOp(connection -> {
             connection.connect();
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {

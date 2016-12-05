@@ -1,6 +1,7 @@
 package ru.ifmo.android_2016.irc.client;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +19,8 @@ import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.utils.NotificationUtils.FOREGROUND_NOTIFICATION;
 import static ru.ifmo.android_2016.irc.utils.NotificationUtils.getNotification;
-import static ru.ifmo.android_2016.irc.utils.NotificationUtils.updateNotification;
+import static ru.ifmo.android_2016.irc.utils.NotificationUtils.getNotificationBuilder;
+import static ru.ifmo.android_2016.irc.utils.NotificationUtils.sendNotification;
 
 public class ClientService extends Service {
     private static final String TAG = ClientService.class.getSimpleName();
@@ -55,7 +57,11 @@ public class ClientService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (!isRunning) {
-            startForeground(FOREGROUND_NOTIFICATION, getNotification(this, ""));
+            Notification notification = getNotificationBuilder(this)
+                    .setContentText("Service started")
+                    .build();
+
+            startForeground(FOREGROUND_NOTIFICATION, notification);
             isRunning = true;
         }
 
@@ -140,7 +146,10 @@ public class ClientService extends Service {
 
         @Override
         protected void onPostExecute(String result) {
-            updateNotification(context, result);
+            String notificationText = clients.size() + " client running";
+
+            sendNotification(context, FOREGROUND_NOTIFICATION,
+                    getNotification(context, "IRC Client", notificationText));
             listener.accept(getClient(id));
         }
     }
