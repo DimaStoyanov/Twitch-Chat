@@ -123,7 +123,7 @@ public final class TwitchMessage extends IRCMessage {
         }
     }
 
-    public static int parseNumber(String number, int defaultValue) {
+    private static int parseNumber(String number, int defaultValue) {
         if (number == null) {
             return defaultValue;
         }
@@ -174,6 +174,7 @@ public final class TwitchMessage extends IRCMessage {
         return getDisplayName() == null ? super.getNickname() : getDisplayName();
     }
 
+    @Nullable
     public List<Emote> getEmotes() {
         return emotes;
     }
@@ -183,7 +184,7 @@ public final class TwitchMessage extends IRCMessage {
         return color;
     }
 
-    public TwitchMessage setColor(int color) {
+    public TwitchMessage setColor(@Nullable Integer color) {
         this.color = color;
         return this;
     }
@@ -197,7 +198,7 @@ public final class TwitchMessage extends IRCMessage {
         return ban;
     }
 
-    public TwitchMessage setEmotes(List<Emote> emotes) {
+    public TwitchMessage setEmotes(@Nullable List<Emote> emotes) {
         this.emotes = emotes;
         return this;
     }
@@ -235,6 +236,10 @@ public final class TwitchMessage extends IRCMessage {
 
     public List<Bits> getBits() {
         return bits;
+    }
+
+    public TwitchMessage clone() {
+        return (TwitchMessage) super.clone();
     }
 }
 

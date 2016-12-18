@@ -2,6 +2,7 @@ package ru.ifmo.android_2016.irc.utils;
 
 import android.graphics.Typeface;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -35,21 +36,27 @@ public final class TextUtils {
 
     @WorkerThread
     public static SpannableStringBuilder buildMessage(@NonNull TwitchMessage msg) {
-        SpannableStringBuilder time = buildTime(msg);
+        SpannableStringBuilder time = buildTime(msg).append(' ');
         SpannableStringBuilder badges = buildBadges(msg);
-        SpannableStringBuilder nickname = buildNickname(msg);
+        SpannableStringBuilder nickname = buildNickname(msg, null).append(' ');
         SpannableStringBuilder message = buildMessageTextWithSomeShit(msg);
 
         return new SpannableStringBuilder()
-                .append(time).append(' ')
+                .append(time)
                 .append(badges)
-                .append(nickname).append(' ')
+                .append(nickname)
                 .append(message);
     }
 
-    private static SpannableStringBuilder buildNickname(@NonNull TwitchMessage msg) {
+    private static SpannableStringBuilder buildNickname(@NonNull TwitchMessage msg,
+                                                        @Nullable String nick) {
         SpannableStringBuilder nickname = new SpannableStringBuilder();
-        nickname.append(msg.getNickname())
+
+        if (nick == null) {
+            nick = msg.getNickname();
+        }
+
+        nickname.append(nick)
                 .append(msg.isAction() ? "" : ":");
 
         nickname.setSpan(new StyleSpan(Typeface.BOLD), 0, nickname.length(),
@@ -168,17 +175,14 @@ public final class TextUtils {
 
     @WorkerThread
     public static Spanned buildWhisper(TwitchMessage msg) {
-        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder()
-                .append(msg.getNickname())
-                .append(" -> ")
-                .append(msg.getPrivmsgTarget())
-                .append(": ");
+        SpannableStringBuilder time = buildTime(msg).append(' ');
+        SpannableStringBuilder nick = buildNickname(msg,
+                msg.getNickname() + " -> " + msg.getPrivmsgTarget()).append(' ');
+        SpannableStringBuilder message = buildMessageTextWithSomeShit(msg);
 
-        spannableStringBuilder.setSpan(new ChangeableForegroundColorSpan(msg.getColor()), 0,
-                spannableStringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-        spannableStringBuilder.setSpan(new StyleSpan(Typeface.BOLD), 0,
-                spannableStringBuilder.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-
-        return spannableStringBuilder.append(buildMessageTextWithSomeShit(msg));
+        return new SpannableStringBuilder()
+                .append(time)
+                .append(nick)
+                .append(message);
     }
 }

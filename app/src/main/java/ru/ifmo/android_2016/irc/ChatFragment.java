@@ -207,7 +207,7 @@ public class ChatFragment extends Fragment implements Channel.Callback {
 
     @Override
     public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        menu.add(0, 0, Menu.CATEGORY_CONTAINER, "Copy to clipboard this message")
+        menu.add(0, 0, Menu.CATEGORY_CONTAINER, R.string.copy_clipboard)
                 .setOnMenuItemClickListener(m -> {
                     DraweeTextView textView = (DraweeTextView) v;
                     ClipboardManager clipboard =
@@ -216,14 +216,14 @@ public class ChatFragment extends Fragment implements Channel.Callback {
                     clipboard.setPrimaryClip(clip);
                     return false;
                 });
-        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "Copy this message")
+        menu.add(0, 1, Menu.CATEGORY_CONTAINER, R.string.copy_message)
                 .setOnMenuItemClickListener(m -> {
                     DraweeTextView textView = (DraweeTextView) v;
                     activity.typeMessage.setText(textView.getMessage().isColored() ? "/me " : "");
                     activity.typeMessage.append(textView.getMessage().getText());
                     return false;
                 });
-        menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Answer").setOnMenuItemClickListener(m -> {
+        menu.add(0, 2, Menu.CATEGORY_CONTAINER, R.string.answer).setOnMenuItemClickListener(m -> {
             DraweeTextView textView = (DraweeTextView) v;
             CharSequence message = "@" + textView.getMessage().getSender() + ", ";
             activity.typeMessage.setText(message);

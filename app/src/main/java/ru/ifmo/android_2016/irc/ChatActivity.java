@@ -51,6 +51,7 @@ import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.TEXT_SIZE_KE
 
 public class ChatActivity extends BaseActivity implements Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
+    public static final String CHANNEL = "Channel";
 
     EditText typeMessage;
     private long id = 0;
@@ -245,7 +246,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             return;
         }
         if (client == null || getChannels() == null) {
-            Toast.makeText(this, "Client loading, please wait", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.client_loading, Toast.LENGTH_SHORT).show();
             return;
         }
         emotesViewPager.setAdapter(new EmotesViewPagerAdapter(getSupportFragmentManager()));
@@ -439,16 +440,17 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(Menu.NONE, 1, Menu.CATEGORY_CONTAINER, "Settings").setOnMenuItemClickListener(m -> {
-            //TODO: 228? 1337!
+        menu.add(Menu.NONE, 1, Menu.CATEGORY_CONTAINER, getResources().getString(R.string.settings)).setOnMenuItemClickListener(m -> {
+            //TODO: 228?
             startActivityForResult(new Intent(this, PreferenceActivity.class), 228);
             return false;
         });
-        menu.add(Menu.NONE, 2, Menu.CATEGORY_CONTAINER, "Disconnect").setOnMenuItemClickListener(m -> {
+        menu.add(Menu.NONE, 2, Menu.CATEGORY_CONTAINER, getResources().getString(R.string.disconnect)).setOnMenuItemClickListener(m -> {
             ClientService.stopClient(id);
             finish();
             return false;
         });
+        //temporary menu item
         menu.add(0, 3, Menu.CATEGORY_CONTAINER, "#ERROR#").setOnMenuItemClickListener(menuItem -> {
             startActivity(new Intent(this, ErrorActivity.class));
             return false;

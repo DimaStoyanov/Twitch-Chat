@@ -23,6 +23,7 @@ public class Ban {
         return new Ban(reason, time);
     }
 
+    //TODO: локализацию запилить чтоль? но нужен Context
     public String toString(String nick) {
         String result;
         if (duration > 0) {

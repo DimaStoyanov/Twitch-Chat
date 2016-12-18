@@ -87,6 +87,9 @@ public class DraweeTextView extends TextView {
         if (message.isMentioned()) {
             setBackgroundColor(ColorUtils.blendARGB(color, Color.RED, 0.6f));
         }
+        if (message.isWhisper()) {
+            setBackgroundColor(ColorUtils.blendARGB(color, Color.GREEN, 0.6f));
+        }
         if (message.isTwitchNotify()) {
             setBackgroundColor(ColorUtils.blendARGB(color, getResources()
                     .getColor(R.color.colorTwitch), 0.6f));

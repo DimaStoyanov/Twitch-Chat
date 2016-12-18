@@ -4,7 +4,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.SpannableString;
 
-import com.annimon.stream.Stream;
 import com.annimon.stream.function.Consumer;
 
 import java.util.ArrayList;
@@ -72,18 +71,21 @@ public final class MessageText {
         return twitchNotify;
     }
 
+    public boolean isWhisper() {
+        return whisper;
+    }
+
     final static class Builder {
         @NonNull
         private IRCMessage msg;
         @Nullable
         private TextUtils.TextFunction function;
-        @NonNull
-        private List<Pattern> highlightList = new ArrayList<>();
         @Nullable
         private TwitchMessage userState;
         @NonNull
         private List<MessageExtension> extensionList = new ArrayList<>();
         private Consumer<CharSequence> notificationListener;
+        private boolean whisper;
 
         Builder(@NonNull IRCMessage msg) {
             this.msg = msg;
@@ -91,11 +93,6 @@ public final class MessageText {
 
         Builder setFunction(@Nullable TextUtils.TextFunction function) {
             this.function = function;
-            return this;
-        }
-
-        Builder addHighlights(Pattern... highlight) {
-            Collections.addAll(this.highlightList, highlight);
             return this;
         }
 
@@ -128,13 +125,16 @@ public final class MessageText {
             }
             boolean colored = msg.isAction();
             boolean twitchNotify = false;
-            boolean whisper = false;
+            boolean whisper = this.whisper;
+
             if (sender != null) {
                 twitchNotify = sender.toLowerCase().equals("twitchnotify");
             }
-            boolean mentioned = Stream.of(highlightList)
-                    .filter(p -> p.matcher(text).find())
-                    .count() > 0;
+
+            Pattern highlightPattern = MessagePatterns.getInstance().getHighlightRegex();
+            boolean mentioned = highlightPattern != null && highlightPattern
+                    .matcher(text)
+                    .find();
 
             if (mentioned) {
                 if (notificationListener != null) {
@@ -156,6 +156,11 @@ public final class MessageText {
             for (MessageExtension extension : extensionList) {
                 msg.applyExtension(extension);
             }
+        }
+
+        public Builder setWhisper(boolean whisper) {
+            this.whisper = whisper;
+            return this;
         }
     }
 }

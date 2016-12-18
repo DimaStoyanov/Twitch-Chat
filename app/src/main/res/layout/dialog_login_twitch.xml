@@ -23,6 +23,7 @@
         android:id="@+id/use_ssl"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:checked="true"
         android:text="@string/use_ssl"
         android:layout_gravity="center" />
 

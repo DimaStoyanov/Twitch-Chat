@@ -1,27 +1,29 @@
-package ru.ifmo.android_2016.irc.api.twitch.emotes;
+package ru.ifmo.android_2016.irc.api.frankerfacez;
 
 import android.support.annotation.Nullable;
 
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import ru.ifmo.android_2016.irc.api.frankerfacez.emotes.FfzEmotes;
 import ru.ifmo.android_2016.irc.client.Badge;
 import ru.ifmo.android_2016.irc.client.Emote;
 import ru.ifmo.android_2016.irc.client.MessageExtension;
 import ru.ifmo.android_2016.irc.client.TwitchMessage;
 
 /**
- * Created by ghost on 12/4/2016.
+ * Created by ghost on 12/18/2016.
  */
 
-public final class TwitchEmotesExtension implements MessageExtension {
-    private final Set<Integer> emoteSets;
+public final class FrankerFaceZExtension implements MessageExtension {
+    private Set<Integer> emoteSets;
 
-    public TwitchEmotesExtension(Set<Integer> emoteSets) {
-        this.emoteSets = emoteSets;
+    public FrankerFaceZExtension(Set<Integer> channelFfzEmotes) {
+        this.emoteSets = channelFfzEmotes;
     }
 
     @Nullable
@@ -46,9 +48,9 @@ public final class TwitchEmotesExtension implements MessageExtension {
     @Override
     public List<Emote> addEmotes(TwitchMessage message) {
         return Stream.of(message.getSplitText())
-                .filter(r -> TwitchEmotes.isEmote(r.word, emoteSets))
+                .filter(r -> FfzEmotes.isEmote(r.word, emoteSets))
                 .map(r -> Emote.newEmote(
-                        TwitchEmotes.getEmoteUrl(r.word),
+                        FfzEmotes.getEmoteUrl(r.word),
                         r.word,
                         r.begin,
                         r.end,

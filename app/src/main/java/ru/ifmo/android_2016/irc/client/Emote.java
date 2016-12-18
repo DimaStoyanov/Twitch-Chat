@@ -9,7 +9,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import ru.ifmo.android_2016.irc.api.TwitchApi;
-import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
 
 /**
  * Created by ghost on 11/12/2016.
@@ -27,24 +26,33 @@ public class Emote implements Comparable<Emote> {
     private final int end;
     private Type type;
 
+    private final int width;
+    private final int height;
+
     private Emote(String emoteUrl,
                   String emoteId,
                   int begin,
                   int end,
-                  Type type) {
+                  Type type,
+                  int width,
+                  int height) {
         this.emoteUrl = emoteUrl;
         this.emoteId = emoteId;
         this.begin = begin;
         this.end = end;
         this.type = type;
+        this.width = width;
+        this.height = height;
     }
 
     public static Emote newEmote(String emoteUrl,
                                  String emoteId,
                                  int begin,
                                  int end,
-                                 Type type) {
-        return new Emote(emoteUrl, emoteId, begin, end, type);
+                                 Type type,
+                                 int width,
+                                 int height) {
+        return new Emote(emoteUrl, emoteId, begin, end, type, width, height);
     }
 
     private static Emote getTwitchEmote(String emoteId, int begin, int end) {
@@ -53,17 +61,9 @@ public class Emote implements Comparable<Emote> {
                 emoteId,
                 begin,
                 end,
-                Type.TWITCH);
-    }
-
-    private static Emote getBttvEmote(String emoteCode, String channel, int begin, int end) {
-        String emoteId = BttvEmotes.getEmoteByCode(emoteCode, channel);
-        return new Emote(
-                BttvEmotes.getEmoteUrl(emoteId),
-                emoteId,
-                begin,
-                end,
-                Type.BTTV);
+                Type.TWITCH,
+                50,
+                50);
     }
 
     @Override
@@ -136,7 +136,8 @@ public class Emote implements Comparable<Emote> {
 
     public enum Type {
         TWITCH,
-        BTTV,;
+        BTTV,
+        FFZ,;
 
         public String getDirectory() {
             switch (this) {
@@ -145,6 +146,9 @@ public class Emote implements Comparable<Emote> {
 
                 case BTTV:
                     return "bttv";
+
+                case FFZ:
+                    return "ffz";
 
                 default:
                     return "other_emotes";

@@ -147,9 +147,10 @@ public class ClientService extends Service {
         @Override
         protected void onPostExecute(String result) {
             String notificationText = clients.size() + " client running";
+            Notification notification = getNotification(context, "IRC Client", notificationText);
+            notification.vibrate = null;
 
-            sendNotification(context, FOREGROUND_NOTIFICATION,
-                    getNotification(context, "IRC Client", notificationText));
+            sendNotification(context, FOREGROUND_NOTIFICATION, notification);
             listener.accept(getClient(id));
         }
     }

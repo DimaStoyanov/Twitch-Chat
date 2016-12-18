@@ -18,12 +18,14 @@ import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 public final class TwitchClient extends Client {
     private static final String TAG = TwitchClient.class.getSimpleName();
-//    private TwitchMessage userState;
-//    private TwitchMessage globalUserState;
+    private TwitchMessage globalUserState;
 
     private String displayName;
-    private int nickColor = 0;
+    private Integer nickColor = null;
     private final Set<Integer> emoteSets = new HashSet<>();
+
+    int globalCount = 0;
+    long lastTime = 0;
 
     TwitchClient(Context context) {
         super(context);
@@ -102,36 +104,63 @@ public final class TwitchClient extends Client {
 
     @Override
     @WorkerThread
-    public void sendMessage(IRCMessage message) {
-        TwitchMessage twitchMessage = (TwitchMessage) message;
-        send(message.toString());
+    public void sendMessage(String channel, String message, IRCMessage userState) {
+        message = message.trim();
 
-        if (parseMyMessage(twitchMessage)) messageQueue.offer(twitchMessage);
+        if (message.startsWith("/") && clientCommand(message)) {
+            return;
+        }
+
+        privmsg(channel, message);
+        TwitchMessage msg;
+        if (userState != null) {
+            msg = (TwitchMessage) userState.clone();
+        } else {
+            msg = globalUserState.clone();
+        }
+        msg.setPrivmsg(channel, message);
+        msg.applyExtension(new TwitchEmotesExtension(getEmoteSets()));
+
+        if (message.startsWith("/")) {
+            serverCommand(msg);
+        } else {
+            messageQueue.offer(msg);
+        }
     }
 
-    private boolean parseMyMessage(TwitchMessage twitchMessage) {
-        if (twitchMessage.getPrivmsgText().startsWith("/")) {
-            String message = twitchMessage.getPrivmsgText();
-            if (message.startsWith("/me ")) {
-                twitchMessage.setAction(true);
-                twitchMessage.setPrivmsgText(message.substring(4));
-            } else if (message.startsWith("/w ")) {
-
+    @Override
+    protected void serverCommand(IRCMessage msg) {
+        String message = msg.getPrivmsgText();
+        if (message.startsWith("/w ")) {
+            String[] parts = message.substring(3).split(" ", 2);
+            if (parts.length > 1) {
+                msg.setNickname(getNickname());
+                msg.setCommand("WHISPER");
+                msg.setPrivmsgTarget(parts[0]);
+                msg.setPrivmsgText(parts[1]);
+                sendBroadcast(msg, TextUtils::buildWhisper);
             }
-            return false;
+            return;
         }
-        twitchMessage
-                .setColor(nickColor)
-                .applyExtension(new TwitchEmotesExtension(getEmoteSets()))
-                .setNickname(getNickname());
-
-        return true;
+        super.serverCommand(msg);
     }
 
     @Override
     protected void send(String s) {
-        //TODO: global ban protection
-        super.send(s);
+        //global ban protection LUL
+        if (lastTime + 30_000_000_000L > System.nanoTime()) {
+            globalCount += 1;
+            if (globalCount < 19) {
+                super.send(s);
+            } else {
+                sendBroadcast("You have sent too many messages in a row. Please wait "
+                        + (30_000_000_000L + lastTime - System.nanoTime()) + " nanoseconds LUL");
+            }
+        } else {
+            lastTime = System.nanoTime();
+            globalCount = 1;
+            super.send(s);
+        }
     }
 
     @Override
@@ -145,6 +174,7 @@ public final class TwitchClient extends Client {
 
     private void updateGlobalUserstate(TwitchMessage userState) {
         //TODO:
+        globalUserState = userState;
         nickColor = userState.getColor();
         displayName = userState.getDisplayName();
         emoteSets.addAll(Arrays.asList(userState.getEmoteSets()));
@@ -152,7 +182,7 @@ public final class TwitchClient extends Client {
     }
 
     private void updateUserstate(TwitchMessage userState) {
-        updateGlobalUserstate(userState);
+//        updateGlobalUserstate(userState);
         getChannel(userState.getPrivmsgTarget()).setUserState(userState);
     }
 

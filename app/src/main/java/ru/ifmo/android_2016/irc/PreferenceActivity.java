@@ -30,7 +30,7 @@ public class PreferenceActivity extends BaseActivity {
         setContentView(R.layout.activity_preferences);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        toolbar.setTitle("Settings");
+        toolbar.setTitle(getResources().getString(R.string.settings));
         setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
@@ -49,6 +49,7 @@ public class PreferenceActivity extends BaseActivity {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             addPreferencesFromResource(R.xml.pref_main);
+            //TODO: тут падает
 //            findPreference(CLEAR_LOGIN_KEY).setOnPreferenceClickListener(this::onPreferenceClick);
         }
 

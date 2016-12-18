@@ -1,11 +1,13 @@
 package ru.ifmo.android_2016.irc.utils;
 
+import com.annimon.stream.Optional;
 import com.annimon.stream.function.Consumer;
-import com.annimon.stream.function.Function;
 import com.annimon.stream.function.FunctionalInterface;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.util.concurrent.Callable;
 
 /**
  * Created by ghost on 11/13/2016.
@@ -142,9 +144,28 @@ public class FunctionUtils {
         lolExceptions(r).run();
     }
 
+    public static <T> T fuckCheckedExceptions(CallableWithException<Exception, T> runnable) {
+        try {
+            return runnable.call();
+        } catch (Exception e) {
+            throwChecked(e);
+        }
+        return null;
+    }
+
     public static <T> void doIfNotNull(T object, Consumer<T> action) {
         if (object != null) {
             action.accept(object);
+        }
+    }
+
+    public static Optional<InputStream> getInputStream(HttpURLConnection httpURLConnection) throws IOException {
+        httpURLConnection.connect();
+
+        if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+            return Optional.of(httpURLConnection.getInputStream());
+        } else {
+            return Optional.empty();
         }
     }
 }

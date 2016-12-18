@@ -11,15 +11,20 @@ import android.support.annotation.WorkerThread;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import ru.ifmo.android_2016.irc.ChatActivity;
 import ru.ifmo.android_2016.irc.IRCApplication;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.BttvMessageExtension;
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotesLoader;
+import ru.ifmo.android_2016.irc.api.frankerfacez.FrankerFaceZExtension;
+import ru.ifmo.android_2016.irc.api.frankerfacez.emotes.FfzEmotesLoader;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesExtension;
 import ru.ifmo.android_2016.irc.api.twitch.badges.TwitchBadgesLoader;
 import ru.ifmo.android_2016.irc.utils.FileUtils;
@@ -28,6 +33,7 @@ import ru.ifmo.android_2016.irc.utils.NotificationUtils;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 import ru.ifmo.android_2016.irc.utils.TextUtils.TextFunction;
 
+import static ru.ifmo.android_2016.irc.ChatActivity.CHANNEL;
 import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
 
 /**
@@ -50,15 +56,9 @@ public final class Channel {
     @NonNull
     private Map<String, String> channelBadges = new HashMap<>();
     @NonNull
-    private Map<String, String> channelEmotes = new HashMap<>();
-    @Nullable
-    private Pattern nicknamePattern = Pattern.compile("\0");
-    @Nullable
-    private final Pattern[] raffleListLul = {
-            Pattern.compile("raffle", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("waffIe", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("waffle", Pattern.CASE_INSENSITIVE),
-    };
+    private Map<String, String> channelBttvEmotes = new HashMap<>();
+    @NonNull
+    private Set<Integer> channelFfzEmoteSet = new HashSet<>();
     @Nullable
     private List<String> lastEmotes = null;
 
@@ -72,7 +72,7 @@ public final class Channel {
             @Nullable TextFunction textFunction) {
         this.client = client;
         this.name = name;
-        this.messages = new ArrayList<>(16);
+        this.messages = Collections.synchronizedList(new ArrayList<>(16));
         this.textFunction = textFunction;
 
         loadExtensions(name);
@@ -83,8 +83,9 @@ public final class Channel {
     }
 
     private void loadExtensions(@NonNull String name) {
-        new BttvEmotesLoader(name, channelEmotes::putAll).executeOnExecutor(Client.executor);
+        new BttvEmotesLoader(name, channelBttvEmotes::putAll).executeOnExecutor(Client.executor);
         new TwitchBadgesLoader(name, channelBadges::putAll).executeOnExecutor(Client.executor);
+        new FfzEmotesLoader(name, channelFfzEmoteSet::addAll).executeOnExecutor(Client.executor);
     }
 
     void add(IRCMessage msg) {
@@ -93,23 +94,40 @@ public final class Channel {
 
     void add(IRCMessage msg, TextFunction func) {
         if (func != null) {
-            add(new MessageText.Builder(msg)
+            MessageText mt = new MessageText.Builder(msg)
                     .setFunction(func)
-                    .addHighlights(nicknamePattern)
-                    .addHighlights(raffleListLul)
                     .setNotificationListener(text -> {
                         Notification notification = NotificationUtils
                                 .getNotification(getContext(), getName(), String.valueOf(text),
                                         new Intent(getContext(), ChatActivity.class)
-                                                .putExtra(SERVER_ID, client.getId()));
+                                                .putExtra(SERVER_ID, client.getId())
+                                                .putExtra(CHANNEL, getName()));
 
                         NotificationUtils.sendNotification(getContext(),
                                 NotificationUtils.HIGHLIGHT_NOTIFICATION,
                                 notification);
                     })
                     .addExtensions(new TwitchBadgesExtension(channelBadges))
-                    .addExtensions(new BttvMessageExtension(channelEmotes))
-                    .build());
+                    .addExtensions(new BttvMessageExtension(channelBttvEmotes))
+                    .addExtensions(new FrankerFaceZExtension(channelFfzEmoteSet))
+                    .setWhisper(msg.getCommand().equals("WHISPER"))
+                    .build();
+
+            Pattern banPattern = MessagePatterns.getInstance().getBanWordsPattern();
+            Pattern ignorePattern = MessagePatterns.getInstance().getIgnoredUsersPattern();
+
+            boolean hasBannedWords = banPattern != null &&
+                    banPattern
+                            .matcher(mt.getText())
+                            .find();
+            boolean hasIgnoredUsers = ignorePattern != null && mt.getSender() != null &&
+                   ignorePattern
+                            .matcher(mt.getSender())
+                            .find();
+
+            if (!hasBannedWords && !hasIgnoredUsers) {
+                add(mt);
+            }
         }
     }
 
@@ -165,10 +183,7 @@ public final class Channel {
     }
 
     public void send(@NonNull String message) {
-        final IRCMessage msg = new TwitchMessage()
-                .setPrivmsg(getName(), message);
-
-        client.post(() -> client.sendMessage(msg));
+        client.post(() -> client.sendMessage(getName(), message, userState));
     }
 
     public interface Callback {
@@ -184,7 +199,6 @@ public final class Channel {
     }
 
     void setNickname(@NonNull String nick) {
-        nicknamePattern = Pattern.compile(nick, Pattern.CASE_INSENSITIVE);
     }
 
     @Override

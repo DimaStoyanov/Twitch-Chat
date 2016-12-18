@@ -16,7 +16,7 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
  * Created by ghost on 10/23/2016.
  */
 
-public class IRCMessage {
+public class IRCMessage implements Cloneable {
     private static final String TAG = IRCMessage.class.getSimpleName();
 
     public final long time;
@@ -99,7 +99,7 @@ public class IRCMessage {
     public IRCMessage setPrivmsg(String name, String message) {
         return IRCMessage.this
                 .setCommand("PRIVMSG")
-                .setParams(Collections.singletonList(name))
+                .setPrivmsgTarget(name)
                 .setTrailing(message);
     }
 
@@ -115,6 +115,11 @@ public class IRCMessage {
 
     public long getTime() {
         return time;
+    }
+
+    public IRCMessage setPrivmsgTarget(String privmsgTarget) {
+        setParams(Collections.singletonList(privmsgTarget));
+        return this;
     }
 
     private static class Prefix {
@@ -286,5 +291,14 @@ public class IRCMessage {
     public IRCMessage applyExtension(MessageExtension extension) {
         //nothing
         return this;
+    }
+
+    public IRCMessage clone() {
+        try {
+            return (IRCMessage) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

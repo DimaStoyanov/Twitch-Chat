@@ -57,14 +57,14 @@ public class Client {
     protected Thread responseFetcherThread;
     protected Thread requestListenerThread;
     protected Thread messageHandlerThread;
+    protected Thread pingSenderThread;
 
     protected Consumer<Exception> defaultExceptionHandler = e -> {
         sendStatus(e.toString(), Color.RED);
-//        Stream.of(e.getStackTrace()).forEach((ste) -> statusChannel.add(ste.toString(), Color.RED));
         e.printStackTrace();
         quit();
         shutdownThreads();
-        reconnect();
+        executor.execute(this::reconnect);
         //notifyUiOnChannelChange();
     };
 
@@ -99,9 +99,9 @@ public class Client {
     }
 
     private void reconnect() {
-        sendBroadcast("Reconnecting in 5 seconds");
+        sendBroadcast("Reconnecting in 3 seconds");
         try {
-            Thread.sleep(5000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             //nothing
         }
@@ -125,9 +125,11 @@ public class Client {
         if (requestListenerThread != null) requestListenerThread.interrupt();
         if (responseFetcherThread != null) responseFetcherThread.interrupt();
         if (messageHandlerThread != null) messageHandlerThread.interrupt();
+        if (pingSenderThread != null) pingSenderThread.interrupt();
         requestListenerThread = null;
         responseFetcherThread = null;
         messageHandlerThread = null;
+        pingSenderThread = null;
     }
 
     protected final void join(String channel) {
@@ -148,6 +150,10 @@ public class Client {
 
     protected final void part(String channel, String reason) {
         send("PART " + channel + " :" + reason);
+    }
+
+    protected final void ping() {
+        send("PING");
     }
 
     protected final void pong() {
@@ -196,6 +202,10 @@ public class Client {
             executor.execute(FunctionUtils.catchExceptions(
                     this::clientHandler,
                     interruptedExceptionHandler));
+
+            executor.execute(FunctionUtils.catchExceptions(
+                    this::pingSender,
+                    interruptedExceptionHandler));
         } catch (IOException x) {
             defaultExceptionHandler.accept(x);
         }
@@ -230,6 +240,16 @@ public class Client {
     }
 
     @WorkerThread
+    protected void pingSender() throws InterruptedException {
+        Thread thisThread = Thread.currentThread();
+        pingSenderThread = thisThread;
+        while (!thisThread.isInterrupted()) {
+            Thread.sleep(60000);
+            ping();
+        }
+    }
+
+    @WorkerThread
     protected void preLoopActions() throws IOException {
         pass(clientSettings.password);
         enterNick(clientSettings.nicks);
@@ -249,13 +269,13 @@ public class Client {
         }
     }
 
-    protected IRCMessage parse(String s) {
+    protected IRCMessage parse(String rawMessage) {
         try {
-            return getMessageFromString(s);
-        } catch (ParserException x) {
-            Log.d(TAG, s);
+            return getMessageFromString(rawMessage);
+        } catch (ParserException | IllegalStateException x) {
+            Log.d(TAG, rawMessage);
             x.printStackTrace();
-            sendStatus("Can't parse message: " + s);
+            sendStatus("Can't parse message: " + rawMessage);
             return null;
         }
     }
@@ -369,9 +389,27 @@ public class Client {
     }
 
     @WorkerThread
-    public void sendMessage(IRCMessage message) {
-        send(message.toString());
-        messageQueue.offer(message);
+    public void sendMessage(String channel, String message, IRCMessage userState) {
+        privmsg(channel, message);
+        IRCMessage ircMessage = new IRCMessage().setPrivmsg(channel, message);
+        messageQueue.offer(ircMessage);
+    }
+
+    protected boolean clientCommand(String msg) {
+        msg = msg.trim();
+        if (msg.startsWith("/join ")) {
+            join(msg.substring(6).trim());
+            return true;
+        }
+        return false;
+    }
+
+    protected void serverCommand(IRCMessage message) {
+        String msg = message.getPrivmsgText().trim();
+        if (msg.startsWith("/me ")) {
+            message.setAction(true);
+            message.setPrivmsgText(msg.substring(4));
+        }
     }
 
     public void post(Runnable runnable) {
