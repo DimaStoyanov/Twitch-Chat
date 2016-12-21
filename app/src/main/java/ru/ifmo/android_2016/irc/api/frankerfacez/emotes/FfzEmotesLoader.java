@@ -63,9 +63,12 @@ public final class FfzEmotesLoader extends AsyncTask<Void, Void, Void> {
         }
         if (channel != null && onLoad != null) {
             FrankerFaceZParser.Response response = load(() -> FrankerFaceZApi.getRoomInfo(channel));
-            onLoad.accept(Stream.of(response.getSets())
+            FunctionUtils.lol(() -> addEmotes(response));
+
+            Set<Integer> set = Stream.of(response.getSets())
                     .map(FrankerFaceZParser.Set::getId)
-                    .collect(Collectors.toSet()));
+                    .collect(Collectors.toSet());
+            onLoad.accept(set);
         }
         return null;
     }

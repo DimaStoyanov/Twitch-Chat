@@ -1,15 +1,8 @@
 package ru.ifmo.android_2016.irc.api.frankerfacez.emotes;
 
-import android.graphics.Path;
-import android.util.SparseArray;
-
 import com.annimon.stream.Collectors;
-import com.annimon.stream.Optional;
 import com.annimon.stream.Stream;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,8 +26,8 @@ public final class FfzEmotes {
     final static Set<Integer> defaultSets = Collections.synchronizedSet(new HashSet<>());
     //code -> id
     private final static Map<String, String> emotes = Collections.synchronizedMap(new HashMap<>());
-    //code -> setId // setId -> code
-    private final static Map<String, Integer> codeToSet = new HashMap<>();
+    //code -> setId
+    private final static Map<String, Set<Integer>> codeToSet = new HashMap<>();
     //roomName -> roomId?
     private final static Map<String, Integer> roomIds = new HashMap<>();
 
@@ -47,14 +40,26 @@ public final class FfzEmotes {
     public static void addEmotes(List<FrankerFaceZParser.Set> sets) {
         for (FrankerFaceZParser.Set set : sets) {
             Map<String, String> emotes = set.getEmotes();
+            Set<String> strings = emotes.keySet();
 
             FfzEmotes.emotes.putAll(emotes);
-            FfzEmotes.lul.put(set.getId(), emotes.keySet());
+            FfzEmotes.lul.put(set.getId(), strings);
+            for (String code : strings) {
+                if (!codeToSet.containsKey(code)) {
+                    codeToSet.put(code, new HashSet<>());
+                }
+                codeToSet.get(code).add(set.getId());
+            }
         }
     }
 
     public static boolean isEmote(String word, Set<Integer> availableEmotes) {
-        return emotes.containsKey(word) && availableEmotes.contains(codeToSet.get(word));
+        if (emotes.containsKey(word)) {
+            boolean channel = !Collections.disjoint(availableEmotes, codeToSet.get(word));
+            boolean global = !Collections.disjoint(defaultSets, codeToSet.get(word));
+            return channel || global;
+        }
+        return false;
     }
 
     public static List<String> getEmotes(String channel) {
