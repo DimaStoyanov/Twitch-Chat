@@ -48,6 +48,7 @@
     <string name="spam_mode_summary">Do not clear typed message after sending</string>
     <string name="clear_emotes_summary">This option can also help to update all emotes</string>
     <string name="sign_out_summary">Reset current twitch token</string>
+    <string name="exit">Exit</string>
 
     <!--Arrays-->
     <string-array name="pref_theme">

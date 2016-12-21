@@ -212,11 +212,11 @@ public class NewChannelListActivity extends BaseActivity {
             startActivity(new Intent(this, ErrorActivity.class));
             return false;
         });*/
-        menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Settings").setOnMenuItemClickListener(menuItem -> {
+        menu.add(0, 2, Menu.CATEGORY_CONTAINER, getString(R.string.settings)).setOnMenuItemClickListener(menuItem -> {
             startActivity(new Intent(this, PreferenceActivity.class));
             return false;
         });
-        menu.add(0, 3, Menu.CATEGORY_CONTAINER, "Exit").setOnMenuItemClickListener(menuItem -> {
+        menu.add(0, 3, Menu.CATEGORY_CONTAINER, getString(R.string.exit)).setOnMenuItemClickListener(menuItem -> {
             ClientService.stopAllClients();
             finish();
             return false;

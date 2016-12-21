@@ -37,4 +37,5 @@
     <string name="theme">Тема</string>
     <string name="use_ssl">Использовать SSL</string>
     <string name="your_message">Отправить сообщение</string>
+    <string name="exit">Выйти</string>
 </resources>

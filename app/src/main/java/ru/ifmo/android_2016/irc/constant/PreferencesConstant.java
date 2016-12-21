@@ -8,8 +8,8 @@ package ru.ifmo.android_2016.irc.constant;
 
 public final class PreferencesConstant {
     public static final String THEME_KEY = "pref_theme";
-    public static final String CLEAR_LOGIN_KEY = "clear_login";
-    public static final String CLEAR_EMOTES_CACHE_KEY = "clear_emotes_cache";
+    public static final String CLEAR_LOGIN_KEY = "clear_data";
+    public static final String CLEAR_EMOTES_CACHE_KEY = "clear_emotes";
     public static final String TEXT_SIZE_KEY = "text_size";
     public static final String SPAM_MODE_KEY = "spam_mode";
     public static final String SHOW_TAB_KEY = "pref_tab";
