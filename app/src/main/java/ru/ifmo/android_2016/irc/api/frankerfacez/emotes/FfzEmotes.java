@@ -1,8 +1,16 @@
 package ru.ifmo.android_2016.irc.api.frankerfacez.emotes;
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
+import android.graphics.Path;
+import android.util.SparseArray;
 
+import com.annimon.stream.Collectors;
+import com.annimon.stream.Optional;
+import com.annimon.stream.Stream;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,13 +30,18 @@ public final class FfzEmotes {
     private static final String EMOTES_BASE_URI = "https://cdn.frankerfacez.com/emoticon/{id}/2";
 
     static boolean globalLoaded = false;
-    final static Set<Integer> defaultSets = new HashSet<>();
-    final static Map<String, String> emotes = new HashMap<>();
-    final static Map<String, Integer> emoteSet = new HashMap<>();
-    final static Set<Integer> loadedSets = new HashSet<>();
+    final static Set<Integer> defaultSets = Collections.synchronizedSet(new HashSet<>());
+    //code -> id
+    private final static Map<String, String> emotes = Collections.synchronizedMap(new HashMap<>());
+    //code -> setId // setId -> code
+    private final static Map<String, Integer> codeToSet = new HashMap<>();
+    //roomName -> roomId?
+    private final static Map<String, Integer> roomIds = new HashMap<>();
 
-    public static String getEmoteUrl(String id) {
-        return EMOTES_BASE_URI.replace("{id}", emotes.get(id));
+    private final static Map<Integer, Set<String>> lul = new HashMap<>();
+
+    public static String getEmoteUrl(String code) {
+        return EMOTES_BASE_URI.replace("{id}", emotes.get(code));
     }
 
     public static void addEmotes(List<FrankerFaceZParser.Set> sets) {
@@ -36,13 +49,34 @@ public final class FfzEmotes {
             Map<String, String> emotes = set.getEmotes();
 
             FfzEmotes.emotes.putAll(emotes);
-            FfzEmotes.loadedSets.add(set.getId());
-            FfzEmotes.emoteSet.putAll(Stream.of(emotes.keySet())
-                    .collect(Collectors.toMap(v -> v, v -> set.getId())));
+            FfzEmotes.lul.put(set.getId(), emotes.keySet());
         }
     }
 
     public static boolean isEmote(String word, Set<Integer> availableEmotes) {
-        return emotes.containsKey(word) && availableEmotes.contains(emoteSet.get(word));
+        return emotes.containsKey(word) && availableEmotes.contains(codeToSet.get(word));
+    }
+
+    public static List<String> getEmotes(String channel) {
+        Set<Integer> integers = new HashSet<>();
+        integers.addAll(defaultSets);
+        integers.add(roomIds.get(channel));
+
+        return Stream.of(lul)
+                .filter(e -> integers.contains(e.getKey()))
+                .flatMap(e -> Stream.of(e.getValue()))
+                .collect(Collectors.toList());
+    }
+
+    public static void addRoomId(String room, int id) {
+        roomIds.put(room, id);
+    }
+
+    public static int getWidth(String word) {
+        return 50;  //TODO:
+    }
+
+    public static int getHeight(String word) {
+        return 50;  //TODO:
     }
 }

@@ -46,5 +46,6 @@ dependencies {
     compile 'com.android.support:support-vector-drawable:25.0.1'
     compile 'com.android.support:preference-v7:25.0.1'
     compile 'com.android.support:preference-v14:25.0.1'
+    compile 'com.google.guava:guava:18.0'
     testCompile 'junit:junit:4.12'
 }
