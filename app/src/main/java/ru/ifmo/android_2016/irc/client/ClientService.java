@@ -17,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import ru.ifmo.android_2016.irc.NewChannelListActivity;
 import ru.ifmo.android_2016.irc.utils.Log;
 
 import static ru.ifmo.android_2016.irc.utils.NotificationUtils.FOREGROUND_NOTIFICATION;
@@ -160,7 +161,8 @@ public class ClientService extends Service {
         @Override
         protected void onPostExecute(String result) {
             String notificationText = clients.size() + " client running";
-            Notification notification = getNotification(context, "IRC Client", notificationText);
+            Notification notification = getNotification(context, "IRC Client", notificationText,
+                    new Intent(context, NewChannelListActivity.class));
             notification.vibrate = null;
 
             sendNotification(context, FOREGROUND_NOTIFICATION, notification);

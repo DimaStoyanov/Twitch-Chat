@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">IRC</string>
+    <string name="app_name" translatable="false">Twitch Chat</string>
     <string name="send">Send</string>
     <string name="irc_client">Twitch Chat Client</string>
     <string name="channel">#channel</string>
@@ -19,9 +19,9 @@
     <string name="answer">Answer</string>
     <string name="text_size">Text size</string>
     <string name="recent">Recent</string>
-    <string name="bttv" translatable="false">Better Twitch tv</string>
+    <string name="bttv" translatable="false">BetterTwitchTV</string>
     <string name="twitch" translatable="false">Twitch</string>
-    <string name="ffz" translatable="false">Franker face zz</string>
+    <string name="ffz" translatable="false">FrankerFaceZ</string>
 
     <!--Settings-->
 

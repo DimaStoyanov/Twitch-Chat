@@ -112,6 +112,7 @@ public final class Channel {
                     .addExtensions(new BttvMessageExtension(channelBttvEmotes))
                     .addExtensions(new FrankerFaceZExtension(channelFfzEmoteSet))
                     .setWhisper(msg.getCommand().equals("WHISPER"))
+                    .setNick(client.getNickname())
                     .build();
 
             Pattern banPattern = MessagePatterns.getInstance().getBanWordsPattern();

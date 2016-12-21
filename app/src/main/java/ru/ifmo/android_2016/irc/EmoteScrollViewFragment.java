@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
@@ -42,7 +43,7 @@ import ru.ifmo.android_2016.irc.utils.Log;
 
 
 public class EmoteScrollViewFragment extends Fragment {
-
+    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(10);
     String currentEmotes;
     ChatActivity activity;
     ScrollView scrollView;
@@ -226,7 +227,7 @@ public class EmoteScrollViewFragment extends Fragment {
                     return null;
 
                 }
-            }.executeOnExecutor(Executors.newFixedThreadPool(10));
+            }.executeOnExecutor(EXECUTOR);
         }
     }
 

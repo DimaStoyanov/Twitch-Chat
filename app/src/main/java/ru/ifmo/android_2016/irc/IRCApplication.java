@@ -26,7 +26,7 @@ public class IRCApplication extends android.app.Application {
     private static LocalBroadcastManager localBroadcastManager;
     private static String filesDir;
     private static String cacheDir;
-    private static boolean debug = true;
+    private static boolean debug = false;
 
     private Thread.UncaughtExceptionHandler old;
     private SharedPreferences preferences;

@@ -20,7 +20,7 @@ public final class FfzEmotes {
     private FfzEmotes() {
     }
 
-    private static final String EMOTES_BASE_URI = "https://cdn.frankerfacez.com/emoticon/{id}/1";
+    private static final String EMOTES_BASE_URI = "https://cdn.frankerfacez.com/emoticon/{id}/2";
 
     static boolean globalLoaded = false;
     final static Set<Integer> defaultSets = Collections.synchronizedSet(new HashSet<>());

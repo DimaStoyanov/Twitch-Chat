@@ -80,12 +80,11 @@ public final class MessageText {
         private IRCMessage msg;
         @Nullable
         private TextUtils.TextFunction function;
-        @Nullable
-        private TwitchMessage userState;
         @NonNull
         private List<MessageExtension> extensionList = new ArrayList<>();
         private Consumer<CharSequence> notificationListener;
         private boolean whisper;
+        private String nick;
 
         Builder(@NonNull IRCMessage msg) {
             this.msg = msg;
@@ -93,11 +92,6 @@ public final class MessageText {
 
         Builder setFunction(@Nullable TextUtils.TextFunction function) {
             this.function = function;
-            return this;
-        }
-
-        Builder setUserState(@NonNull TwitchMessage userState) {
-            this.userState = userState;
             return this;
         }
 
@@ -137,6 +131,10 @@ public final class MessageText {
                 mentioned = highlightPattern != null && highlightPattern
                         .matcher(text)
                         .find();
+
+                if (nick != null) {
+                    mentioned = text.toLowerCase().contains(nick.toLowerCase()) || mentioned;
+                }
             }
 
             if (mentioned) {
@@ -163,6 +161,11 @@ public final class MessageText {
 
         public Builder setWhisper(boolean whisper) {
             this.whisper = whisper;
+            return this;
+        }
+
+        public Builder setNick(String nick) {
+            this.nick = nick;
             return this;
         }
     }

@@ -6,7 +6,7 @@ package ru.ifmo.android_2016.irc.utils;
 
 @SuppressWarnings("unused")
 public final class Log {
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private Log() {
     }

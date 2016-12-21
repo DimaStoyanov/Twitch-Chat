@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">IRC</string>
     <string name="add_channel">Добавить канал</string>
     <string name="answer">Ответить</string>
-    <string name="channel">Канал</string>
+    <string name="channel">#канал</string>
     <string name="chat_mechanics">Механика чата</string>
     <string name="clear">Очистить</string>
     <string name="clear_data_summary">Очистить список каналов и удалить все пароли</string>
@@ -18,7 +17,6 @@
     <string name="disconnect">Отключиться</string>
     <string name="emotes">эмоции</string>
     <string name="emotes_category">Эмоции</string>
-    <string name="ffz"></string>
     <string name="irc_client">Twitch чат-клиент</string>
     <string name="name_optionally">Имя (опционально)</string>
     <string name="recent">Недавние</string>

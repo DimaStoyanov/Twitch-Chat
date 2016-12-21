@@ -19,7 +19,7 @@ import ru.ifmo.android_2016.irc.utils.Splitter;
 public class IRCMessage implements Cloneable {
     private static final String TAG = IRCMessage.class.getSimpleName();
 
-    public final long time;
+    private long time;
 
     @Nullable
     protected String tags;
@@ -295,10 +295,12 @@ public class IRCMessage implements Cloneable {
 
     public IRCMessage clone() {
         try {
-            return (IRCMessage) super.clone();
+            IRCMessage cloned = (IRCMessage) super.clone();
+            cloned.time = System.currentTimeMillis();
+            return cloned;
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }
-        return null;
+        return new IRCMessage();
     }
 }
