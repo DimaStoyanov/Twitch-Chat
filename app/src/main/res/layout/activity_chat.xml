@@ -6,125 +6,168 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/activity_chat"
+    <LinearLayout
+        android:id="@+id/content"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        tools:context="ru.ifmo.android_2016.irc.ChatActivity">
 
-        <android.support.design.widget.AppBarLayout
-            android:id="@+id/app_bar"
+        <android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            xmlns:tools="http://schemas.android.com/tools"
+            android:id="@+id/activity_chat"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="vertical"
 
+            tools:context="ru.ifmo.android_2016.twitch_chat.ChatActivity">
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:layout_scrollFlags="scroll|enterAlways|snap">
-
-                <TextView
-                    android:id="@+id/title"
-                    style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
-
-            </android.support.v7.widget.Toolbar>
-
-            <android.support.design.widget.TabLayout
-                android:id="@+id/tabLayout"
+            <android.support.design.widget.AppBarLayout
+                android:id="@+id/app_bar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
 
-            </android.support.design.widget.TabLayout>
+                <android.support.v7.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_scrollFlags="scroll|enterAlways|snap">
+
+                    <TextView
+                        android:id="@+id/title"
+                        style="@style/TextAppearance.AppCompat.Widget.ActionBar.Title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+
+                </android.support.v7.widget.Toolbar>
+
+                <android.support.design.widget.TabLayout
+                    android:id="@+id/tabLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
 
-        </android.support.design.widget.AppBarLayout>
+                </android.support.design.widget.TabLayout>
 
-        <android.support.v4.view.ViewPager
-            android:id="@+id/viewPager"
+
+            </android.support.design.widget.AppBarLayout>
+
+            <android.support.v4.view.ViewPager
+                android:id="@+id/viewPager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            </android.support.v4.view.ViewPager>
+
+            <ProgressBar
+                android:id="@+id/pbar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone" />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/fab"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|bottom"
+                android:layout_margin="16dp"
+                android:src="@drawable/fab_scroll_down"
+                app:fabSize="mini"
+                app:layout_behavior=".ui.behavior.FloatingActionButtonScrollBehavior" />
+
+        </android.support.design.widget.CoordinatorLayout>
+
+        <LinearLayout
+            android:id="@+id/answer"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
-        </android.support.v4.view.ViewPager>
-
-        <ProgressBar
-            android:id="@+id/pbar"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone" />
+            android:orientation="horizontal">
 
-        <android.support.design.widget.FloatingActionButton
-            android:id="@+id/fab"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end|bottom"
-            android:layout_margin="16dp"
-            android:src="@drawable/fab_scroll_down"
-            android:visibility="gone"
-            app:fabSize="mini"
-            app:layout_behavior=".ui.behavior.FloatingActionButtonScrollBehavior" />
+            <ImageButton
+                android:layout_width="46dp"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/emotes"
+                android:hapticFeedbackEnabled="true"
+                android:onClick="onEmotesShowClick"
+                android:src="@android:drawable/ic_menu_gallery" />
 
-    </android.support.design.widget.CoordinatorLayout>
-
-    <LinearLayout
-        android:id="@+id/answer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal">
-
-        <ImageButton
-            android:layout_width="46dp"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/emotes"
-            android:hapticFeedbackEnabled="true"
-            android:onClick="onEmotesShowClick"
-            android:src="@android:drawable/ic_menu_gallery" />
-
-        <EditText
-            android:id="@+id/text_message"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:hint="@string/your_message" />
+            <EditText
+                android:id="@+id/text_message"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:hint="@string/your_message" />
 
 
-        <ImageButton
-            android:id="@+id/clear"
-            android:layout_width="46dp"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/clear"
-            android:hapticFeedbackEnabled="true"
-            android:onClick="onClearClick"
-            android:src="@android:drawable/ic_menu_close_clear_cancel" />
+            <ImageButton
+                android:id="@+id/clear"
+                android:layout_width="46dp"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/clear"
+                android:hapticFeedbackEnabled="true"
+                android:onClick="onClearClick"
+                android:src="@android:drawable/ic_menu_close_clear_cancel" />
 
-        <ImageButton
-            android:id="@+id/send"
-            android:layout_width="46dp"
-            android:layout_height="match_parent"
-            android:background="@android:color/transparent"
-            android:contentDescription="@string/send"
-            android:hapticFeedbackEnabled="true"
-            android:src="@android:drawable/ic_menu_send" />
+            <ImageButton
+                android:id="@+id/send"
+                android:layout_width="46dp"
+                android:layout_height="match_parent"
+                android:background="@android:color/transparent"
+                android:contentDescription="@string/send"
+                android:hapticFeedbackEnabled="true"
+                android:src="@android:drawable/ic_menu_send" />
 
+        </LinearLayout>
     </LinearLayout>
 
-
-    <android.support.v4.view.ViewPager
-        android:id="@+id/emotes_viewpager"
+    <LinearLayout
+        android:id="@+id/emotes_ll"
         android:layout_width="match_parent"
-        android:visibility="gone"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
+        <LinearLayout
+            android:id="@+id/emotes_tab"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/recent_emotes"
+                style="@style/TabStyle"
+                android:contentDescription="@string/recent"
+                android:src="@drawable/recent" />
+
+            <ImageButton
+                android:id="@+id/twitch_emotes"
+                style="@style/TabStyle"
+                android:contentDescription="@string/twitch"
+                android:src="@drawable/twitch" />
+
+            <ImageButton
+                android:id="@+id/bttv_emotes"
+                style="@style/TabStyle"
+                android:contentDescription="@string/bttv"
+                android:src="@drawable/bttv" />
+
+
+            <ImageButton
+                android:id="@+id/ffz_emotes"
+                style="@style/TabStyle"
+                android:contentDescription="@string/ffz"
+                android:src="@drawable/ffz" />
+        </LinearLayout>
+
+        <android.support.v4.view.ViewPager
+            android:id="@+id/emotes_viewpager"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </LinearLayout>
 </LinearLayout>

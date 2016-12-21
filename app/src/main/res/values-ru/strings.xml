@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">IRC</string>
+    <string name="add_channel">Добавить канал</string>
+    <string name="answer">Ответить</string>
+    <string name="channel">Канал</string>
+    <string name="chat_mechanics">Механика чата</string>
+    <string name="clear">Очистить</string>
+    <string name="clear_data_summary">Очистить список каналов и удалить все пароли</string>
+    <string name="clear_data_title">Очистить персональные данные</string>
+    <string name="clear_emotes_summary">Эта опция может помочь обновить эмоции</string>
+    <string name="client_loading">Клиент загружается, подождите, пожалуйста</string>
+    <string name="clear_emotes_title">Очистить кэш эмоций</string>
+    <string name="close">Закрыть</string>
+    <string name="copy_clipboard">Скопировать сообщения в буфер обмена</string>
+    <string name="copy_message">Скопировать сообщение в текстовое поле</string>
+    <string name="design">Дизайн</string>
+    <string name="disconnect">Отключиться</string>
+    <string name="emotes">эмоции</string>
+    <string name="emotes_category">Эмоции</string>
+    <string name="ffz"></string>
+    <string name="irc_client">Twitch чат-клиент</string>
+    <string name="name_optionally">Имя (опционально)</string>
+    <string name="recent">Недавние</string>
+    <string name="open">Открыть</string>
+    <string name="send">Отправить</string>
+    <string name="settings">Настройки</string>
+    <string name="sign_out_summary">Сбросить текущий токен twich аккаунта</string>
+    <string name="sign_out_title">Выйти</string>
+    <string name="spam_mode_summary">Не очищать поле ввода после отправки сообщения</string>
+    <string name="spam_mode_title">СПАМ режим</string>
+    <string name="tab_title">Показывать табы в чате</string>
+    <string name="tab_summary">Показывать заголовки каналов</string>
+    <string name="text_size">Размер текста</string>
+    <string name="text_size_summary">Определяет размер текста любого сообщения в чате</string>
+    <string name="text_size_title">Размер текста в чате</string>
+    <string name="theme">Тема</string>
+    <string name="use_ssl">Использовать SSL</string>
+    <string name="your_message">Отправить сообщение</string>
+    <string name="exit">Выйти</string>
+</resources>

@@ -1,55 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-    <android.support.v7.preference.PreferenceCategory android:title="Design">
-        <android.support.v7.preference.ListPreference
-            android:defaultValue="Light"
-            android:entries="@array/pref_theme"
-            android:entryValues="@array/pref_theme"
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/design">
+        <com.jenzz.materialpreference.Preference
             android:key="pref_theme"
             android:title="@string/theme" />
 
-        <android.support.v7.preference.ListPreference
+        <com.jenzz.materialpreference.Preference
             android:defaultValue="14"
             android:entries="@array/text_size"
             android:entryValues="@array/text_size"
             android:key="text_size"
-            android:summary="Define size of every text message in chat"
-            android:title="Text size in chat" />
+            android:summary="@string/text_size_summary"
+            android:title="@string/text_size_title" />
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <com.jenzz.materialpreference.SwitchPreference
             android:defaultValue="false"
             android:key="pref_tab"
-            android:summary="Show headers of channel in chat"
-            android:title="Show tabs in chat" />
-
-        <android.support.v7.preference.SwitchPreferenceCompat
-            android:defaultValue="false"
-            android:key="pref_time"
-            android:title="Show time in chat messages" />
+            android:summary="@string/tab_summary"
+            android:title="@string/tab_title" />
 
 
-    </android.support.v7.preference.PreferenceCategory>
-    <android.support.v7.preference.PreferenceCategory android:title="Chat mechanics">
-        <android.support.v7.preference.Preference
+    </com.jenzz.materialpreference.PreferenceCategory>
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/chat_mechanics">
+        <com.jenzz.materialpreference.Preference
             android:key="clear_data"
-            android:summary="Reset channel list and clear all passwords"
-            android:title="Clear login data" />
+            android:summary="@string/clear_data_summary"
+            android:title="@string/clear_data_title" />
 
-        <android.support.v7.preference.SwitchPreferenceCompat
+        <com.jenzz.materialpreference.SwitchPreference
             android:defaultValue="false"
             android:key="spam_mode"
-            android:summary="Don't clear typed message after sending"
-            android:title="Spam mode" />
+            android:summary="@string/spam_mode_summary"
+            android:title="@string/spam_mode_title" />
 
-    </android.support.v7.preference.PreferenceCategory>
+    </com.jenzz.materialpreference.PreferenceCategory>
 
-    <android.support.v7.preference.PreferenceCategory android:title="Emotes">
-        <android.support.v7.preference.Preference
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/emotes_category">
+        <com.jenzz.materialpreference.Preference
             android:key="clear_emotes"
-            android:summary="Clear emotes cache"
-            android:title="This option can also help to update all emotes" />
-    </android.support.v7.preference.PreferenceCategory>
+            android:summary="@string/clear_emotes_summary"
+            android:title="@string/clear_emotes_title" />
+    </com.jenzz.materialpreference.PreferenceCategory>
 
-</android.support.v7.preference.PreferenceScreen>
+    <com.jenzz.materialpreference.Preference
+        android:key="sign_out"
+        android:title="@string/sign_out_title"
+        android:summary="@string/sign_out_summary" />
+</PreferenceScreen>

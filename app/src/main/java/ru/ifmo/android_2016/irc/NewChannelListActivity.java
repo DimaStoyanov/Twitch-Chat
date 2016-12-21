@@ -1,7 +1,6 @@
 package ru.ifmo.android_2016.irc;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
@@ -11,10 +10,7 @@ import android.support.v4.app.LoaderManager;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
-import android.text.Editable;
 import android.text.TextUtils;
-import android.text.TextWatcher;
-import android.util.Patterns;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.View;
@@ -22,7 +18,6 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -31,8 +26,8 @@ import com.annimon.stream.Stream;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.regex.Pattern;
 
+import ru.ifmo.android_2016.irc.client.ClientService;
 import ru.ifmo.android_2016.irc.client.ClientSettings;
 import ru.ifmo.android_2016.irc.client.ServerList;
 import ru.ifmo.android_2016.irc.constant.PreferencesConstant;
@@ -121,153 +116,10 @@ public class NewChannelListActivity extends BaseActivity {
     }
 
 
-    public void onAddChannelClick(View view) {
-        Log.d(TAG, "On add channel click");
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setPositiveButton("Ok", null)
-                .setNegativeButton("Cancel", null)
-                .setView(R.layout.dialog_login)
-                .setTitle("Login data")
-                .setIcon(R.mipmap.ic_launcher);
-        final AlertDialog dialog = builder.create();
-
-        dialog.setOnShowListener(dialogInterface -> {
-            final EditText name = (EditText) dialog.findViewById(R.id.name);
-            final EditText server = (EditText) dialog.findViewById(R.id.server);
-            final EditText port = (EditText) dialog.findViewById(R.id.port);
-            final EditText username = (EditText) dialog.findViewById(R.id.username);
-            final EditText password = (EditText) dialog.findViewById(R.id.password);
-            final EditText channel = (EditText) dialog.findViewById(R.id.channel);
-            final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
-            dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view1 -> dialog.dismiss());
-            dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(view1 -> {
-
-                Toast toast = new Toast(context);
-                if (!TextUtils.isEmpty(server.getText()) &&
-                        !TextUtils.isEmpty(port.getText())
-                        && !TextUtils.isEmpty(password.getText())
-                        && !TextUtils.isEmpty(channel.getText())) {
-
-                    long id = ServerList.getInstance().add(new ClientSettings()
-                            .setName(name.getText().toString())
-                            .setAddress(server.getText().toString())
-                            .setPort(Integer.parseInt(port.getText().toString()))
-                            .setUsername(username.getText().toString())
-                            .setPassword(password.getText().toString())
-                            .setChannel(channel.getText().toString())
-                            .setSsl(ssl != null && ssl.isChecked()));
-
-                    dialog.cancel();
-
-                    startActivity(new Intent(context, ChatActivity.class)
-                            .putExtra(SERVER_ID, id));
-                } else {
-                    toast.cancel();
-                    toast = Toast.makeText(context, "Fill the fields correctly", Toast.LENGTH_SHORT);
-                    toast.show();
-                }
-            });
-            final ImageView server_status = (ImageView) dialog.findViewById(R.id.server_status);
-            final ImageView port_status = (ImageView) dialog.findViewById(R.id.port_status);
-            final ImageView nick_status = (ImageView) dialog.findViewById(R.id.username_status);
-            final ImageView password_status = (ImageView) dialog.findViewById(R.id.password_status);
-            final ImageView channel_status = (ImageView) dialog.findViewById(R.id.channel_status);
-
-
-            server.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-                    server_status.setImageResource(Patterns.WEB_URL.matcher(editable).matches() ?
-                            R.drawable.ok : R.drawable.not_ok);
-                }
-
-            });
-
-            port.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-                    port_status.setImageResource(Pattern.compile("^[0-9]+$").matcher(editable).matches() ?
-                            R.drawable.ok : R.drawable.not_ok);
-                }
-            });
-
-            username.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-                    nick_status.setImageResource(Pattern.compile("^[_a-z-A-Z0-9]+$").matcher(editable).matches() ?
-                            R.drawable.ok : R.drawable.not_ok);
-                }
-            });
-
-            password.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-                    password_status.setImageResource(Pattern.compile("^$").matcher(editable).matches() ?
-                            R.drawable.not_ok : R.drawable.ok);
-
-                }
-            });
-
-            channel.addTextChangedListener(new TextWatcher() {
-                @Override
-                public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                }
-
-                @Override
-                public void afterTextChanged(Editable editable) {
-                    channel_status.setImageResource(Pattern.compile("^#[_a-z-A-Z0-9]+$").matcher(editable).matches() ?
-                            R.drawable.ok : R.drawable.not_ok);
-                }
-            });
-        });
-        dialog.show();
-    }
-
     public void onTwitchOauthClick(View view) {
         startActivityForResult(new Intent(this, TwitchLoginActivity.class), 1);
     }
 
-    public void onSettingsClick(View view) {
-        startActivityForResult(new Intent(this, PreferenceActivity.class), 16);
-    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -312,13 +164,14 @@ public class NewChannelListActivity extends BaseActivity {
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
                         Toast toast = new Toast(context);
 
+                        @SuppressWarnings("ConstantConditions")
                         @Override
                         public void onClick(View view) {
                             final EditText name = (EditText) alert.findViewById(R.id.name);
                             final EditText channel = (EditText) alert.findViewById(R.id.channel);
                             final CheckBox ssl = (CheckBox) alert.findViewById(R.id.use_ssl);
                             if (!TextUtils.isEmpty(channel.getText())) {
-                                long id = ServerList.getInstance()
+                                @SuppressWarnings("deprecation") long id = ServerList.getInstance()
                                         .add(ClientSettings.getTwitchSettings(token, ssl.isChecked())
                                                 .setName(TextUtils.isEmpty(name.getText()) ?
                                                         channel.getText().toString() :
@@ -355,8 +208,17 @@ public class NewChannelListActivity extends BaseActivity {
 
     @Override
     public boolean onCreatePanelMenu(int featureId, Menu menu) {
-        menu.add(0, 1, Menu.CATEGORY_CONTAINER, "#ERROR#").setOnMenuItemClickListener(menuItem -> {
+      /*  menu.add(0, 1, Menu.CATEGORY_CONTAINER, "#ERROR#").setOnMenuItemClickListener(menuItem -> {
             startActivity(new Intent(this, ErrorActivity.class));
+            return false;
+        });*/
+        menu.add(0, 2, Menu.CATEGORY_CONTAINER, getString(R.string.settings)).setOnMenuItemClickListener(menuItem -> {
+            startActivity(new Intent(this, PreferenceActivity.class));
+            return false;
+        });
+        menu.add(0, 3, Menu.CATEGORY_CONTAINER, getString(R.string.exit)).setOnMenuItemClickListener(menuItem -> {
+            ClientService.stopAllClients();
+            finish();
             return false;
         });
         return true;
@@ -378,6 +240,7 @@ public class NewChannelListActivity extends BaseActivity {
             });
             menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Delete").setOnMenuItemClickListener(menuItem -> {
                 AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
+                    @SuppressWarnings("ConstantConditions")
                     @Override
                     protected Void doInBackground(Void... voids) {
                         ServerList.getInstance().remove(clientSettings.get(acmi.position).getId());
@@ -398,44 +261,32 @@ public class NewChannelListActivity extends BaseActivity {
     }
 
 
+    @SuppressWarnings("ConstantConditions")
     private void onEditChannel(ClientSettings data) {
         Log.d(TAG, "On edit channel click");
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setPositiveButton("Ok", null)
                 .setNegativeButton("Cancel", null)
-                .setView(R.layout.dialog_login);
+                .setView(R.layout.dialog_login_twitch);
         final AlertDialog dialog = builder.create();
 
         dialog.setOnShowListener(dialogInterface -> {
             final EditText name = (EditText) dialog.findViewById(R.id.name);
-            final EditText server = (EditText) dialog.findViewById(R.id.server);
-            final EditText port = (EditText) dialog.findViewById(R.id.port);
-            final EditText username = (EditText) dialog.findViewById(R.id.username);
-            final EditText password = (EditText) dialog.findViewById(R.id.password);
             final EditText channel = (EditText) dialog.findViewById(R.id.channel);
             final CheckBox ssl = (CheckBox) dialog.findViewById(R.id.use_ssl);
             name.setText(data.getName());
-            server.setText(data.getAddress());
-            port.setText(Integer.toString(data.getPort()));
-            username.setText(data.getUsername());
-            password.setText(data.getPassword());
             channel.setText(data.getChannels());
             ssl.setChecked(data.isSsl());
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setOnClickListener(view -> dialog.dismiss());
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(view -> {
 
                 Toast toast = new Toast(context);
-                if (!TextUtils.isEmpty(server.getText()) &&
-                        !TextUtils.isEmpty(port.getText())
-                        && !TextUtils.isEmpty(password.getText())
-                        && !TextUtils.isEmpty(channel.getText())) {
+                if (!TextUtils.isEmpty(channel.getText())) {
 
                     dialog.cancel();
 
+                    //noinspection deprecation
                     data.setName(name.getText().toString())
-                            .setPort(Integer.parseInt(port.getText().toString()))
-                            .setUsername(username.getText().toString())
-                            .setPassword(password.getText().toString())
                             .setChannel(channel.getText().toString())
                             .setSsl(ssl.isChecked());
                     updateChannelList();

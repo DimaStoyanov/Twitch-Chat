@@ -34,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
 import ru.ifmo.android_2016.irc.api.bettertwitchtv.emotes.BttvEmotes;
+import ru.ifmo.android_2016.irc.api.frankerfacez.emotes.FfzEmotes;
 import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotes;
 import ru.ifmo.android_2016.irc.client.Channel;
 import ru.ifmo.android_2016.irc.constant.TwitchApiConstant;
@@ -108,8 +109,6 @@ public class EmoteScrollViewFragment extends Fragment {
         int margin = emoteDimension / 10;
         int columns = point.x / (emoteDimension + (margin << 1));
         List<String> keySet = getEmotes(currentChannel.getName());
-        if (keySet.isEmpty())
-            keySet.add("Kappa"); // Чтоб если не загрузились смайлы твича, там была хотя бы каппа для теста
         Log.d(TAG, "Keyset length " + keySet.size());
         Log.d(TAG, keySet.toString());
         LinearLayout emotesLl = new LinearLayout(activity);
@@ -168,6 +167,8 @@ public class EmoteScrollViewFragment extends Fragment {
                 return TwitchEmotes.getGlobalEmotesList();
             case "bttv":
                 return BttvEmotes.getEmotes(channel);
+            case "ffz":
+                return FfzEmotes.getEmotes(channel);
             case "recent":
                 try {
                     List<String> result = new AsyncTask<Void, Void, List<String>>() {
@@ -191,6 +192,9 @@ public class EmoteScrollViewFragment extends Fragment {
                 return Uri.parse(TwitchEmotes.getEmoteUrl(code, TwitchApiConstant.EMOTE_LARGE));
             case "bttv":
                 return Uri.parse(BttvEmotes.getEmoteUrlByCode(code, channel));
+            case "ffz":
+                Log.d(TAG, FfzEmotes.getEmoteUrl(code));
+                return Uri.parse(FfzEmotes.getEmoteUrl(code));
             case "recent":
                 if (BttvEmotes.isEmote(code, channel)) {
                     return Uri.parse(BttvEmotes.getEmoteUrlByCode(code, channel));

@@ -1,43 +1,56 @@
 <resources>
     <string name="app_name">IRC</string>
     <string name="send">Send</string>
-    <string name="server_address_port">Server address:port</string>
-    <string name="nick">Nick</string>
-    <string name="irc_client">IRC Client</string>
-    <string name="password">Password</string>
+    <string name="irc_client">Twitch Chat Client</string>
     <string name="channel">#channel</string>
-    <string name="connect">Connect</string>
     <string name="your_message">Send message</string>
     <string name="add_channel">Add Channel</string>
-    <string name="delete">Delete</string>
-    <string name="forsenlol">#Forsenlol</string>
-    <string name="test">TEST</string>
     <string name="settings">Settings</string>
-    <string name="id_status">id_status</string>
-    <string name="nick_status">nick_status</string>
-    <string name="pw_status">password_status</string>
-    <string name="channel_status">channel_status</string>
-    <string name="connect_via_twitch">Connect via Twitch</string>
-    <string name="edit">edit</string>
     <string name="name_optionally">Name (optionally)</string>
-    <string name="server">Server</string>
-    <string name="default_port">6667</string>
-    <string name="port">Port</string>
-    <string name="username">Username</string>
     <string name="use_ssl">Use SSL</string>
-    <string name="server_status">Server status</string>
-    <string name="username_status">Username status</string>
     <string name="close">Close</string>
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="twitch_chat">Twitch Chat</string>
     <string name="emotes">emotes</string>
-    <string name="title_activity_settings">Settings</string>
-
+    <string name="clear">Clear</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="client_loading">Client loading, please wait</string>
+    <string name="open">Open</string>
+    <string name="copy_clipboard">Copy to clipboard this message</string>
+    <string name="copy_message">Copy this message</string>
+    <string name="answer">Answer</string>
+    <string name="text_size">Text size</string>
+    <string name="recent">Recent</string>
+    <string name="bttv" translatable="false">Better Twitch tv</string>
+    <string name="twitch" translatable="false">Twitch</string>
+    <string name="ffz" translatable="false">Franker face zz</string>
 
     <!--Settings-->
 
-    <string name="theme">Theme</string>
 
+    <!--Category-->
+    <string name="design">Design</string>
+    <string name="chat_mechanics">Chat mechanics</string>
+    <string name="emotes_category">Emotes</string>
+
+
+    <!--Title-->
+    <string name="theme">Theme</string>
+    <string name="text_size_title">Text size in chat</string>
+    <string name="clear_data_title">Clear login data</string>
+    <string name="tab_title">Show tabs in chat</string>
+    <string name="spam_mode_title">Spam mode</string>
+    <string name="clear_emotes_title">Clear emotes cache</string>
+    <string name="sign_out_title">Sign out</string>
+
+    <!--Summary-->
+    <string name="text_size_summary">Define size of every text message in chat</string>
+    <string name="tab_summary">Show headers of channel in chat</string>
+    <string name="clear_data_summary">Reset channel list and clear all passwords</string>
+    <string name="spam_mode_summary">Do not clear typed message after sending</string>
+    <string name="clear_emotes_summary">This option can also help to update all emotes</string>
+    <string name="sign_out_summary">Reset current twitch token</string>
+    <string name="exit">Exit</string>
+
+    <!--Arrays-->
     <string-array name="pref_theme">
         <item>Light</item>
         <item>Dark</item>
@@ -51,13 +64,5 @@
         <item>20</item>
     </string-array>
 
-    <string name="title_activity_twitch_stream">TwitchStreamActivity</string>
-    <string name="clear">Clear</string>
-    <string name="disconnect">Disconnect</string>
-    <string name="client_loading">Client loading, please wait</string>
-    <string name="open">Open</string>
-    <string name="copy_clipboard">Copy to clipboard this message</string>
-    <string name="copy_message">Copy this message</string>
-    <string name="answer">Answer</string>
 
 </resources>

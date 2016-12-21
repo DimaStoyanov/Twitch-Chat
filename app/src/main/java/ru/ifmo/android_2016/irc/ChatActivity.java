@@ -6,10 +6,10 @@ import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
-import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.TabLayout;
@@ -29,6 +29,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -55,14 +56,16 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
     public static final String CHANNEL = "Channel";
 
-    EditText typeMessage;
+    protected EditText typeMessage;
     private long id = 0;
     private int keyboardHeight;
     @Nullable
-    Client client;
-    ChatFragmentPagerAdapter viewPagerAdapter;
-    ViewPager viewPager, emotesViewPager;
-    Toolbar toolbar;
+    protected Client client;
+    private ChatFragmentPagerAdapter viewPagerAdapter;
+    protected ViewPager viewPager;
+    private ViewPager emotesViewPager;
+    private Toolbar toolbar;
+    private LinearLayout content, emotesLl;
     private boolean spamMode = false;
     private TextView chatTitle;
     protected FloatingActionButton fab;
@@ -92,6 +95,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         findViewById(R.id.send).setOnClickListener(v -> {
             Log.d(TAG, String.valueOf(viewPager.getCurrentItem()));
+            if (((ViewPager) findViewById(R.id.viewPager)).getCurrentItem() == 0) return;
             v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
             if (!TextUtils.isEmpty(typeMessage.getText()))
                 sendMessage(typeMessage.getText().toString());
@@ -113,7 +117,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
                 try {
                     closeEmotes();
                     changeCheckedMenuItem(position);
-                    if (chatTitle != null && viewPagerAdapter.getPageTitle(position) != null) {
+                    if (chatTitle != null) {
                         chatTitle.setText(viewPagerAdapter.getPageTitle(position));
                     }
                     //TODO:
@@ -137,12 +141,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
-        //TODO: Temp
-        tabLayout.setVisibility(View.GONE);
-        ((AppBarLayout.LayoutParams) toolbar.getLayoutParams())
-                .setScrollFlags(AppBarLayout.LayoutParams.SCROLL_FLAG_ENTER_ALWAYS);
-        //TODO: Temp
-
         chatTitle = (TextView) findViewById(R.id.title);
 
         ActionBar actionBar = getSupportActionBar();
@@ -161,6 +159,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this::onNavigationItemSelected);
+        fab.hide();
     }
 
     @Override
@@ -196,6 +195,8 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         viewPager = (ViewPager) findViewById(R.id.viewPager);
         emotesViewPager = (ViewPager) findViewById(R.id.emotes_viewpager);
         fab = (FloatingActionButton) findViewById(R.id.fab);
+        emotesLl = (LinearLayout) findViewById(R.id.emotes_ll);
+        content = (LinearLayout) findViewById(R.id.content);
     }
 
 
@@ -241,6 +242,8 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         outState.putInt("Last position", lastPosition);
     }
 
+    private boolean isEmotesShowing = false;
+
     public void onEmotesShowClick(View view) {
         view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -255,19 +258,48 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             return;
         }
         emotesViewPager.setAdapter(new EmotesViewPagerAdapter(getSupportFragmentManager()));
-        emotesViewPager.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
-        emotesViewPager.setVisibility(View.VISIBLE);
+        emotesLl.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, keyboardHeight));
+        isEmotesShowing = true;
         emotesViewPager.setCurrentItem(1);
         emotesViewPager.setOffscreenPageLimit(3);
+        // TRANSLATE UP
+        Handler handler = new Handler();
+        handler.postDelayed(() -> {
+            content.animate().translationY(-keyboardHeight).setInterpolator(new LinearInterpolator()).start();
+            emotesLl.animate().translationY(-keyboardHeight).setInterpolator(new LinearInterpolator()).start();
+        }, 100);
     }
 
 
     private void closeEmotes() {
-        emotesViewPager.setVisibility(View.GONE);
+        //TRANSLATE DOWN
+        emotesLl.animate().translationY(emotesLl.getHeight()).setInterpolator(new LinearInterpolator()).start();
+        content.animate().translationY(0).setInterpolator(new LinearInterpolator()).start();
+        isEmotesShowing = false;
     }
 
     private boolean isEmotesShowing() {
-        return emotesViewPager.getVisibility() == View.VISIBLE;
+        return isEmotesShowing;
+    }
+
+
+    @SuppressWarnings("unused")
+    public void onEmoteTabClick(View view) {
+        switch (view.getId()) {
+            case R.id.recent_emotes:
+                emotesViewPager.setCurrentItem(0);
+                break;
+            case R.id.bttv_emotes:
+                emotesViewPager.setCurrentItem(1);
+                break;
+            case R.id.twitch_emotes:
+                emotesViewPager.setCurrentItem(2);
+                break;
+            case R.id.ffz_emotes:
+                emotesViewPager.setCurrentItem(3);
+                break;
+
+        }
     }
 
     public void onClearClick(View view) {
@@ -307,7 +339,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
     class EmotesViewPagerAdapter extends FragmentPagerAdapter {
 
-        private final String[] type = new String[]{"recent", "bttv", "twitch"};
+        private final String[] type = new String[]{"recent", "twitch", "bttv", "ffz"};
 
         EmotesViewPagerAdapter(FragmentManager supportFragmentManager) {
             super(supportFragmentManager);
@@ -315,7 +347,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
         @Override
         public Fragment getItem(int position) {
-            return EmoteScrollViewFragment.newInstance(type[position]);
+            return EmoteScrollViewFragment.newInstance(type[position % type.length]);
         }
 
         @Override
@@ -356,9 +388,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             getChannels().addAll(client.getChannelList());
         }
         viewPagerAdapter.notifyDataSetChanged();
-        //reset view pager
-        viewPager.setAdapter(viewPagerAdapter);
-        viewPager.setCurrentItem(lastPosition);
 
         if (getChannels().size() > 1) loadMenu();
     }
@@ -477,8 +506,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         menu.add(Menu.NONE, 1, Menu.CATEGORY_CONTAINER, getResources().getString(R.string.settings)).setOnMenuItemClickListener(m -> {
-            //TODO: 228?
-            startActivityForResult(new Intent(this, PreferenceActivity.class), 228);
+            startActivity(new Intent(this, PreferenceActivity.class));
             return false;
         });
         menu.add(Menu.NONE, 2, Menu.CATEGORY_CONTAINER, getResources().getString(R.string.disconnect)).setOnMenuItemClickListener(m -> {

@@ -13,6 +13,8 @@ import com.annimon.stream.Stream;
 import com.annimon.stream.function.Consumer;
 
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import ru.ifmo.android_2016.irc.utils.Log;
@@ -34,6 +36,8 @@ public class ClientService extends Service {
     private static Map<Long, Client> clients = new HashMap<>();
     private static boolean isRunning = false;
     private static ClientService instance;
+    private static List<Long> ids = new LinkedList<>();
+
 
     @Override
     public void onCreate() {
@@ -74,18 +78,27 @@ public class ClientService extends Service {
     }
 
     public static void stopClient(long serverId) {
+        ids.remove(serverId);
         new StopClientTask(serverId).execute();
+    }
+
+    public static void stopAllClients() {
+        while (!ids.isEmpty()) {
+            stopClient(ids.get(0));
+        }
     }
 
     public static void startClient(Context context,
                                    long serverId,
                                    Consumer<Client> onLoadListener) {
+        ids.add(serverId);
         new StartClientTask(context, serverId, onLoadListener).execute();
     }
 
     public static Client getClient(long id) {
         return clients.get(id);
     }
+
 
     private static class ForceClientStopTask extends AsyncTask<Void, Void, Void> {
         @Override
