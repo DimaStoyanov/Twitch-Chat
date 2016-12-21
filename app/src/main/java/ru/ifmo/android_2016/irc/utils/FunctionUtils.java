@@ -7,7 +7,6 @@ import com.annimon.stream.function.FunctionalInterface;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.concurrent.Callable;
 
 /**
  * Created by ghost on 11/13/2016.
@@ -144,13 +143,13 @@ public class FunctionUtils {
         lolExceptions(r).run();
     }
 
-    public static <T> T fuckCheckedExceptions(CallableWithException<Exception, T> runnable) {
+    public static <T> T fuckCheckedExceptions(CallableWithException<Exception, T> runnable, T defaultVal) {
         try {
             return runnable.call();
         } catch (Exception e) {
             throwChecked(e);
         }
-        return null;
+        return defaultVal;
     }
 
     public static <T> void doIfNotNull(T object, Consumer<T> action) {
@@ -159,7 +158,7 @@ public class FunctionUtils {
         }
     }
 
-    public static Optional<InputStream> getInputStream(HttpURLConnection httpURLConnection) throws IOException {
+    public static Optional<InputStream> getInputStreamIfOk(HttpURLConnection httpURLConnection) throws IOException {
         httpURLConnection.connect();
 
         if (httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
