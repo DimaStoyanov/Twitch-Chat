@@ -2,7 +2,7 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
 
-    <com.jenzz.materialpreference.PreferenceCategory android:title="Design">
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/design">
         <com.jenzz.materialpreference.Preference
             android:key="pref_theme"
             android:title="@string/theme" />
@@ -12,40 +12,40 @@
             android:entries="@array/text_size"
             android:entryValues="@array/text_size"
             android:key="text_size"
-            android:summary="Define size of every text message in chat"
-            android:title="Text size in chat" />
+            android:summary="@string/text_size_summary"
+            android:title="@string/text_size_title" />
 
         <com.jenzz.materialpreference.SwitchPreference
             android:defaultValue="false"
             android:key="pref_tab"
-            android:summary="Show headers of channel in chat"
-            android:title="Show tabs in chat" />
+            android:summary="@string/tab_summary"
+            android:title="@string/tab_title" />
 
 
     </com.jenzz.materialpreference.PreferenceCategory>
-    <com.jenzz.materialpreference.PreferenceCategory android:title="Chat mechanics">
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/chat_mechanics">
         <com.jenzz.materialpreference.Preference
             android:key="clear_data"
-            android:summary="Reset channel list and clear all passwords"
-            android:title="Clear login data" />
+            android:summary="@string/clear_data_summary"
+            android:title="@string/clear_data_title" />
 
         <com.jenzz.materialpreference.SwitchPreference
             android:defaultValue="false"
             android:key="spam_mode"
-            android:summary="Don't clear typed message after sending"
-            android:title="Spam mode" />
+            android:summary="@string/spam_mode_summary"
+            android:title="@string/spam_mode_title" />
 
     </com.jenzz.materialpreference.PreferenceCategory>
 
-    <com.jenzz.materialpreference.PreferenceCategory android:title="Emotes">
+    <com.jenzz.materialpreference.PreferenceCategory android:title="@string/emotes_category">
         <com.jenzz.materialpreference.Preference
             android:key="clear_emotes"
-            android:summary="This option can also help to update all emotes"
-            android:title="Clear emotes cache" />
+            android:summary="@string/clear_emotes_summary"
+            android:title="@string/clear_emotes_title" />
     </com.jenzz.materialpreference.PreferenceCategory>
 
     <com.jenzz.materialpreference.Preference
         android:key="sign_out"
-        android:title="Sign out"
-        android:summary="Reset current twitch token" />
+        android:title="@string/sign_out_title"
+        android:summary="@string/sign_out_summary" />
 </PreferenceScreen>
