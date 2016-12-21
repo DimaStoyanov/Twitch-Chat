@@ -32,15 +32,14 @@
             android:layout_height="match_parent" />
     </LinearLayout>
 
-    <ImageButton
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab"
-        android:background="@android:color/transparent"
-        android:onClick="onTwitchOauthClick"
-        android:contentDescription="@string/add_channel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_margin="16dp"
-        android:src="@drawable/add_button2" />
+        android:onClick="onTwitchOauthClick"
+        android:src="?attr/add_button"
+        android:visibility="visible" />
 
 </android.support.design.widget.CoordinatorLayout>

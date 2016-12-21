@@ -1,4 +1,5 @@
 <resources>
+    <attr name="add_button" format="reference" />
 
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
@@ -7,10 +8,12 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="add_button">@drawable/ic_add_white_24dp</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.AppCompat.NoActionBar">
         <item name="android:textColor">@color/white</item>
+        <item name="add_button">@drawable/ic_add_black_24dp</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
