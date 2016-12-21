@@ -59,5 +59,10 @@
     <string name="copy_clipboard">Copy to clipboard this message</string>
     <string name="copy_message">Copy this message</string>
     <string name="answer">Answer</string>
+    <string name="text_size">Text size</string>
+    <string name="recent">Recent</string>
+    <string name="bttv">Better Twitch tv</string>
+    <string name="twitch">Twitch</string>
+    <string name="ffz">Franker face zz</string>
 
 </resources>

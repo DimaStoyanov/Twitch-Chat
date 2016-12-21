@@ -13,7 +13,7 @@ public final class PreferencesConstant {
     public static final String TEXT_SIZE_KEY = "text_size";
     public static final String SPAM_MODE_KEY = "spam_mode";
     public static final String SHOW_TAB_KEY = "pref_tab";
-    public static final String SHOW_TIME_KEY = "pref_time";
+    public static final String SIGN_OUT_KEY = "sign_out";
 
 
     public static final String THEME_DARK_KEY = "Dark";

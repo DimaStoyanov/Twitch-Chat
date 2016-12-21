@@ -25,43 +25,6 @@
         android:orientation="vertical"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-
-            <ImageButton
-                android:id="@+id/add_channel1"
-                style="?android:attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:contentDescription="@string/add_channel"
-                android:onClick="onAddChannelClick"
-                android:scaleType="centerInside"
-                android:src="@drawable/add_button" />
-
-            <ImageButton
-                android:id="@+id/twitch_login1"
-                style="?android:attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:layout_weight="1"
-                android:contentDescription="@string/connect_via_twitch"
-                android:onClick="onTwitchOauthClick"
-                android:src="@drawable/twitch_login" />
-
-            <ImageButton
-                android:id="@+id/settings"
-                style="?android:attr/buttonBarButtonStyle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:contentDescription="lel"
-                android:onClick="onSettingsClick"
-                android:src="@drawable/settings" />
-        </LinearLayout>
 
         <ListView
             android:id="@+id/list_veiw"
@@ -69,13 +32,15 @@
             android:layout_height="match_parent" />
     </LinearLayout>
 
-    <android.support.design.widget.FloatingActionButton
+    <ImageButton
         android:id="@+id/fab"
+        android:background="@android:color/transparent"
+        android:onClick="onTwitchOauthClick"
+        android:contentDescription="@string/add_channel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_margin="16dp"
-        android:src="@drawable/fab_scroll_down"
-        android:visibility="visible" />
+        android:src="@drawable/add_button2" />
 
 </android.support.design.widget.CoordinatorLayout>

@@ -108,8 +108,6 @@ public class EmoteScrollViewFragment extends Fragment {
         int margin = emoteDimension / 10;
         int columns = point.x / (emoteDimension + (margin << 1));
         List<String> keySet = getEmotes(currentChannel.getName());
-        if (keySet.isEmpty())
-            keySet.add("Kappa"); // Чтоб если не загрузились смайлы твича, там была хотя бы каппа для теста
         Log.d(TAG, "Keyset length " + keySet.size());
         Log.d(TAG, keySet.toString());
         LinearLayout emotesLl = new LinearLayout(activity);
