@@ -164,13 +164,14 @@ public class NewChannelListActivity extends BaseActivity {
                     alert.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(new View.OnClickListener() {
                         Toast toast = new Toast(context);
 
+                        @SuppressWarnings("ConstantConditions")
                         @Override
                         public void onClick(View view) {
                             final EditText name = (EditText) alert.findViewById(R.id.name);
                             final EditText channel = (EditText) alert.findViewById(R.id.channel);
                             final CheckBox ssl = (CheckBox) alert.findViewById(R.id.use_ssl);
                             if (!TextUtils.isEmpty(channel.getText())) {
-                                long id = ServerList.getInstance()
+                                @SuppressWarnings("deprecation") long id = ServerList.getInstance()
                                         .add(ClientSettings.getTwitchSettings(token, ssl.isChecked())
                                                 .setName(TextUtils.isEmpty(name.getText()) ?
                                                         channel.getText().toString() :
@@ -239,6 +240,7 @@ public class NewChannelListActivity extends BaseActivity {
             });
             menu.add(0, 2, Menu.CATEGORY_CONTAINER, "Delete").setOnMenuItemClickListener(menuItem -> {
                 AsyncTask<Void, Void, Void> deleteTask = new AsyncTask<Void, Void, Void>() {
+                    @SuppressWarnings("ConstantConditions")
                     @Override
                     protected Void doInBackground(Void... voids) {
                         ServerList.getInstance().remove(clientSettings.get(acmi.position).getId());
@@ -259,12 +261,13 @@ public class NewChannelListActivity extends BaseActivity {
     }
 
 
+    @SuppressWarnings("ConstantConditions")
     private void onEditChannel(ClientSettings data) {
         Log.d(TAG, "On edit channel click");
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setPositiveButton("Ok", null)
                 .setNegativeButton("Cancel", null)
-                .setView(R.layout.dialog_login);
+                .setView(R.layout.dialog_login_twitch);
         final AlertDialog dialog = builder.create();
 
         dialog.setOnShowListener(dialogInterface -> {
@@ -282,6 +285,7 @@ public class NewChannelListActivity extends BaseActivity {
 
                     dialog.cancel();
 
+                    //noinspection deprecation
                     data.setName(name.getText().toString())
                             .setChannel(channel.getText().toString())
                             .setSsl(ssl.isChecked());

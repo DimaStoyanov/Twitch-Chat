@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 import com.annimon.stream.Collectors;
 import com.annimon.stream.Stream;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -54,7 +53,9 @@ public final class FrankerFaceZExtension implements MessageExtension {
                         r.word,
                         r.begin,
                         r.end,
-                        Emote.Type.TWITCH, 50, 50))
+                        Emote.Type.TWITCH,
+                        FfzEmotes.getWidth(r.word),
+                        FfzEmotes.getHeight(r.word)))
                 .collect(Collectors.toList());
     }
 }

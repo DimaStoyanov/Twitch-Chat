@@ -1,6 +1,7 @@
 package ru.ifmo.android_2016.irc.api.frankerfacez.emotes;
 
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.annimon.stream.Collectors;
@@ -8,19 +9,17 @@ import com.annimon.stream.Stream;
 import com.annimon.stream.function.Consumer;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
 import ru.ifmo.android_2016.irc.api.FrankerFaceZApi;
 import ru.ifmo.android_2016.irc.api.frankerfacez.FrankerFaceZParser;
+import ru.ifmo.android_2016.irc.utils.FunctionUtils;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils.CallableWithException;
 import ru.ifmo.android_2016.irc.utils.FunctionUtils.Reference;
 
 import static ru.ifmo.android_2016.irc.utils.FunctionUtils.fuckCheckedExceptions;
-import static ru.ifmo.android_2016.irc.utils.FunctionUtils.getInputStream;
+import static ru.ifmo.android_2016.irc.utils.FunctionUtils.getInputStreamIfOk;
 import static ru.ifmo.android_2016.irc.utils.FunctionUtils.tryWith;
 
 /**
@@ -56,21 +55,28 @@ public final class FfzEmotesLoader extends AsyncTask<Void, Void, Void> {
     @Override
     protected Void doInBackground(Void... params) {
         if (!FfzEmotes.globalLoaded || forceGlobalReload) {
-            load(FrankerFaceZApi::getGlobalEmotes);
+            FrankerFaceZParser.Response response = load(FrankerFaceZApi::getGlobalEmotes);
+            FunctionUtils.lol(() -> addEmotes(response));
+            FfzEmotes.globalLoaded = true;
+            response.getDefaultSets().executeIfPresent(FfzEmotes.defaultSets::addAll);
         }
         if (channel != null && onLoad != null) {
-            Set<Integer> map = load(() -> FrankerFaceZApi.getRoomInfo(channel));
-            onLoad.accept(map);
+            FrankerFaceZParser.Response response = load(() -> FrankerFaceZApi.getRoomInfo(channel));
+            onLoad.accept(Stream.of(response.getSets())
+                    .map(FrankerFaceZParser.Set::getId)
+                    .collect(Collectors.toSet()));
         }
         return null;
     }
 
-    private Set<Integer> load(CallableWithException<IOException, HttpURLConnection> callable) {
-        Reference<Set<Integer>> ref = new Reference<>(Collections.emptySet());
+    @NonNull
+    private FrankerFaceZParser.Response
+    load(CallableWithException<IOException, HttpURLConnection> callable) {
+        Reference<FrankerFaceZParser.Response> ref = new Reference<>(new FrankerFaceZParser.Response());
 
         tryWith(callable).doOp(connection -> {
-            getInputStream(connection).executeIfPresent(inputStream -> {
-                ref.ref = fuckCheckedExceptions(() -> readJson(inputStream));
+            getInputStreamIfOk(connection).executeIfPresent(inputStream -> {
+                ref.ref = fuckCheckedExceptions(() -> FrankerFaceZParser.parse(inputStream), null);
             });
         }).catchWith(IOException.class, (e) -> {
             e.printStackTrace();
@@ -79,13 +85,13 @@ public final class FfzEmotesLoader extends AsyncTask<Void, Void, Void> {
         return ref.ref;
     }
 
-    private Set<Integer> readJson(InputStream inputStream) throws IOException {
-        FrankerFaceZParser.Response response = FrankerFaceZParser.parse(inputStream);
-
+    private void addEmotes(FrankerFaceZParser.Response response) throws IOException {
         FfzEmotes.addEmotes(response.getSets());
 
-        return Stream.of(response.getSets())
-                .map(FrankerFaceZParser.Set::getId)
-                .collect(Collectors.toSet());
+        response.getRoom().executeIfPresent(r -> {
+            String room = r.getName();
+            int id = r.getId();
+            FfzEmotes.addRoomId(room, id);
+        });
     }
 }

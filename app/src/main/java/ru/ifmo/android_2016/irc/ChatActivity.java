@@ -267,7 +267,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
 
     private void closeEmotes() {
-//TRANSLATE DOWN
+        //TRANSLATE DOWN
         emotesLl.animate().translationY(emotesLl.getHeight()).setInterpolator(new LinearInterpolator()).start();
         content.animate().translationY(0).setInterpolator(new LinearInterpolator()).start();
         isEmotesShowing = false;

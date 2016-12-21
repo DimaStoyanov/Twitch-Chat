@@ -30,11 +30,23 @@ public final class FrankerFaceZParser {
         T parse(JsonReader reader) throws IOException;
     }
 
+    private static class JsonInt implements Parsable<Integer> {
+        JsonInt() {
+        }
+
+        @Override
+        public Integer parse(JsonReader reader) throws IOException {
+            return reader.nextInt();
+        }
+    }
+
     public static final class Response implements Parsable<Response> {
         @NonNull
         private Optional<Room> room = Optional.empty();
         @NonNull
         private Optional<List<Set>> set = Optional.empty();
+        @NonNull
+        private Optional<java.util.Set<Integer>> defaultSets = Optional.empty();
 
         public Response parse(JsonReader reader) throws IOException {
             reader.beginObject();
@@ -50,6 +62,10 @@ public final class FrankerFaceZParser {
 
                     case "sets":
                         setSets(parseMap(reader, Set::new));
+                        break;
+
+                    case "default_sets":
+                        defaultSets = Optional.of(new HashSet<>(parseArray(reader, JsonInt::new)));
                         break;
 
                     default:
@@ -77,12 +93,23 @@ public final class FrankerFaceZParser {
         }
 
         public List<Set> getSets() {
-            return set.get();
+            return set.orElse(Collections.emptyList());
+        }
+
+        @NonNull
+        public Optional<Room> getRoom() {
+            return room;
+        }
+
+        @NonNull
+        public Optional<java.util.Set<Integer>> getDefaultSets() {
+            return defaultSets;
         }
     }
 
     public static final class Room implements Parsable<Room> {
         private int _id;
+        private String id;
         private int twitchId;
         private int set;
 
@@ -103,6 +130,10 @@ public final class FrankerFaceZParser {
                         set = reader.nextInt();
                         break;
 
+                    case "id":
+                        id = reader.nextString();
+                        break;
+
                     default:
                         //TODO: еще добавить полей
                         reader.skipValue();
@@ -110,6 +141,14 @@ public final class FrankerFaceZParser {
             }
             reader.endObject();
             return this;
+        }
+
+        public String getName() {
+            return id;
+        }
+
+        public int getId() {
+            return _id;
         }
     }
 
@@ -191,8 +230,8 @@ public final class FrankerFaceZParser {
         }
     }
 
-    private static <T extends Parsable<T>> List<T> parseArray(JsonReader reader,
-                                                              Supplier<T> constructor)
+    private static <T> List<T> parseArray(JsonReader reader,
+                                          Supplier<Parsable<T>> constructor)
             throws IOException {
         List<T> result = new ArrayList<>();
 
@@ -221,10 +260,6 @@ public final class FrankerFaceZParser {
 
     public static Response parse(InputStream inputStream) throws IOException {
         JsonReader reader = new JsonReader(new InputStreamReader(inputStream));
-        Response response = new Response();
-
-        response.parse(reader);
-
-        return response;
+        return new Response().parse(reader);
     }
 }
