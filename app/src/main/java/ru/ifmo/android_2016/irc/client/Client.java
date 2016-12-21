@@ -98,7 +98,7 @@ public class Client {
         notifyUiOnChannelChange();
     }
 
-    private void reconnect() {
+    protected void reconnect() {
         sendBroadcast("Reconnecting in 3 seconds");
         try {
             Thread.sleep(3000);
@@ -429,6 +429,7 @@ public class Client {
     }
 
     @SuppressWarnings("deprecation")
+    @Nullable
     public Channel getChannel(String channel) {
         return getChannels().get(channel);
     }

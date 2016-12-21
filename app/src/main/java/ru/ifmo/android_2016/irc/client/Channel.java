@@ -41,6 +41,7 @@ import static ru.ifmo.android_2016.irc.client.ClientService.SERVER_ID;
  */
 public final class Channel {
     private static final String TAG = Channel.class.getSimpleName();
+    private static final int MAX_MESSAGES = 1000;
 
     private Client client;
     @NonNull
@@ -121,7 +122,7 @@ public final class Channel {
                             .matcher(mt.getText())
                             .find();
             boolean hasIgnoredUsers = ignorePattern != null && mt.getSender() != null &&
-                   ignorePattern
+                    ignorePattern
                             .matcher(mt.getSender())
                             .find();
 
@@ -140,15 +141,11 @@ public final class Channel {
     }
 
     private void add(MessageText msg) {
-        synchronized (messages) {
-            messages.add(msg);
-        }
+        messages.add(msg);
         if (messages.size() > 1000) {
             IRCApplication.runOnUiThread(() -> {
                 if (messages.size() > 1000) {
-                    synchronized (messages) {
-                        messages.subList(0, 99).clear();
-                    }
+                    messages.subList(0, 99).clear();
                     if (ui != null) ui.onMessagesRemoved(0, 100);
                 }
             });

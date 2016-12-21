@@ -10,6 +10,7 @@ import java.util.Set;
 
 import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotesExtension;
 import ru.ifmo.android_2016.irc.api.twitch.emotes.TwitchEmotesLoader;
+import ru.ifmo.android_2016.irc.utils.Log;
 import ru.ifmo.android_2016.irc.utils.TextUtils;
 
 /**
@@ -183,7 +184,19 @@ public final class TwitchClient extends Client {
 
     private void updateUserstate(TwitchMessage userState) {
 //        updateGlobalUserstate(userState);
-        getChannel(userState.getPrivmsgTarget()).setUserState(userState);
+        Channel channel = getChannel(userState.getPrivmsgTarget());
+        if (channel != null) {
+            channel.setUserState(userState);
+        } else {
+            Log.d(TAG, userState.toString());
+        }
+    }
+
+    @Override
+    protected void reconnect() {
+        lastTime = 0;
+        globalCount = 0;
+        super.reconnect();
     }
 
     public Set<Integer> getEmoteSets() {

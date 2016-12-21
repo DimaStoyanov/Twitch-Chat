@@ -35,6 +35,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.annimon.stream.Optional;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +67,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     private TextView chatTitle;
     protected FloatingActionButton fab;
     private int lastPosition = 0;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,6 +169,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             client.attachUi(this);
         }
         super.onStart();
+
+        Optional.ofNullable(getIntent().getStringExtra(CHANNEL))
+                .executeIfPresent(s -> viewPagerAdapter.setChannel(s));
+        setIntent(new Intent());
     }
 
     @Override
@@ -336,7 +341,11 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     public void onConnected(@NonNull final Client client) {
         ChatActivity.this.client = client;
         client.attachUi(this);
-        viewPager.setCurrentItem(lastPosition);
+        //reset view pager
+        viewPager.setAdapter(viewPagerAdapter);
+        viewPager.postDelayed(() -> {
+            viewPager.setCurrentItem(lastPosition);
+        }, 500);
     }
 
     @Override
@@ -347,6 +356,9 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             getChannels().addAll(client.getChannelList());
         }
         viewPagerAdapter.notifyDataSetChanged();
+        //reset view pager
+        viewPager.setAdapter(viewPagerAdapter);
+        viewPager.setCurrentItem(lastPosition);
 
         if (getChannels().size() > 1) loadMenu();
     }
@@ -423,13 +435,37 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         }
 
         public void add(Channel channel) {
-            channels.add(channel);
+            //TODO: o(n) complexity
+            String name = channel.getName();
+            boolean contains = false;
+            for (int i = 0; i < channels.size(); i++) {
+                String lul = channels.get(i).getName();
+                if (lul.equals(name)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) {
+                channels.add(channel);
+            }
             notifyDataSetChanged();
         }
 
         public void add(int position, Channel channel) {
             channels.add(position, channel);
             notifyDataSetChanged();
+        }
+
+        public void setChannel(String channelName) {
+            int position = -1;
+            for (int i = 0; i < channels.size(); i++) {
+                if (channels.get(i).getName().equals(channelName)) {
+                    position = i;
+                }
+            }
+            if (position >= 0) {
+                viewPager.setCurrentItem(position);
+            }
         }
 
         public List<Channel> getChannels() {
@@ -450,11 +486,18 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             finish();
             return false;
         });
-        //temporary menu item
-        menu.add(0, 3, Menu.CATEGORY_CONTAINER, "#ERROR#").setOnMenuItemClickListener(menuItem -> {
-            startActivity(new Intent(this, ErrorActivity.class));
-            return false;
-        });
+        if (IRCApplication.isDebug()) {
+            menu.add(0, 3, Menu.CATEGORY_CONTAINER, "DEBUG").setOnMenuItemClickListener(menuItem -> {
+                startActivity(new Intent(this, ErrorActivity.class));
+                return false;
+            });
+        }
         return true;
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
     }
 }

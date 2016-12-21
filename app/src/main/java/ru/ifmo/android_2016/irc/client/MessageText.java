@@ -131,10 +131,13 @@ public final class MessageText {
                 twitchNotify = sender.toLowerCase().equals("twitchnotify");
             }
 
-            Pattern highlightPattern = MessagePatterns.getInstance().getHighlightRegex();
-            boolean mentioned = highlightPattern != null && highlightPattern
-                    .matcher(text)
-                    .find();
+            boolean mentioned = false;
+            if (text != null) {
+                Pattern highlightPattern = MessagePatterns.getInstance().getHighlightRegex();
+                mentioned = highlightPattern != null && highlightPattern
+                        .matcher(text)
+                        .find();
+            }
 
             if (mentioned) {
                 if (notificationListener != null) {

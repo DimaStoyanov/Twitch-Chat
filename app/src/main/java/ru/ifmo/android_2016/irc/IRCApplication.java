@@ -1,7 +1,9 @@
 package ru.ifmo.android_2016.irc;
 
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
@@ -20,11 +22,16 @@ import ru.ifmo.android_2016.irc.utils.FileUtils;
  */
 
 public class IRCApplication extends android.app.Application {
-    private Thread.UncaughtExceptionHandler old;
     private static Handler mainThread;
     private static LocalBroadcastManager localBroadcastManager;
     private static String filesDir;
     private static String cacheDir;
+    private static boolean debug = true;
+
+    private Thread.UncaughtExceptionHandler old;
+    private SharedPreferences preferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener listener =
+            this::onSharedPreferences;
 
     private Thread.UncaughtExceptionHandler uncaughtExceptionHandler = (thread, throwable) -> {
         ServerList.save(filesDir);
@@ -49,6 +56,10 @@ public class IRCApplication extends android.app.Application {
         return filesDir;
     }
 
+    public static boolean isDebug() {
+        return debug;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -68,5 +79,12 @@ public class IRCApplication extends android.app.Application {
         new TwitchBadgesLoader().execute();
         new TwitchEmotesLoader().execute(0);
         new BttvEmotesLoader().execute();
+
+        preferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        preferences.registerOnSharedPreferenceChangeListener(listener);
+    }
+
+    private void onSharedPreferences(SharedPreferences sharedPreferences, String key) {
+
     }
 }
