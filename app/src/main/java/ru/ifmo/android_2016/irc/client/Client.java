@@ -336,7 +336,9 @@ public class Client {
     }
 
     protected void putNewChannel(String status, Channel channel) {
-        channels.put(status, channel);
+        if (!channels.containsKey(status)) {
+            channels.put(status, channel);
+        }
     }
 
     protected void sendBroadcast(String message) {

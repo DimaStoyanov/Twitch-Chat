@@ -17,6 +17,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.GravityCompat;
+import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -52,24 +53,24 @@ import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SHOW_TAB_KEY
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.SPAM_MODE_KEY;
 import static ru.ifmo.android_2016.irc.constant.PreferencesConstant.TEXT_SIZE_KEY;
 
-public class ChatActivity extends BaseActivity implements Client.Callback {
+public final class ChatActivity extends BaseActivity implements Client.Callback {
     private static final String TAG = ChatActivity.class.getSimpleName();
     public static final String CHANNEL = "Channel";
 
-    protected EditText typeMessage;
+    EditText typeMessage;
     private long id = 0;
     private int keyboardHeight;
     @Nullable
-    protected Client client;
+    Client client;
     private ChatFragmentPagerAdapter viewPagerAdapter;
-    protected ViewPager viewPager;
+    ViewPager viewPager;
     private ViewPager emotesViewPager;
-    private Toolbar toolbar;
     private LinearLayout content, emotesLl;
     private boolean spamMode = false;
     private TextView chatTitle;
-    protected FloatingActionButton fab;
-    private int lastPosition = 0;
+    FloatingActionButton fab;
+    @Nullable
+    private CharSequence lastPosition = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +113,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
 
             @Override
             public void onPageSelected(final int position) {
-                lastPosition = position;
+                lastPosition = viewPagerAdapter.getPageTitle(position);
 
                 try {
                     closeEmotes();
@@ -138,7 +139,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         tabLayout.setupWithViewPager(viewPager);
         tabLayout.setTabMode(TabLayout.MODE_SCROLLABLE);
 
-        toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setNavigationOnClickListener(v -> finish());
         chatTitle = (TextView) findViewById(R.id.title);
@@ -172,6 +173,10 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         Optional.ofNullable(getIntent().getStringExtra(CHANNEL))
                 .executeIfPresent(s -> viewPagerAdapter.setChannel(s));
         setIntent(new Intent());
+
+        if (lastPosition != null) {
+            viewPagerAdapter.setChannel(lastPosition);
+        }
     }
 
     @Override
@@ -232,14 +237,14 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        lastPosition = savedInstanceState.getInt("Last position");
+        lastPosition = savedInstanceState.getCharSequence("Last position");
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putLong("Id", id);
-        outState.putInt("Last position", lastPosition);
+        outState.putCharSequence("Last position", lastPosition);
     }
 
     private boolean isEmotesShowing = false;
@@ -373,11 +378,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
     public void onConnected(@NonNull final Client client) {
         ChatActivity.this.client = client;
         client.attachUi(this);
-        //reset view pager
-        viewPager.setAdapter(viewPagerAdapter);
-        viewPager.postDelayed(() -> {
-            viewPager.setCurrentItem(lastPosition);
-        }, 500);
+        viewPagerAdapter.setChannel(lastPosition);
     }
 
     @Override
@@ -459,6 +460,11 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         }
 
         @Override
+        public int getItemPosition(Object object) {
+            return PagerAdapter.POSITION_NONE;
+        }
+
+        @Override
         public void destroyItem(ViewGroup container, int position, Object object) {
             super.destroyItem(container, position, object);
         }
@@ -466,15 +472,17 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
         public void add(Channel channel) {
             //TODO: o(n) complexity
             String name = channel.getName();
-            boolean contains = false;
+            int contains = -1;
             for (int i = 0; i < channels.size(); i++) {
                 String lul = channels.get(i).getName();
                 if (lul.equals(name)) {
-                    contains = true;
+                    contains = i;
                     break;
                 }
             }
-            if (!contains) {
+            if (contains >= 0) {
+                channels.set(contains, channel);
+            } else {
                 channels.add(channel);
             }
             notifyDataSetChanged();
@@ -485,7 +493,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             notifyDataSetChanged();
         }
 
-        public void setChannel(String channelName) {
+        public void setChannel(CharSequence channelName) {
             int position = -1;
             for (int i = 0; i < channels.size(); i++) {
                 if (channels.get(i).getName().equals(channelName)) {
@@ -497,7 +505,7 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             }
         }
 
-        public List<Channel> getChannels() {
+        List<Channel> getChannels() {
             return channels;
         }
     }
@@ -514,12 +522,6 @@ public class ChatActivity extends BaseActivity implements Client.Callback {
             finish();
             return false;
         });
-        if (IRCApplication.isDebug()) {
-            menu.add(0, 3, Menu.CATEGORY_CONTAINER, "DEBUG").setOnMenuItemClickListener(menuItem -> {
-                startActivity(new Intent(this, ErrorActivity.class));
-                return false;
-            });
-        }
         return true;
     }
 
