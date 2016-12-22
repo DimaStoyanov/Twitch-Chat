@@ -25,7 +25,9 @@ import com.facebook.drawee.controller.BaseControllerListener;
 import com.facebook.drawee.drawable.ScalingUtils;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
+import com.facebook.imagepipeline.common.ImageDecodeOptions;
 import com.facebook.imagepipeline.image.ImageInfo;
+import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -132,7 +134,11 @@ public class EmoteScrollViewFragment extends Fragment {
                 emote.setHapticFeedbackEnabled(true);
                 emote.setOnTouchListener(new OnEmoteTouchListener(keySet.get(i), emote));
                 DraweeController draweeController = Fresco.newDraweeControllerBuilder()
-                        .setUri(getImageUri(keySet.get(i++), currentChannel.getName()))
+                        .setImageRequest(ImageRequestBuilder.newBuilderWithSource(getImageUri(keySet.get(i++), currentChannel.getName()))
+                                .setImageDecodeOptions(ImageDecodeOptions.newBuilder()
+                                        .setDecodeAllFrames(true)
+                                        .build())
+                                .build())
                         .setControllerListener(new BaseControllerListener<ImageInfo>() {
                             @Override
                             public void onFinalImageSet(String id, @javax.annotation.Nullable ImageInfo imageInfo, @javax.annotation.Nullable Animatable animatable) {

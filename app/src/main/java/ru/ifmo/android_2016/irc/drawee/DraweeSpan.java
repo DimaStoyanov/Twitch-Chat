@@ -79,6 +79,7 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
     private DraweeTextView mAttachedView;
     private String mImageUri;
     private Point mLayout = new Point();
+    private boolean mRealSizeSet = false;
     private Rect mMargin = new Rect();
     private boolean mIsAttached;
     private boolean mShouldShowAnim = false;
@@ -134,8 +135,12 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
     }
 
     public void setImage(Drawable drawable) {
-        mLayout.set(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-        layout();
+        if (!mRealSizeSet) {
+            float wh = ((float) drawable.getIntrinsicWidth()) / drawable.getIntrinsicHeight();
+            mLayout.x = (int) (((float) mLayout.x) * wh);
+            mRealSizeSet = true;
+            layout();
+        }
         if (mDrawable != drawable) {
             releaseDrawable(mDrawable);
             setDrawableInner(drawable);
@@ -195,7 +200,10 @@ public class DraweeSpan extends DynamicDrawableSpan implements DeferredReleaser.
         mIsRequestSubmitted = true;
         final String id = getId();
         ImageRequest request = ImageRequestBuilder.newBuilderWithSource(Uri.parse(getImageUri()))
-                .setImageDecodeOptions(ImageDecodeOptions.newBuilder().setDecodePreviewFrame(true).build())
+                .setImageDecodeOptions(ImageDecodeOptions.newBuilder()
+                        .setDecodeAllFrames(true)
+//                        .setDecodePreviewFrame(true)
+                        .build())
                 .build();
 
         mDataSource = ImagePipelineFactory.getInstance().getImagePipeline()

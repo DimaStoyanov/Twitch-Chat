@@ -9,8 +9,10 @@ import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 
 import ru.ifmo.android_2016.irc.client.Badge;
 import ru.ifmo.android_2016.irc.client.Bits;
@@ -26,6 +28,7 @@ import ru.ifmo.android_2016.irc.ui.span.ChangeableForegroundColorSpan;
 
 public final class TextUtils {
     private final static String TAG = TextUtils.class.getSimpleName();
+    private final static DateFormat timeFormat = new SimpleDateFormat("hh:mm:ss", Locale.getDefault());
 
     private TextUtils() {
     }
@@ -70,7 +73,7 @@ public final class TextUtils {
 
     private static SpannableStringBuilder buildTime(@NonNull TwitchMessage msg) {
         SpannableStringBuilder time = new SpannableStringBuilder()
-                .append(new SimpleDateFormat("hh:mm:ss").format(new Date(msg.getTime())));
+                .append(timeFormat.format(new Date(msg.getTime())));
         time.setSpan(new RelativeSizeSpan(0.65f), 0, time.length(),
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
@@ -85,7 +88,7 @@ public final class TextUtils {
                 SpannableStringBuilder b = new SpannableStringBuilder().append("  ");
                 b.setSpan(
                         new DraweeSpan.Builder(badge.getUrl())
-                                .setLayout(50, 50)
+                                .setLayout(36, 36)
                                 .build(),
                         0,
                         1,
