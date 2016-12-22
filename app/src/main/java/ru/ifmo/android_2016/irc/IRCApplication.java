@@ -69,7 +69,7 @@ public class IRCApplication extends android.app.Application {
         filesDir = getFilesDir().toString();
         cacheDir = getCacheDir().toString();
 
-        DraweeSpan.dp = getResources().getDisplayMetrics().density / 2;
+        DraweeSpan.dp = getResources().getDisplayMetrics().density;
 
         old = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler(uncaughtExceptionHandler);

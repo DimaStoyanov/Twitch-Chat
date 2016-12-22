@@ -53,7 +53,6 @@ public final class FrankerFaceZExtension implements MessageExtension {
                         r.word,
                         r.begin,
                         r.end,
-                        Emote.Type.TWITCH,
                         FfzEmotes.getWidth(r.word),
                         FfzEmotes.getHeight(r.word)))
                 .collect(Collectors.toList());

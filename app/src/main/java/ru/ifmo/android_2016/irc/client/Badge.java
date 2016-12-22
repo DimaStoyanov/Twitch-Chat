@@ -58,4 +58,12 @@ public final class Badge {
         this.url = url;
         return this;
     }
+
+    public int getWidth() {
+        return 18;
+    }
+
+    public int getHeight() {
+        return 18;
+    }
 }

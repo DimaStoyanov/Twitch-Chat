@@ -52,7 +52,8 @@ public final class TwitchEmotesExtension implements MessageExtension {
                         r.word,
                         r.begin,
                         r.end,
-                        Emote.Type.TWITCH, 50, 50))
+                        25,
+                        25))
                 .collect(Collectors.toList());
     }
 }

@@ -24,7 +24,6 @@ public class Emote implements Comparable<Emote> {
     private final String emoteId;
     private final int begin;
     private final int end;
-    private Type type;
 
     private final int width;
     private final int height;
@@ -33,14 +32,12 @@ public class Emote implements Comparable<Emote> {
                   String emoteId,
                   int begin,
                   int end,
-                  Type type,
                   int width,
                   int height) {
         this.emoteUrl = emoteUrl;
         this.emoteId = emoteId;
         this.begin = begin;
         this.end = end;
-        this.type = type;
         this.width = width;
         this.height = height;
     }
@@ -49,10 +46,9 @@ public class Emote implements Comparable<Emote> {
                                  String emoteId,
                                  int begin,
                                  int end,
-                                 Type type,
                                  int width,
                                  int height) {
-        return new Emote(emoteUrl, emoteId, begin, end, type, width, height);
+        return new Emote(emoteUrl, emoteId, begin, end, width, height);
     }
 
     private static Emote getTwitchEmote(String emoteId, int begin, int end) {
@@ -61,9 +57,8 @@ public class Emote implements Comparable<Emote> {
                 emoteId,
                 begin,
                 end,
-                Type.TWITCH,
-                50,
-                50);
+                25,
+                25);
     }
 
     @Override
@@ -130,29 +125,12 @@ public class Emote implements Comparable<Emote> {
         return emoteId;
     }
 
-    public Type getType() {
-        return type;
+    public int getWidth() {
+        return width;
     }
 
-    public enum Type {
-        TWITCH,
-        BTTV,
-        FFZ,;
-
-        public String getDirectory() {
-            switch (this) {
-                case TWITCH:
-                    return "twitch";
-
-                case BTTV:
-                    return "bttv";
-
-                case FFZ:
-                    return "ffz";
-
-                default:
-                    return "other_emotes";
-            }
-        }
+    public int getHeight() {
+        return height;
     }
+
 }

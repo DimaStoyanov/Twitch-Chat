@@ -121,4 +121,12 @@ public class Bits {
     public String toString() {
         return bits + " " + beginImage + ":" + endImage + "/" + beginText + ":" + endText;
     }
+
+    public int getWidth() {
+        return 25;
+    }
+
+    public int getHeight() {
+        return 25;
+    }
 }

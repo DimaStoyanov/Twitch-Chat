@@ -78,10 +78,10 @@ public final class FfzEmotes {
     }
 
     public static int getWidth(String word) {
-        return 50;  //TODO:
+        return 25;  //TODO:
     }
 
     public static int getHeight(String word) {
-        return 50;  //TODO:
+        return 25;  //TODO:
     }
 }

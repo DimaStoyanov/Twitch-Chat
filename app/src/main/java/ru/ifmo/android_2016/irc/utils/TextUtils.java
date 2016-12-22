@@ -88,7 +88,7 @@ public final class TextUtils {
                 SpannableStringBuilder b = new SpannableStringBuilder().append("  ");
                 b.setSpan(
                         new DraweeSpan.Builder(badge.getUrl())
-                                .setLayout(36, 36)
+                                .setLayout(badge.getWidth(), badge.getHeight())
                                 .build(),
                         0,
                         1,
@@ -114,7 +114,7 @@ public final class TextUtils {
             for (Emote emote : msg.getEmotes()) {
                 messageText.setSpan(
                         new DraweeSpan.Builder(emote.getEmoteUrl())
-                                .setLayout(50, 50)
+                                .setLayout(emote.getWidth(), emote.getHeight())
                                 .setShowAnimaImmediately(true)    //LAAAAAGGGGSSSS!!! NotLikeThis
                                 .build(),
                         emote.getBegin(),
@@ -126,7 +126,7 @@ public final class TextUtils {
             for (Bits bits : msg.getBits()) {
                 messageText.setSpan(
                         new DraweeSpan.Builder(bits.getBitsUrl())
-                                .setLayout(50, 50)
+                                .setLayout(bits.getWidth(), bits.getHeight())
                                 .setShowAnimaImmediately(true)
                                 .build(),
                         bits.getImageBegin(),

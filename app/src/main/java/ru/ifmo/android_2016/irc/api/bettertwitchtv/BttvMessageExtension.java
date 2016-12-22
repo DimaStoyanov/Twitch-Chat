@@ -59,8 +59,8 @@ public final class BttvMessageExtension implements MessageExtension {
                             id,
                             result.begin,
                             result.end,
-                            Emote.Type.BTTV,
-                            50, 50));
+                            25,
+                            25));
                 }
             }
         }
@@ -79,8 +79,8 @@ public final class BttvMessageExtension implements MessageExtension {
                             id,
                             result.begin,
                             result.end,
-                            Emote.Type.BTTV,
-                            50, 50));
+                            25,
+                            25));
                 }
             }
         }
