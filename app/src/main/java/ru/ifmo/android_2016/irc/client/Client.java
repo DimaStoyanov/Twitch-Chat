@@ -16,6 +16,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -50,7 +51,7 @@ public class Client {
     protected PrintWriter out;
     protected final BlockingQueue<IRCMessage> messageQueue = new LinkedBlockingQueue<>();
     protected final BlockingQueue<Runnable> requestQueue = new LinkedBlockingQueue<>();
-    protected Map<String, Channel> channels = new android.support.v4.util.ArrayMap<>();
+    protected Map<String, Channel> channels = new LinkedHashMap<>();
     @Nullable
     protected Callback ui;
     protected Channel statusChannel = new Channel(this, "Status");
