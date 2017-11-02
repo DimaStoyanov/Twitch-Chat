@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="ru.ifmo.android_2016.irc"
+    android:installLocation="auto">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+
+    <application
+        android:name=".IRCApplication"
+        android:allowBackup="true"
+        android:fullBackupContent="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="false"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".NewChannelListActivity"
+            android:label="@string/irc_client"
+            android:windowSoftInputMode="stateHidden|adjustPan">
+            <intent-filter android:label="@string/irc_client">
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ChatActivity"
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="stateHidden|adjustPan" />
+
+        <service
+            android:name=".client.ClientService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <activity android:name=".PreferenceActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MANAGE_NETWORK_USAGE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="ru.ifmo.android_2016.irc.ACTION_USER_PREFERENCE" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".TwitchLoginActivity"
+            android:label="Login"
+            android:theme="@style/AppTheme.TwitchLogin" />
+        <activity android:name=".ErrorActivity" />
+    </application>
+
+</manifest>
