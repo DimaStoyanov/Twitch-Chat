@@ -12,6 +12,9 @@ buildscript {
     }
 }
 
+
+asdas
+
 allprojects {
     repositories {
         jcenter()
